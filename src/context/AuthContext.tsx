@@ -64,8 +64,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Sign in successful for user:", result.user.email);
     } catch (error: any) {
       console.error("Error signing in:", error);
-      // We'll let the component handle the error display if needed
-      // but we log it clearly for the developer
+      
+      if (error.code === 'auth/unauthorized-domain') {
+        const currentDomain = window.location.hostname;
+        alert(`Erro de Autenticação: O domínio "${currentDomain}" não está autorizado no Console do Firebase.\n\nPor favor, adicione este domínio em: Console Firebase > Authentication > Settings > Authorized Domains.`);
+      } else if (error.code === 'auth/popup-blocked') {
+        alert('O popup de login foi bloqueado pelo seu navegador. Por favor, permita popups para este site.');
+      } else {
+        alert(`Erro ao entrar: ${error.message}`);
+      }
     } finally {
       setIsSigningIn(false);
     }
