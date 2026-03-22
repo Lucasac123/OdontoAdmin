@@ -1,6 +1,15 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, addDoc, collection, deleteDoc, doc, getDocFromServer } from 'firebase/firestore';
+import { 
+  initializeFirestore, 
+  getFirestore, 
+  addDoc, 
+  collection, 
+  deleteDoc, 
+  doc, 
+  getDocFromServer,
+  Firestore
+} from 'firebase/firestore';
 import configFromJson from '../firebase-applet-config.json';
 
 const getEnvVar = (val: string | undefined, fallback: string) => {
@@ -17,20 +26,31 @@ const firebaseConfig = {
   firestoreDatabaseId: getEnvVar(import.meta.env.VITE_FIREBASE_DATABASE_ID, configFromJson.firestoreDatabaseId)
 };
 
-console.log("Firebase Config:", firebaseConfig);
+console.log("Firebase Config:", { ...firebaseConfig, apiKey: '***' });
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+// Initialize Firestore with experimentalForceLongPolling to avoid WebSocket issues in some environments
+export const db: Firestore = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+}, firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)' 
+  ? firebaseConfig.firestoreDatabaseId 
+  : undefined);
+
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
 // Connection test
 async function testConnection() {
   try {
+    // Use getDocFromServer to bypass cache and test real connectivity
     await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Please check your Firebase configuration. The client is offline.");
+    console.log("Firestore connection successful.");
+  } catch (error: any) {
+    if (error.message?.includes('the client is offline') || error.code === 'unavailable') {
+      console.error("Firestore is offline. Please check your Firebase configuration or project status.");
+    } else {
+      console.warn("Firestore connection test finished with expected error (doc not found):", error.message);
     }
   }
 }

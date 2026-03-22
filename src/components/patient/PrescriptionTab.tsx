@@ -9,6 +9,32 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
   const [selectedDrug, setSelectedDrug] = useState('amoxicilina');
   const [calculatedDose, setCalculatedDose] = useState('');
 
+  const [anestheticWeight, setAnestheticWeight] = useState('');
+  const [selectedAnesthetic, setSelectedAnesthetic] = useState('lidocaina_2_epi');
+  const [maxTubetes, setMaxTubetes] = useState<number | null>(null);
+
+  const ANESTHETICS = {
+    lidocaina_2_epi: { name: 'Lidocaína 2% c/ Epi (1:100.000)', maxDose: 4.4, mgPerTubete: 36 },
+    mepivacaina_2_epi: { name: 'Mepivacaína 2% c/ Epi (1:100.000)', maxDose: 4.4, mgPerTubete: 36 },
+    mepivacaina_3_sv: { name: 'Mepivacaína 3% s/ Vaso', maxDose: 4.4, mgPerTubete: 54 },
+    prilocaina_3_feli: { name: 'Prilocaína 3% c/ Felipressina', maxDose: 6.0, mgPerTubete: 54 },
+    articaina_4_epi: { name: 'Articaína 4% c/ Epi (1:100.000)', maxDose: 7.0, mgPerTubete: 72 },
+    bupivacaina_05_epi: { name: 'Bupivacaína 0.5% c/ Epi (1:200.000)', maxDose: 1.3, mgPerTubete: 9 },
+  };
+
+  const calculateAnesthetic = () => {
+    const weight = parseFloat(anestheticWeight);
+    if (isNaN(weight) || weight <= 0) {
+      setMaxTubetes(null);
+      return;
+    }
+
+    const anesthetic = ANESTHETICS[selectedAnesthetic as keyof typeof ANESTHETICS];
+    const totalMaxMg = weight * anesthetic.maxDose;
+    const tubetes = totalMaxMg / anesthetic.mgPerTubete;
+    setMaxTubetes(tubetes);
+  };
+
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
@@ -152,6 +178,60 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
                 >
                   Adicionar ao Receituário
                 </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-3xl border border-emerald-100 dark:border-emerald-800/30 p-6">
+          <h3 className="text-lg font-bold text-emerald-900 dark:text-emerald-100 flex items-center gap-2 mb-6">
+            <Calculator className="w-5 h-5" />
+            Cálculo Anestésico
+          </h3>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-emerald-900 dark:text-emerald-200 mb-1">Peso do Paciente (kg)</label>
+              <input 
+                type="number" 
+                step="0.1"
+                value={anestheticWeight}
+                onChange={(e) => setAnestheticWeight(e.target.value)}
+                placeholder="Ex: 70"
+                className="w-full bg-surface border border-emerald-200 dark:border-emerald-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-emerald-500" 
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-emerald-900 dark:text-emerald-200 mb-1">Anestésico</label>
+              <select 
+                value={selectedAnesthetic}
+                onChange={(e) => setSelectedAnesthetic(e.target.value)}
+                className="w-full bg-surface border border-emerald-200 dark:border-emerald-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-emerald-500"
+              >
+                {Object.entries(ANESTHETICS).map(([key, value]) => (
+                  <option key={key} value={key}>{value.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <button 
+              onClick={calculateAnesthetic}
+              className="w-full bg-emerald-600 text-white py-2 rounded-xl font-medium hover:bg-emerald-700 transition-colors"
+            >
+              Calcular Limite
+            </button>
+
+            {maxTubetes !== null && (
+              <div className="mt-6 p-4 bg-surface rounded-xl border border-emerald-200 dark:border-emerald-700 shadow-sm">
+                <h4 className="text-sm font-bold text-emerald-900 dark:text-emerald-200 mb-2">Limite Máximo:</h4>
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold text-emerald-600">{maxTubetes.toFixed(1)}</span>
+                  <span className="text-sm text-text-secondary">tubetes</span>
+                </div>
+                <p className="text-[10px] text-text-secondary mt-2 leading-tight">
+                  Baseado na dose máxima de {ANESTHETICS[selectedAnesthetic as keyof typeof ANESTHETICS].maxDose} mg/kg.
+                </p>
               </div>
             )}
           </div>
