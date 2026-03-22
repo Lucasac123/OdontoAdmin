@@ -14,7 +14,6 @@ import {
   Moon,
   Menu,
   X,
-  Monitor,
   Download,
   Trash2
 } from 'lucide-react';
@@ -84,10 +83,10 @@ const SidebarContent = ({
         
         <div className="flex bg-zinc-100 dark:bg-black/20 p-1 rounded-xl relative">
           <motion.div 
-            className="absolute top-1 bottom-1 w-[calc(33.33%-4px)] bg-white dark:bg-zinc-800 rounded-lg shadow-sm"
+            className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-zinc-800 rounded-lg shadow-sm"
             initial={false}
             animate={{
-              x: theme === 'light' ? '0%' : theme === 'system' ? '100%' : '200%'
+              x: theme === 'light' ? '0%' : '100%'
             }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           />
@@ -97,13 +96,6 @@ const SidebarContent = ({
             title="Modo Claro"
           >
             <Sun className="w-4 h-4" />
-          </button>
-          <button 
-            onClick={() => setTheme('system')}
-            className={`flex-1 flex items-center justify-center p-2 rounded-lg transition-colors relative z-10 ${theme === 'system' ? 'text-indigo-600 dark:text-white' : 'text-text-secondary hover:text-indigo-600 dark:hover:text-white'}`}
-            title="Padrão do Sistema"
-          >
-            <Monitor className="w-4 h-4" />
           </button>
           <button 
             onClick={() => setTheme('dark')}

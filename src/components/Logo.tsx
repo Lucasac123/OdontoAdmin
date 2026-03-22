@@ -18,7 +18,7 @@ export const Logo: React.FC<{ className?: string, iconOnly?: boolean }> = ({ cla
             strokeLinejoin="round" 
             className="w-8 h-8 relative z-10 drop-shadow-sm text-indigo-600 dark:text-indigo-400"
           >
-            <path d="M7 4c-1.5 0-3 1-3 3.5s1 5 1 7.5c0 2 1 4 2 4s2-1.5 2-3.5c0-1.5 0-3 1-3s1 1.5 1 3c0 2 1 3.5 2 3.5s2-2 2-4c0-2.5 1-5 1-7.5s-1.5-3.5-3-3.5c-1 0-2 .5-3 1.5-1-1-2-1.5-3-1.5z" />
+            <path d="M9 4c-1.5 0-3 1-3 3.5s1 5 1 7.5c0 2 1 4 2 4s2-1.5 2-3.5c0-1.5 0-3 1-3s1 1.5 1 3c0 2 1 3.5 2 3.5s2-2 2-4c0-2.5 1-5 1-7.5s-1.5-3.5-3-3.5c-1 0-2 .5-3 1.5-1-1-2-1.5-3-1.5z" />
           </svg>
         </div>
       </div>
