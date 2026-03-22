@@ -1,0 +1,151 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A dentist or clinic administrator",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "dentist"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "name", "role", "createdAt"]
+    },
+    "Patient": {
+      "title": "Patient",
+      "description": "A patient record",
+      "type": "object",
+      "properties": {
+        "dentistId": { "type": "string", "description": "ID of the dentist who owns this record" },
+        "name": { "type": "string" },
+        "dob": { "type": "string", "format": "date" },
+        "phone": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "anamnesis": { "type": "string", "description": "JSON stringified anamnesis data" },
+        "odontogram": { "type": "string", "description": "JSON stringified odontogram state" },
+        "treatmentStatus": { "type": "string", "enum": ["Planejado", "Em Andamento", "Concluído"] },
+        "treatmentStartDate": { "type": "string", "format": "date" },
+        "treatmentEndDate": { "type": "string", "format": "date" },
+        "source": { "type": "string", "description": "Patient source (e.g., Indication, Advertising, Insurance)" },
+        "status": { "type": "string", "enum": ["Ativo", "Inativo", "Em Tratamento"] },
+        "sex": { "type": "string" },
+        "nationality": { "type": "string" },
+        "placeOfBirth": { "type": "string" },
+        "legalRepDetails": { "type": "string", "description": "JSON string for relation, CPF, RG, etc." },
+        "spouseDetails": { "type": "string", "description": "JSON string for name, CPF, RG, etc." },
+        "referenceDoctor": { "type": "string", "description": "JSON string for name, phone" },
+        "mainComplaint": { "type": "string", "description": "JSON string for reason, description" },
+        "allergies": { "type": "string" },
+        "previousDentist": { "type": "string", "description": "JSON string for name, date" },
+        "appointmentPreference": { "type": "string", "description": "JSON string for date, period" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["dentistId", "name", "createdAt"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "A scheduled appointment",
+      "type": "object",
+      "properties": {
+        "dentistId": { "type": "string" },
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "duration": { "type": "number", "description": "Duration in minutes" },
+        "notes": { "type": "string" },
+        "status": { "type": "string", "enum": ["scheduled", "completed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["dentistId", "patientId", "date", "status", "createdAt"]
+    },
+    "Finance": {
+      "title": "Finance",
+      "description": "A financial transaction",
+      "type": "object",
+      "properties": {
+        "dentistId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "description": { "type": "string" },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["income", "expense"] },
+        "patientId": { "type": "string", "description": "Optional patient ID for income" },
+        "paymentMethod": { "type": "string", "enum": ["money", "card", "pix", "transfer", "other"], "description": "Optional payment method for income" },
+        "percentages": { "type": "string", "description": "JSON stringified percentage splits" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["dentistId", "date", "description", "amount", "type", "createdAt"]
+    },
+    "FileRecord": {
+      "title": "FileRecord",
+      "description": "Metadata for an uploaded file (x-ray, photo, consent form)",
+      "type": "object",
+      "properties": {
+        "dentistId": { "type": "string" },
+        "patientId": { "type": "string" },
+        "name": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "type": { "type": "string", "enum": ["extraoral", "intraoral", "xray", "tomography", "consent", "other"] },
+        "uploadedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["dentistId", "patientId", "name", "url", "type", "uploadedAt"]
+    },
+    "NotificationSettings": {
+      "title": "NotificationSettings",
+      "description": "Settings for appointment reminders.",
+      "type": "object",
+      "properties": {
+        "dentistId": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "type": { "type": "string", "enum": ["sms", "email", "both"] },
+        "hoursBefore": { "type": "integer" },
+        "messageTemplate": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["dentistId", "enabled", "type", "hoursBefore", "messageTemplate", "updatedAt"]
+    },
+    "QuickNote": {
+      "title": "QuickNote",
+      "description": "A quick note or reminder for the dentist.",
+      "type": "object",
+      "properties": {
+        "dentistId": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["dentistId", "content", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Dentist profiles"
+    },
+    "/patients/{patientId}": {
+      "schema": { "$ref": "#/entities/Patient" },
+      "description": "Patient records"
+    },
+    "/appointments/{appointmentId}": {
+      "schema": { "$ref": "#/entities/Appointment" },
+      "description": "Appointments"
+    },
+    "/finances/{financeId}": {
+      "schema": { "$ref": "#/entities/Finance" },
+      "description": "Financial records"
+    },
+    "/files/{fileId}": {
+      "schema": { "$ref": "#/entities/FileRecord" },
+      "description": "File metadata"
+    },
+    "/notificationSettings/{settingId}": {
+      "schema": { "$ref": "#/entities/NotificationSettings" },
+      "description": "Dentist's notification and reminder settings."
+    },
+    "/quickNotes/{noteId}": {
+      "schema": { "$ref": "#/entities/QuickNote" },
+      "description": "Quick notes for the dentist."
+    }
+  }
+}
