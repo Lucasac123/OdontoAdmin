@@ -1,7 +1,16 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, addDoc, collection, deleteDoc, doc, getDocFromServer } from 'firebase/firestore';
-import firebaseConfig from '../firebase-applet-config.json';
+import configFromJson from '../firebase-applet-config.json';
+
+// Use environment variables if available, otherwise fallback to JSON config
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || configFromJson.apiKey,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || configFromJson.authDomain,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || configFromJson.projectId,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || configFromJson.appId,
+  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID || configFromJson.firestoreDatabaseId
+};
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
