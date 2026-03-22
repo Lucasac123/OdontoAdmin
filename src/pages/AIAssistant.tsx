@@ -169,8 +169,8 @@ export const AIAssistant: React.FC = () => {
     <div className="space-y-6 h-[calc(100vh-8rem)] flex flex-col">
       <div className="flex items-center justify-between shrink-0">
         <div>
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">IA Assistente</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Potencializado pelo Google Gemini</p>
+          <h1 className="text-3xl font-bold text-text-primary">IA Assistente</h1>
+          <p className="text-sm text-text-secondary">Potencializado pelo Google Gemini</p>
         </div>
       </div>
 
@@ -188,7 +188,7 @@ export const AIAssistant: React.FC = () => {
               className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors relative ${
                 activeTab === tab.id 
                   ? 'text-indigo-600 dark:text-indigo-400' 
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
+                  : 'text-text-secondary hover:text-text-primary hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
               }`}
             >
               <tab.icon className="w-4 h-4" />
@@ -206,7 +206,7 @@ export const AIAssistant: React.FC = () => {
             <div className="h-full flex flex-col">
               <div className="flex-1 overflow-y-auto space-y-4 pb-4">
                 {chatMessages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-400 space-y-4">
+                  <div className="h-full flex flex-col items-center justify-center text-text-secondary space-y-4">
                     <Bot className="w-12 h-12 opacity-50" />
                     <p>Olá! Sou seu assistente odontológico. Como posso ajudar hoje?</p>
                   </div>
@@ -216,7 +216,7 @@ export const AIAssistant: React.FC = () => {
                       <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                         msg.role === 'user' 
                           ? 'bg-indigo-600 text-white rounded-br-none' 
-                          : 'bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 rounded-bl-none'
+                          : 'bg-surface border border-zinc-200 dark:border-zinc-700 text-text-primary rounded-bl-none'
                       }`}>
                         <p className="whitespace-pre-wrap">{msg.text}</p>
                       </div>
@@ -225,9 +225,9 @@ export const AIAssistant: React.FC = () => {
                 )}
                 {isChatLoading && (
                   <div className="flex justify-start">
-                    <div className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl rounded-bl-none px-4 py-3 flex items-center gap-2">
+                    <div className="bg-surface border border-zinc-200 dark:border-zinc-700 rounded-2xl rounded-bl-none px-4 py-3 flex items-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin text-indigo-600 dark:text-indigo-400" />
-                      <span className="text-zinc-500 dark:text-zinc-400 text-sm">Pensando...</span>
+                      <span className="text-text-secondary text-sm">Pensando...</span>
                     </div>
                   </div>
                 )}
@@ -239,7 +239,7 @@ export const AIAssistant: React.FC = () => {
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   placeholder="Digite sua dúvida clínica..."
-                  className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl pl-4 pr-12 py-3 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl pl-4 pr-12 py-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                   disabled={isChatLoading}
                 />
                 <button 
@@ -263,23 +263,23 @@ export const AIAssistant: React.FC = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Pesquise na web (ex: Legislação CRO atualizada, novos materiais...)"
-                  className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl pl-12 pr-4 py-4 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm text-lg"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl pl-12 pr-4 py-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm text-lg"
                   disabled={isSearchLoading}
                 />
               </form>
               
-              <div className="flex-1 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-6 overflow-y-auto">
+              <div className="flex-1 bg-surface rounded-2xl border border-zinc-200 dark:border-zinc-700 p-6 overflow-y-auto">
                 {isSearchLoading ? (
-                  <div className="h-full flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-400 space-y-4">
+                  <div className="h-full flex flex-col items-center justify-center text-text-secondary space-y-4">
                     <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400" />
                     <p>Pesquisando na web...</p>
                   </div>
                 ) : searchResult ? (
-                  <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap">
+                  <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap text-text-primary">
                     {searchResult}
                   </div>
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-400 space-y-4">
+                  <div className="h-full flex flex-col items-center justify-center text-text-secondary space-y-4">
                     <Search className="w-12 h-12 opacity-50" />
                     <p>Resultados da pesquisa aparecerão aqui.</p>
                   </div>
@@ -292,13 +292,13 @@ export const AIAssistant: React.FC = () => {
           {activeTab === 'analyze' && (
             <div className="h-full flex flex-col md:flex-row gap-6">
               <div className="w-full md:w-1/3 flex flex-col gap-4">
-                <div className="border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl p-4 flex flex-col items-center justify-center text-center bg-white dark:bg-zinc-900 relative overflow-hidden min-h-[200px]">
+                <div className="border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl p-4 flex flex-col items-center justify-center text-center bg-surface relative overflow-hidden min-h-[200px]">
                   {analyzeImage ? (
                     <img src={analyzeImage} alt="Upload" className="absolute inset-0 w-full h-full object-contain" />
                   ) : (
                     <>
                       <Upload className="w-8 h-8 text-zinc-400 mb-2" />
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400">Faça upload de uma radiografia ou foto intraoral</p>
+                      <p className="text-sm text-text-secondary">Faça upload de uma radiografia ou foto intraoral</p>
                     </>
                   )}
                   <input 
@@ -311,7 +311,7 @@ export const AIAssistant: React.FC = () => {
                 <textarea
                   value={analyzePrompt}
                   onChange={(e) => setAnalyzePrompt(e.target.value)}
-                  className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none h-32"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none h-32"
                   placeholder="O que você deseja analisar nesta imagem?"
                 />
                 <button
@@ -323,18 +323,18 @@ export const AIAssistant: React.FC = () => {
                   Analisar Imagem
                 </button>
               </div>
-              <div className="w-full md:w-2/3 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-6 overflow-y-auto">
+              <div className="w-full md:w-2/3 bg-surface rounded-2xl border border-zinc-200 dark:border-zinc-700 p-6 overflow-y-auto">
                 {isAnalyzeLoading ? (
-                  <div className="h-full flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-400 space-y-4">
+                  <div className="h-full flex flex-col items-center justify-center text-text-secondary space-y-4">
                     <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400" />
                     <p>Analisando imagem...</p>
                   </div>
                 ) : analyzeResult ? (
-                  <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap">
+                  <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap text-text-primary">
                     {analyzeResult}
                   </div>
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-400 space-y-4">
+                  <div className="h-full flex flex-col items-center justify-center text-text-secondary space-y-4">
                     <ImageIcon className="w-12 h-12 opacity-50" />
                     <p>O resultado da análise aparecerá aqui.</p>
                   </div>
@@ -348,7 +348,7 @@ export const AIAssistant: React.FC = () => {
             <div className="h-full flex flex-col md:flex-row gap-6">
               <div className="w-full md:w-1/3 flex flex-col gap-4">
                 <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Prompt da Imagem</label>
+                  <label className="block text-sm font-medium text-text-secondary">Prompt da Imagem</label>
                   <button 
                     onClick={setLogoPreset}
                     className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
@@ -362,16 +362,16 @@ export const AIAssistant: React.FC = () => {
                     <textarea
                       value={generatePrompt}
                       onChange={(e) => setGeneratePrompt(e.target.value)}
-                      className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none h-32"
+                      className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none h-32"
                       placeholder="Ex: Ilustração 3D de um implante dentário..."
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Proporção (Aspect Ratio)</label>
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Proporção (Aspect Ratio)</label>
                     <select
                       value={generateAspectRatio}
                       onChange={(e) => setGenerateAspectRatio(e.target.value)}
-                      className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                       <option value="1:1">1:1 (Quadrado)</option>
                       <option value="3:4">3:4 (Retrato)</option>
@@ -390,16 +390,16 @@ export const AIAssistant: React.FC = () => {
                   </button>
                 </form>
               </div>
-              <div className="w-full md:w-2/3 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-6 flex items-center justify-center overflow-hidden">
+              <div className="w-full md:w-2/3 bg-surface rounded-2xl border border-zinc-200 dark:border-zinc-700 p-6 flex items-center justify-center overflow-hidden">
                 {isGenerateLoading ? (
-                  <div className="flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-400 space-y-4">
+                  <div className="flex flex-col items-center justify-center text-text-secondary space-y-4">
                     <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400" />
                     <p>Gerando ilustração...</p>
                   </div>
                 ) : generatedImage ? (
                   <img src={generatedImage} alt="Generated" className="max-w-full max-h-full object-contain rounded-lg shadow-md" />
                 ) : (
-                  <div className="flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-400 space-y-4">
+                  <div className="flex flex-col items-center justify-center text-text-secondary space-y-4">
                     <ImageIcon className="w-12 h-12 opacity-50" />
                     <p>A imagem gerada aparecerá aqui.</p>
                   </div>

@@ -80,7 +80,7 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-2 space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-text-primary flex items-center gap-2">
             <Pill className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
             Receituário Interativo
           </h2>
@@ -93,11 +93,11 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
           </button>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm">
+        <div className="bg-surface rounded-3xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm">
           <textarea
             value={prescriptionText}
             onChange={(e) => setPrescriptionText(e.target.value)}
-            className="w-full h-[500px] bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl p-6 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 resize-none font-mono text-sm leading-relaxed"
+            className="w-full h-[500px] bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl p-6 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none font-mono text-sm leading-relaxed"
           />
         </div>
       </div>
@@ -118,7 +118,7 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
                 value={childWeight}
                 onChange={(e) => setChildWeight(e.target.value)}
                 placeholder="Ex: 15.5"
-                className="w-full bg-white dark:bg-zinc-900 border border-indigo-200 dark:border-indigo-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500" 
+                className="w-full bg-surface border border-indigo-200 dark:border-indigo-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" 
               />
             </div>
 
@@ -127,7 +127,7 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
               <select 
                 value={selectedDrug}
                 onChange={(e) => setSelectedDrug(e.target.value)}
-                className="w-full bg-white dark:bg-zinc-900 border border-indigo-200 dark:border-indigo-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-surface border border-indigo-200 dark:border-indigo-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="amoxicilina">Amoxicilina Susp. 250mg/5ml</option>
                 <option value="dipirona">Dipirona Gotas 500mg/ml</option>
@@ -143,9 +143,9 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
             </button>
 
             {calculatedDose && (
-              <div className="mt-6 p-4 bg-white dark:bg-zinc-900 rounded-xl border border-indigo-200 dark:border-indigo-700 shadow-sm">
+              <div className="mt-6 p-4 bg-surface rounded-xl border border-indigo-200 dark:border-indigo-700 shadow-sm">
                 <h4 className="text-sm font-bold text-indigo-900 dark:text-indigo-200 mb-2">Resultado:</h4>
-                <p className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap mb-4">{calculatedDose}</p>
+                <p className="text-sm text-text-secondary whitespace-pre-wrap mb-4">{calculatedDose}</p>
                 <button 
                   onClick={addDoseToPrescription}
                   className="w-full text-sm bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-200 py-2 rounded-lg font-medium hover:bg-indigo-200 dark:hover:bg-indigo-700 transition-colors"

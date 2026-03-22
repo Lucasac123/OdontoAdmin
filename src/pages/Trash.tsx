@@ -3,10 +3,12 @@ import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, serverTim
 import { db, auth, handleFirestoreError, OperationType } from '../firebase';
 import { TrashItem } from '../types';
 import { Trash2, RotateCcw, Loader2 } from 'lucide-react';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 export const Trash = () => {
   const [trashItems, setTrashItems] = useState<TrashItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -38,12 +40,16 @@ export const Trash = () => {
   };
 
   const handlePermanentDelete = async (id: string) => {
-    if (window.confirm('Apagar permanentemente?')) {
-      try {
-        await deleteDoc(doc(db, 'trash', id));
-      } catch (error) {
-        handleFirestoreError(error, OperationType.DELETE, `trash/${id}`);
-      }
+    setItemToDelete(id);
+  };
+
+  const confirmPermanentDelete = async () => {
+    if (!itemToDelete) return;
+    try {
+      await deleteDoc(doc(db, 'trash', itemToDelete));
+      setItemToDelete(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `trash/${itemToDelete}`);
     }
   };
 
@@ -51,13 +57,13 @@ export const Trash = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-6">Lixeira</h1>
+      <h1 className="text-2xl font-bold text-text-primary mb-6">Lixeira</h1>
       <div className="grid gap-4">
         {trashItems.map(item => (
-          <div key={item.id} className="p-4 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
+          <div key={item.id} className="p-4 bg-surface rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
             <div>
-              <p className="font-medium text-zinc-900 dark:text-white">{item.originalCollection}</p>
-              <p className="text-sm text-zinc-500">Apagado em: {new Date(item.deletedAt).toLocaleString()}</p>
+              <p className="font-medium text-text-primary">{item.originalCollection}</p>
+              <p className="text-sm text-text-secondary">Apagado em: {new Date(item.deletedAt).toLocaleString()}</p>
             </div>
             <div className="flex gap-2">
               <button onClick={() => handleRestore(item)} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg">
@@ -70,6 +76,17 @@ export const Trash = () => {
           </div>
         ))}
       </div>
+
+      <ConfirmModal
+        isOpen={!!itemToDelete}
+        title="Excluir Permanentemente"
+        message="Tem certeza que deseja excluir este item permanentemente? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        cancelLabel="Cancelar"
+        onConfirm={confirmPermanentDelete}
+        onCancel={() => setItemToDelete(null)}
+        variant="danger"
+      />
     </div>
   );
 };

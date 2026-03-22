@@ -68,12 +68,14 @@ export interface FileRecord {
   url: string;
   type: 'extraoral' | 'intraoral' | 'xray' | 'tomography' | 'consent' | 'audio' | 'other';
   uploadedAt: string;
+  expiresAt?: string;
 }
 
 export interface NotificationSettings {
+  id?: string;
   dentistId: string;
   enabled: boolean;
-  type: 'sms' | 'email' | 'both';
+  type: 'sms' | 'email' | 'whatsapp' | 'both' | 'all';
   hoursBefore: number;
   messageTemplate: string;
   updatedAt: string;

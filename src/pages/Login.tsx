@@ -7,16 +7,16 @@ export const Login: React.FC = () => {
   const { signIn } = useAuth();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full bg-white dark:bg-zinc-900 rounded-3xl shadow-xl p-8 text-center"
+        className="max-w-md w-full bg-surface rounded-3xl shadow-xl p-8 text-center"
       >
         <div className="flex justify-center mb-8">
           <Logo className="flex-col !gap-4" />
         </div>
-        <p className="text-zinc-500 dark:text-zinc-400 mb-8">
+        <p className="text-text-secondary mb-8">
           Gestão inteligente para o seu consultório odontológico.
         </p>
         

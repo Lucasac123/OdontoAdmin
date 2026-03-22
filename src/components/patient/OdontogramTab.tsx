@@ -230,17 +230,17 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Odontograma Interativo</h2>
+          <h2 className="text-xl font-bold text-text-primary">Odontograma Interativo</h2>
           <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
             <button
               onClick={() => setOdontogramMode('adult')}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${odontogramMode === 'adult' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400'}`}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${odontogramMode === 'adult' ? 'bg-surface text-text-primary shadow-sm' : 'text-text-secondary'}`}
             >
               Adulto
             </button>
             <button
               onClick={() => setOdontogramMode('pediatric')}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${odontogramMode === 'pediatric' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400'}`}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${odontogramMode === 'pediatric' ? 'bg-surface text-text-primary shadow-sm' : 'text-text-secondary'}`}
             >
               Infantil
             </button>
@@ -272,7 +272,7 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-        <div className="xl:col-span-3 bg-white dark:bg-zinc-900 p-8 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-x-auto">
+        <div className="xl:col-span-3 bg-surface p-8 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-x-auto">
           <div className="min-w-[800px]">
             {odontogramMode === 'adult' ? renderArch(adultTeeth) : renderArch(pediatricTeeth)}
           </div>
@@ -281,7 +281,7 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
             {Object.entries(statusConfig).map(([key, config]) => (
               <div key={key} className="flex items-center gap-2">
                 <div className={`w-3 h-3 rounded-full ${config.bg}`} />
-                <span className="text-xs text-zinc-500 dark:text-zinc-400">{config.label}</span>
+                <span className="text-xs text-text-secondary">{config.label}</span>
               </div>
             ))}
           </div>
@@ -299,8 +299,8 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
               >
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h3 className="text-2xl font-bold text-zinc-900 dark:text-white">Dente {selectedTooth}</h3>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                    <h3 className="text-2xl font-bold text-text-primary">Dente {selectedTooth}</h3>
+                    <p className="text-sm text-text-secondary">
                       {selectedTooth <= 28 && selectedTooth >= 11 ? 'Arcada Superior' : 'Arcada Inferior'}
                     </p>
                   </div>
@@ -311,11 +311,11 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
 
                 <div className="space-y-6 flex-1">
                   <div>
-                    <label className="block text-sm font-semibold text-zinc-900 dark:text-white mb-3">Status Clínico</label>
+                    <label className="block text-sm font-semibold text-text-primary mb-3">Status Clínico</label>
                     <select
                       value={teethState[selectedTooth]?.status || 'healthy'}
                       onChange={(e) => updateToothStatus(e.target.value as ToothStatus)}
-                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                      className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                     >
                       {(Object.keys(statusConfig) as ToothStatus[]).map(status => (
                         <option key={status} value={status}>
@@ -326,12 +326,12 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-zinc-900 dark:text-white mb-2">Observações do Dente</label>
+                    <label className="block text-sm font-semibold text-text-primary mb-2">Observações do Dente</label>
                     <textarea
                       value={teethState[selectedTooth]?.notes || ''}
                       onChange={(e) => updateToothNotes(e.target.value)}
                       placeholder="Descreva o estado, tratamentos realizados ou planejados para este dente..."
-                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-2xl p-4 text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 resize-none h-40 transition-all"
+                      className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-2xl p-4 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-40 transition-all"
                     />
                   </div>
                   
@@ -366,12 +366,12 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
                 </div>
               </motion.div>
             ) : (
-              <div className="bg-zinc-50 dark:bg-zinc-900/30 rounded-3xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 p-12 h-full flex flex-col items-center justify-center text-center">
-                <div className="w-16 h-16 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm flex items-center justify-center mb-4">
+              <div className="bg-surface rounded-3xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 p-12 h-full flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 bg-surface rounded-2xl shadow-sm flex items-center justify-center mb-4">
                   <Info className="w-8 h-8 text-zinc-400" />
                 </div>
-                <h4 className="text-lg font-semibold text-zinc-900 dark:text-white mb-2">Selecione um Dente</h4>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-[200px]">
+                <h4 className="text-lg font-semibold text-text-primary mb-2">Selecione um Dente</h4>
+                <p className="text-sm text-text-secondary max-w-[200px]">
                   Clique em qualquer dente no odontograma para visualizar detalhes ou editar o status.
                 </p>
                 <div className="mt-8 flex items-center gap-2 text-xs font-medium text-indigo-600 dark:text-indigo-400">

@@ -135,7 +135,8 @@ service cloud.firestore {
              data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
              data.url is string && data.url.size() > 0 && data.url.size() < 2000 &&
              data.type in ['extraoral', 'intraoral', 'xray', 'tomography', 'consent', 'other'] &&
-             isValidDateString(data.uploadedAt);
+             isValidDateString(data.uploadedAt) &&
+             (!( 'expiresAt' in data ) || data.expiresAt == null || isValidDateString(data.expiresAt));
     }
 
     // ===============================================================
@@ -203,7 +204,7 @@ service cloud.firestore {
       return hasRequiredFields(['dentistId', 'enabled', 'type', 'hoursBefore', 'messageTemplate', 'updatedAt']) &&
              data.dentistId is string &&
              data.enabled is bool &&
-             data.type in ['sms', 'email', 'both'] &&
+             data.type in ['sms', 'email', 'whatsapp', 'both', 'all'] &&
              data.hoursBefore is int &&
              data.messageTemplate is string && data.messageTemplate.size() < 500 &&
              isValidDateString(data.updatedAt);

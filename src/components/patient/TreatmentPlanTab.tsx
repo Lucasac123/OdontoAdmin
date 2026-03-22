@@ -147,7 +147,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+        <h2 className="text-xl font-bold text-text-primary flex items-center gap-2">
           <DollarSign className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
           Plano de Tratamento
         </h2>
@@ -173,15 +173,15 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm">
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-4">Informações do Plano</h3>
+          <div className="bg-surface rounded-3xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm">
+            <h3 className="text-sm font-semibold text-text-primary mb-4">Informações do Plano</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1 uppercase tracking-wider">Status do Tratamento</label>
+                <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wider">Status do Tratamento</label>
                 <select 
                   value={treatmentStatus}
                   onChange={(e) => setTreatmentStatus(e.target.value as any)}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 >
                   <option value="Planejado">Planejado</option>
                   <option value="Em Andamento">Em Andamento</option>
@@ -189,63 +189,63 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1 uppercase tracking-wider">Data de Início</label>
+                <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wider">Data de Início</label>
                 <input 
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1 uppercase tracking-wider">Fim Previsto</label>
+                <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wider">Fim Previsto</label>
                 <input 
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
-          <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50">
+          <div className="bg-surface rounded-3xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
+          <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 bg-surface">
             <form onSubmit={handleAddProcedure} className="grid grid-cols-1 md:grid-cols-12 gap-4">
               <div className="md:col-span-4">
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Procedimento</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Procedimento</label>
                 <input 
                   type="text" 
                   required 
                   value={newProcedure.name} 
                   onChange={e => setNewProcedure({...newProcedure, name: e.target.value})} 
                   placeholder="Ex: Restauração Resina MOD"
-                  className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500" 
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" 
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Dente ou Região</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Dente ou Região</label>
                 <input 
                   type="text" 
                   value={newProcedure.tooth} 
                   onChange={e => setNewProcedure({...newProcedure, tooth: e.target.value})} 
                   placeholder="Ex: 46, Maxila..."
-                  className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500" 
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" 
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Qtd</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Qtd</label>
                 <input 
                   type="number" 
                   min="1"
                   required 
                   value={newProcedure.quantity} 
                   onChange={e => setNewProcedure({...newProcedure, quantity: e.target.value})} 
-                  className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500" 
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" 
                 />
               </div>
               <div className="md:col-span-3">
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">V. Unitário (R$)</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">V. Unitário (R$)</label>
                 <input 
                   type="number" 
                   step="0.01" 
@@ -253,7 +253,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                   value={newProcedure.unitPrice} 
                   onChange={e => setNewProcedure({...newProcedure, unitPrice: e.target.value})} 
                   placeholder="0.00"
-                  className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500" 
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" 
                 />
               </div>
               <div className="md:col-span-1 flex items-end">
@@ -266,22 +266,22 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
 
           <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
             {procedures.length === 0 ? (
-              <div className="p-8 text-center text-zinc-500 dark:text-zinc-400">
+              <div className="p-8 text-center text-text-secondary">
                 Nenhum procedimento adicionado ao plano.
               </div>
             ) : (
               procedures.map(proc => (
-                <div key={proc.id} className="p-4 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                <div key={proc.id} className="p-4 flex items-center justify-between hover:bg-surface transition-colors">
                   <div className="flex-1">
-                    <p className="font-medium text-zinc-900 dark:text-white">{proc.name}</p>
-                    <div className="flex gap-4 text-sm text-zinc-500 dark:text-zinc-400">
+                    <p className="font-medium text-text-primary">{proc.name}</p>
+                    <div className="flex gap-4 text-sm text-text-secondary">
                       {proc.tooth && <span>Dente/Região: {proc.tooth}</span>}
                       <span>Qtd: {proc.quantity || 1}</span>
                       <span>Unit: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(proc.unitPrice || proc.cost)}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="font-semibold text-zinc-900 dark:text-white">
+                    <span className="font-semibold text-text-primary">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(proc.cost)}
                     </span>
                     <button 

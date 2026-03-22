@@ -1,0 +1,81 @@
+import React from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { AlertTriangle, X } from 'lucide-react';
+
+interface ConfirmModalProps {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  variant?: 'danger' | 'warning' | 'info';
+}
+
+export const ConfirmModal: React.FC<ConfirmModalProps> = ({
+  isOpen,
+  title,
+  message,
+  confirmLabel = 'Confirmar',
+  cancelLabel = 'Cancelar',
+  onConfirm,
+  onCancel,
+  variant = 'danger'
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          className="bg-surface w-full max-w-md rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+        >
+          <div className="p-6">
+            <div className="flex items-start gap-4">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${
+                variant === 'danger' ? 'bg-red-100 dark:bg-red-500/10 text-red-600' :
+                variant === 'warning' ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-600' :
+                'bg-blue-100 dark:bg-blue-500/10 text-blue-600'
+              }`}>
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-text-primary mb-2">{title}</h3>
+                <p className="text-text-secondary leading-relaxed">{message}</p>
+              </div>
+              <button 
+                onClick={onCancel}
+                className="text-text-secondary hover:text-text-primary transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-zinc-50 dark:bg-zinc-900/50 flex flex-col sm:flex-row gap-3 justify-end">
+            <button
+              onClick={onCancel}
+              className="px-6 py-2.5 rounded-xl font-medium text-text-secondary hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+            >
+              {cancelLabel}
+            </button>
+            <button
+              onClick={onConfirm}
+              className={`px-6 py-2.5 rounded-xl font-medium text-white transition-colors ${
+                variant === 'danger' ? 'bg-red-600 hover:bg-red-700' :
+                variant === 'warning' ? 'bg-amber-600 hover:bg-amber-700' :
+                'bg-indigo-600 hover:bg-indigo-700'
+              }`}
+            >
+              {confirmLabel}
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+};

@@ -72,14 +72,14 @@ export const PatientDetail: React.FC = () => {
           <ArrowLeft className="w-6 h-6" />
         </button>
         <div>
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">{patient.name}</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <h1 className="text-3xl font-bold text-text-primary">{patient.name}</h1>
+          <p className="text-sm text-text-secondary">
             Cadastrado em {new Date(patient.createdAt).toLocaleDateString()}
           </p>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+      <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
         <div className="flex overflow-x-auto border-b border-zinc-200 dark:border-zinc-800 hide-scrollbar">
           {tabs.map((tab) => (
             <motion.button
@@ -90,7 +90,7 @@ export const PatientDetail: React.FC = () => {
               className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors relative ${
                 activeTab === tab.id 
                   ? 'text-indigo-600 dark:text-indigo-400' 
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
+                  : 'text-text-secondary hover:text-text-primary hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
               }`}
             >
               <tab.icon className="w-4 h-4" />

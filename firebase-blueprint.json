@@ -88,7 +88,8 @@
         "name": { "type": "string" },
         "url": { "type": "string", "format": "uri" },
         "type": { "type": "string", "enum": ["extraoral", "intraoral", "xray", "tomography", "consent", "other"] },
-        "uploadedAt": { "type": "string", "format": "date-time" }
+        "uploadedAt": { "type": "string", "format": "date-time" },
+        "expiresAt": { "type": "string", "format": "date-time", "description": "Optional expiration date for automatic deletion" }
       },
       "required": ["dentistId", "patientId", "name", "url", "type", "uploadedAt"]
     },
@@ -99,7 +100,7 @@
       "properties": {
         "dentistId": { "type": "string" },
         "enabled": { "type": "boolean" },
-        "type": { "type": "string", "enum": ["sms", "email", "both"] },
+        "type": { "type": "string", "enum": ["sms", "email", "whatsapp", "all"] },
         "hoursBefore": { "type": "integer" },
         "messageTemplate": { "type": "string" },
         "updatedAt": { "type": "string", "format": "date-time" }

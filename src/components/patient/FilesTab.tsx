@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, writeBatch, getDocs } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../../firebase';
 import { Patient, FileRecord } from '../../types';
-import { Upload, FileImage, FileText, Trash2, Download, Eye, X, ZoomIn, ZoomOut, RotateCcw, Music } from 'lucide-react';
+import { Upload, FileImage, FileText, Trash2, Download, Eye, X, ZoomIn, ZoomOut, RotateCcw, Music, Clock, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { ConfirmModal } from '../ConfirmModal';
 
 export const FilesTab = ({ patient }: { patient: Patient }) => {
   const [files, setFiles] = useState<FileRecord[]>([]);
@@ -13,6 +14,8 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
   const [filterType, setFilterType] = useState<string>('all');
   const [uploadType, setUploadType] = useState<FileRecord['type']>('intraoral');
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [expirationDays, setExpirationDays] = useState<string>('0');
+  const [fileToDelete, setFileToDelete] = useState<FileRecord | null>(null);
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -23,8 +26,26 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
       where('dentistId', '==', auth.currentUser.uid)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FileRecord));
+      
+      // Auto-deletion logic: check for expired files
+      const now = new Date();
+      const expiredFiles = data.filter(f => f.expiresAt && new Date(f.expiresAt) < now);
+      
+      if (expiredFiles.length > 0) {
+        const batch = writeBatch(db);
+        expiredFiles.forEach(f => {
+          batch.delete(doc(db, 'files', f.id));
+        });
+        try {
+          await batch.commit();
+          // The snapshot will update again after commit
+        } catch (error) {
+          console.error("Error deleting expired files:", error);
+        }
+      }
+
       data.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
       setFiles(data);
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'files'));
@@ -76,6 +97,14 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
         }
 
         let typeToSave = uploadType;
+        const now = new Date();
+        let expiresAt: string | null = null;
+        
+        if (expirationDays !== '0') {
+          const expirationDate = new Date(now);
+          expirationDate.setDate(now.getDate() + parseInt(expirationDays));
+          expiresAt = expirationDate.toISOString();
+        }
         
         await addDoc(collection(db, 'files'), {
           dentistId: auth.currentUser!.uid,
@@ -83,7 +112,8 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
           name: file.name,
           url: base64,
           type: typeToSave,
-          uploadedAt: new Date().toISOString()
+          uploadedAt: now.toISOString(),
+          ...(expiresAt && { expiresAt })
         });
         setUploadProgress(100);
         setTimeout(() => {
@@ -101,12 +131,16 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
   };
 
   const handleDelete = async (file: FileRecord) => {
-    if (window.confirm('Excluir este arquivo permanentemente?')) {
-      try {
-        await moveToTrash('files', file.id, file);
-      } catch (error) {
-        handleFirestoreError(error, OperationType.DELETE, `files/${file.id}`);
-      }
+    setFileToDelete(file);
+  };
+
+  const confirmDelete = async () => {
+    if (!fileToDelete) return;
+    try {
+      await moveToTrash('files', fileToDelete.id, fileToDelete);
+      setFileToDelete(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `files/${fileToDelete.id}`);
     }
   };
 
@@ -128,19 +162,19 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-surface p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700">
         <div className="space-y-1">
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Arquivos e Imagens</h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Gerencie radiografias, fotos e documentos do paciente.</p>
+          <h2 className="text-xl font-bold text-text-primary">Arquivos e Imagens</h2>
+          <p className="text-sm text-text-secondary">Gerencie radiografias, fotos e documentos do paciente.</p>
         </div>
         
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-          <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2">
-            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">Tipo:</span>
+          <div className="flex items-center gap-2 bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2">
+            <span className="text-xs font-medium text-text-secondary uppercase">Tipo:</span>
             <select 
               value={uploadType} 
               onChange={(e) => setUploadType(e.target.value as any)}
-              className="bg-transparent text-sm font-medium text-zinc-900 dark:text-white focus:outline-none"
+              className="bg-transparent text-sm font-medium text-text-primary focus:outline-none"
             >
               <option value="intraoral">Foto Intraoral</option>
               <option value="extraoral">Foto Extraoral</option>
@@ -149,6 +183,22 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
               <option value="consent">Consentimento</option>
               <option value="audio">Áudio</option>
               <option value="other">Outro</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2">
+            <Clock className="w-3.5 h-3.5 text-text-secondary" />
+            <span className="text-xs font-medium text-text-secondary uppercase">Expira em:</span>
+            <select 
+              value={expirationDays} 
+              onChange={(e) => setExpirationDays(e.target.value)}
+              className="bg-transparent text-sm font-medium text-text-primary focus:outline-none"
+            >
+              <option value="0">Nunca</option>
+              <option value="7">7 dias</option>
+              <option value="30">30 dias</option>
+              <option value="90">90 dias</option>
+              <option value="365">1 ano</option>
             </select>
           </div>
 
@@ -189,13 +239,13 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
 
       <div className="flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar">
         {['all', 'intraoral', 'extraoral', 'xray', 'tomography', 'consent', 'audio', 'other'].map((type) => (
-          <button
+            <button
             key={type}
             onClick={() => setFilterType(type)}
             className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
               filterType === type
                 ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-md'
-                : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                : 'bg-surface text-text-secondary border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
             }`}
           >
             {type === 'all' ? 'Todos' : type.charAt(0).toUpperCase() + type.slice(1)}
@@ -205,8 +255,8 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {filteredFiles.length === 0 ? (
-          <div className="col-span-full p-16 text-center text-zinc-500 dark:text-zinc-400 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl bg-zinc-50/50 dark:bg-zinc-900/20">
-            <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="col-span-full p-16 text-center text-text-secondary border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl bg-surface">
+            <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mx-auto mb-4">
               <Upload className="w-8 h-8 opacity-30" />
             </div>
             <p className="font-medium">Nenhum arquivo nesta categoria</p>
@@ -214,9 +264,9 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
           </div>
         ) : (
           filteredFiles.map(file => (
-            <div key={file.id} className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden group hover:shadow-md transition-all">
+            <div key={file.id} className="bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden group hover:shadow-md transition-all">
               <div 
-                className="aspect-square bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center relative cursor-pointer overflow-hidden"
+                className="aspect-square bg-surface flex items-center justify-center relative cursor-pointer overflow-hidden"
                 onClick={() => setSelectedFile(file)}
               >
                 {file.url.startsWith('data:image') ? (
@@ -234,15 +284,38 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
               </div>
               <div className="p-4 flex items-start justify-between gap-2">
                 <div className="overflow-hidden">
-                  <p className="font-medium text-sm text-zinc-900 dark:text-white truncate" title={file.name}>{file.name}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 capitalize">{file.type}</p>
+                  <p className="font-medium text-sm text-text-primary truncate" title={file.name}>{file.name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-text-secondary capitalize">{file.type}</p>
+                    {file.expiresAt && (
+                      <div className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                        <Clock className="w-3 h-3" />
+                        <span>Expira {new Date(file.expiresAt).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <button 
-                  onClick={() => handleDelete(file)}
-                  className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors shrink-0"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <a 
+                    href={file.url} 
+                    download={file.name}
+                    className="p-1.5 text-zinc-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-colors"
+                    title="Download"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Download className="w-4 h-4" />
+                  </a>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(file);
+                    }}
+                    className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                    title="Excluir"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           ))
@@ -340,6 +413,17 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        isOpen={!!fileToDelete}
+        title="Excluir Arquivo"
+        message={`Tem certeza que deseja excluir o arquivo "${fileToDelete?.name}"? Ele será movido para a lixeira.`}
+        confirmLabel="Excluir"
+        cancelLabel="Cancelar"
+        onConfirm={confirmDelete}
+        onCancel={() => setFileToDelete(null)}
+        variant="danger"
+      />
     </div>
   );
 };

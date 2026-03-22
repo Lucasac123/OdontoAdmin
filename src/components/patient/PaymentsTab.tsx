@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, orderBy } from 'firebase/firestore';
-import { db, auth, handleFirestoreError, OperationType } from '../../firebase';
+import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../../firebase';
 import { Patient, Finance } from '../../types';
 import { Plus, Trash2, DollarSign, Calendar, CreditCard, Wallet, QrCode, ArrowRightLeft, Loader2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { ConfirmModal } from '../ConfirmModal';
 
 const paymentMethodConfig = {
   money: { label: 'Dinheiro', icon: Wallet, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
@@ -23,6 +24,7 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
     description: 'Pagamento de tratamento',
     paymentMethod: 'pix' as Finance['paymentMethod']
   });
+  const [paymentToDelete, setPaymentToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -79,12 +81,21 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Excluir este registro de pagamento?')) {
-      try {
-        await deleteDoc(doc(db, 'finances', id));
-      } catch (error) {
-        handleFirestoreError(error, OperationType.DELETE, `finances/${id}`);
+    setPaymentToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!paymentToDelete) return;
+    try {
+      const payment = payments.find(p => p.id === paymentToDelete);
+      if (payment) {
+        await moveToTrash('finances', paymentToDelete, payment);
+      } else {
+        await deleteDoc(doc(db, 'finances', paymentToDelete));
       }
+      setPaymentToDelete(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `finances/${paymentToDelete}`);
     }
   };
 
@@ -94,8 +105,8 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Histórico de Pagamentos</h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Total recebido deste paciente: <span className="font-bold text-emerald-600">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPaid)}</span></p>
+          <h2 className="text-xl font-bold text-text-primary">Histórico de Pagamentos</h2>
+          <p className="text-sm text-text-secondary">Total recebido deste paciente: <span className="font-bold text-emerald-600">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPaid)}</span></p>
         </div>
         <button
           onClick={() => setIsAdding(true)}
@@ -112,37 +123,37 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
+            className="bg-surface p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
           >
             <form onSubmit={handleAddPayment} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
               <div>
-                <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase mb-2">Valor (R$)</label>
+                <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">Valor (R$)</label>
                 <input
                   type="number"
                   step="0.01"
                   required
                   value={formData.amount}
                   onChange={e => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                   placeholder="0,00"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase mb-2">Data</label>
+                <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">Data</label>
                 <input
                   type="date"
                   required
                   value={formData.date}
                   onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase mb-2">Forma de Pagamento</label>
+                <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">Forma de Pagamento</label>
                 <select
                   value={formData.paymentMethod}
                   onChange={e => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as any }))}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 >
                   {Object.entries(paymentMethodConfig).map(([key, config]) => (
                     <option key={key} value={key}>{config.label}</option>
@@ -167,12 +178,12 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
                 </button>
               </div>
               <div className="md:col-span-2 lg:col-span-4">
-                <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase mb-2">Descrição</label>
+                <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">Descrição</label>
                 <input
                   type="text"
                   value={formData.description}
                   onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                   placeholder="Ex: Pagamento da primeira parcela do implante"
                 />
               </div>
@@ -181,22 +192,22 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
         )}
       </AnimatePresence>
 
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+      <div className="bg-surface rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800">
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Data</th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Descrição</th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Método</th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Valor</th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right">Ações</th>
+              <tr className="bg-surface border-b border-zinc-200 dark:border-zinc-800">
+                <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Data</th>
+                <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Descrição</th>
+                <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Método</th>
+                <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Valor</th>
+                <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {payments.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-zinc-500 dark:text-zinc-400">
+                  <td colSpan={5} className="px-6 py-12 text-center text-text-secondary">
                     <div className="flex flex-col items-center gap-2">
                       <DollarSign className="w-8 h-8 opacity-20" />
                       <p>Nenhum pagamento registrado para este paciente.</p>
@@ -211,16 +222,16 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
                       key={payment.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors"
+                      className="hover:bg-surface transition-colors"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2 text-sm text-zinc-900 dark:text-white">
-                          <Calendar className="w-4 h-4 text-zinc-400" />
+                        <div className="flex items-center gap-2 text-sm text-text-primary">
+                          <Calendar className="w-4 h-4 text-text-secondary" />
                           {new Date(payment.date).toLocaleDateString()}
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-zinc-900 dark:text-white font-medium">{payment.description}</p>
+                        <p className="text-sm text-text-primary font-medium">{payment.description}</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${method.bg} ${method.color}`}>
@@ -251,13 +262,24 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
         </div>
       </div>
 
-      <div className="p-4 bg-zinc-50 dark:bg-zinc-800/30 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-start gap-3">
-        <AlertCircle className="w-5 h-5 text-zinc-400 shrink-0 mt-0.5" />
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+      <div className="p-4 bg-surface rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-start gap-3">
+        <AlertCircle className="w-5 h-5 text-text-secondary shrink-0 mt-0.5" />
+        <p className="text-xs text-text-secondary leading-relaxed">
           Os pagamentos registrados aqui também aparecem no seu fluxo de caixa geral em "Financeiro". 
           Utilize esta aba para acompanhar especificamente o acerto financeiro deste paciente.
         </p>
       </div>
+
+      <ConfirmModal
+        isOpen={!!paymentToDelete}
+        title="Excluir Pagamento"
+        message="Tem certeza que deseja excluir este registro de pagamento? Ele será movido para a lixeira."
+        confirmLabel="Excluir"
+        cancelLabel="Cancelar"
+        onConfirm={confirmDelete}
+        onCancel={() => setPaymentToDelete(null)}
+        variant="danger"
+      />
     </div>
   );
 };

@@ -7,6 +7,7 @@ import { format, startOfWeek, addDays, isSameDay, parseISO, isAfter, subHours } 
 import { ptBR } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'motion/react';
 import { NotificationSettings } from '../types';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 export const Agenda: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -16,6 +17,7 @@ export const Agenda: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [notifSettings, setNotifSettings] = useState<NotificationSettings | null>(null);
+  const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
   
   const [newAppt, setNewAppt] = useState({
     patientId: '',
@@ -104,10 +106,20 @@ export const Agenda: React.FC = () => {
           .replace('{data}', format(date, 'dd/MM/yyyy'))
           .replace('{hora}', format(date, 'HH:mm'));
 
-        // Here we would call a real API (Twilio, SendGrid, etc.)
-        console.log(`Enviando lembrete para ${patient.name} (${patient.phone || patient.email}): ${message}`);
+        // Simulation of API calls
+        if (notifSettings.type === 'sms' || notifSettings.type === 'both' || notifSettings.type === 'all') {
+          console.log(`[SMS] Enviando para ${patient.phone}: ${message}`);
+        }
+        if (notifSettings.type === 'email' || notifSettings.type === 'both' || notifSettings.type === 'all') {
+          console.log(`[EMAIL] Enviando para ${patient.email}: ${message}`);
+        }
+        if (notifSettings.type === 'whatsapp' || notifSettings.type === 'all') {
+          console.log(`[WHATSAPP] Enviando para ${patient.phone}: ${message}`);
+          // For a real integration without API, we could use:
+          // window.open(`https://wa.me/${patient.phone?.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`);
+        }
         
-        // Simulate API call
+        // Simulate API call delay
         await new Promise(resolve => setTimeout(resolve, 500));
       }
       
@@ -158,14 +170,16 @@ export const Agenda: React.FC = () => {
   };
 
   const handleDelete = async (appointment: Appointment) => {
-    console.log('handleDelete called', appointment.id, auth.currentUser?.uid);
-    if (window.confirm('Excluir este agendamento?')) {
-      try {
-        await moveToTrash('appointments', appointment.id, appointment);
-        console.log('moveToTrash successful');
-      } catch (error) {
-        handleFirestoreError(error, OperationType.DELETE, `appointments/${appointment.id}`);
-      }
+    setAppointmentToDelete(appointment);
+  };
+
+  const confirmDelete = async () => {
+    if (!appointmentToDelete) return;
+    try {
+      await moveToTrash('appointments', appointmentToDelete.id, appointmentToDelete);
+      setAppointmentToDelete(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `appointments/${appointmentToDelete.id}`);
     }
   };
 
@@ -196,13 +210,13 @@ export const Agenda: React.FC = () => {
     <div className="space-y-6 h-full flex flex-col">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
         <div>
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">Agenda</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Gerencie seus atendimentos e sincronize com o Google Agenda.</p>
+          <h1 className="text-3xl font-bold text-text-primary">Agenda</h1>
+          <p className="text-sm text-text-secondary">Gerencie seus atendimentos e sincronize com o Google Agenda.</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center gap-2 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 px-4 py-2 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+            className="flex items-center gap-2 bg-surface text-text-primary border border-zinc-200 dark:border-zinc-800 px-4 py-2 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
           >
             <Settings className="w-5 h-5" />
             Lembretes
@@ -219,20 +233,20 @@ export const Agenda: React.FC = () => {
 
       <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0">
         <div className="w-full lg:w-1/3 flex flex-col gap-6 shrink-0">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
+          <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-medium text-zinc-900 dark:text-white capitalize">
+              <h3 className="text-lg font-medium text-text-primary capitalize">
                 {format(selectedDate, 'MMMM yyyy', { locale: ptBR })}
               </h3>
               <div className="flex gap-2">
-                <button onClick={() => setSelectedDate(addDays(selectedDate, -7))} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg">&lt;</button>
-                <button onClick={() => setSelectedDate(addDays(selectedDate, 7))} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg">&gt;</button>
+                <button onClick={() => setSelectedDate(addDays(selectedDate, -7))} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-text-primary">&lt;</button>
+                <button onClick={() => setSelectedDate(addDays(selectedDate, 7))} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-text-primary">&gt;</button>
               </div>
             </div>
             
             <div className="grid grid-cols-7 gap-2 text-center mb-2">
               {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(d => (
-                <div key={d} className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{d}</div>
+                <div key={d} className="text-xs font-medium text-text-secondary">{d}</div>
               ))}
             </div>
             <div className="grid grid-cols-7 gap-2">
@@ -246,7 +260,7 @@ export const Agenda: React.FC = () => {
                     className={`aspect-square flex flex-col items-center justify-center rounded-xl text-sm relative transition-colors ${
                       isSelected 
                         ? 'bg-indigo-600 text-white font-bold shadow-md' 
-                        : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
+                        : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-text-primary'
                     }`}
                   >
                     {format(day, 'd')}
@@ -260,40 +274,40 @@ export const Agenda: React.FC = () => {
           </div>
 
           {isAdding && (
-            <form onSubmit={handleAdd} className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6 space-y-4">
-              <h3 className="text-lg font-medium text-zinc-900 dark:text-white">Agendar para {format(selectedDate, 'dd/MM/yyyy')}</h3>
+            <form onSubmit={handleAdd} className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6 space-y-4">
+              <h3 className="text-lg font-medium text-text-primary">Agendar para {format(selectedDate, 'dd/MM/yyyy')}</h3>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Paciente</label>
-                <select required value={newAppt.patientId} onChange={e => setNewAppt({...newAppt, patientId: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500">
+                <label className="block text-sm font-medium text-text-secondary mb-1">Paciente</label>
+                <select required value={newAppt.patientId} onChange={e => setNewAppt({...newAppt, patientId: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500">
                   <option value="">Selecione um paciente...</option>
                   {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Horário</label>
-                  <input type="time" required value={newAppt.time} onChange={e => setNewAppt({...newAppt, time: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500" />
+                  <label className="block text-sm font-medium text-text-secondary mb-1">Horário</label>
+                  <input type="time" required value={newAppt.time} onChange={e => setNewAppt({...newAppt, time: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Duração (min)</label>
-                  <input type="number" step="15" required value={newAppt.duration} onChange={e => setNewAppt({...newAppt, duration: parseInt(e.target.value)})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500" />
+                  <label className="block text-sm font-medium text-text-secondary mb-1">Duração (min)</label>
+                  <input type="number" step="15" required value={newAppt.duration} onChange={e => setNewAppt({...newAppt, duration: parseInt(e.target.value)})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Observações</label>
-                <textarea value={newAppt.notes} onChange={e => setNewAppt({...newAppt, notes: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 resize-none h-20" />
+                <label className="block text-sm font-medium text-text-secondary mb-1">Observações</label>
+                <textarea value={newAppt.notes} onChange={e => setNewAppt({...newAppt, notes: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-20" />
               </div>
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setIsAdding(false)} className="px-4 py-2 rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button>
+                <button type="button" onClick={() => setIsAdding(false)} className="px-4 py-2 rounded-xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">Salvar</button>
               </div>
             </form>
           )}
         </div>
 
-        <div className="flex-1 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col">
+        <div className="flex-1 bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col">
           <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 shrink-0 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+            <h2 className="text-xl font-bold text-text-primary flex items-center gap-2">
               <CalendarIcon className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
               Consultas do dia {format(selectedDate, 'dd/MM/yyyy')}
             </h2>
@@ -311,7 +325,7 @@ export const Agenda: React.FC = () => {
           
           <div className="flex-1 overflow-y-auto p-6">
             {dayAppointments.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-400">
+              <div className="h-full flex flex-col items-center justify-center text-text-secondary">
                 <CalendarIcon className="w-12 h-12 opacity-50 mb-4" />
                 <p>Nenhuma consulta agendada para este dia.</p>
               </div>
@@ -321,7 +335,7 @@ export const Agenda: React.FC = () => {
                   <div key={app.id} className={`p-4 rounded-2xl border ${
                     app.status === 'completed' ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/30' :
                     app.status === 'cancelled' ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/30' :
-                    'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700'
+                    'bg-surface border-zinc-200 dark:border-zinc-700'
                   } flex flex-col sm:flex-row gap-4 sm:items-center justify-between transition-colors`}>
                     
                     <div className="flex items-start gap-4">
@@ -334,8 +348,8 @@ export const Agenda: React.FC = () => {
                       </div>
                       
                       <div>
-                        <h4 className="font-bold text-lg text-zinc-900 dark:text-white">{app.patientName}</h4>
-                        <div className="flex items-center gap-3 text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+                        <h4 className="font-bold text-lg text-text-primary">{app.patientName}</h4>
+                        <div className="flex items-center gap-3 text-sm text-text-secondary mt-1">
                           <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {app.duration} min</span>
                           {app.notes && <span className="truncate max-w-[200px]">- {app.notes}</span>}
                         </div>
@@ -381,23 +395,23 @@ export const Agenda: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-zinc-200 dark:border-zinc-800 w-full max-w-lg overflow-hidden"
+              className="bg-surface rounded-3xl shadow-2xl border border-zinc-200 dark:border-zinc-800 w-full max-w-lg overflow-hidden"
             >
               <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Bell className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-                  <h3 className="text-xl font-bold text-zinc-900 dark:text-white">Configurar Lembretes</h3>
+                  <h3 className="text-xl font-bold text-text-primary">Configurar Lembretes</h3>
                 </div>
                 <button onClick={() => setIsSettingsOpen(false)} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors">
-                  <XCircle className="w-6 h-6 text-zinc-400" />
+                  <XCircle className="w-6 h-6 text-text-secondary" />
                 </button>
               </div>
 
               <form onSubmit={handleSaveSettings} className="p-6 space-y-6">
                 <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-200 dark:border-zinc-700">
                   <div>
-                    <h4 className="font-bold text-zinc-900 dark:text-white">Ativar Lembretes</h4>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Enviar notificações automáticas para pacientes.</p>
+                    <h4 className="font-bold text-text-primary">Ativar Lembretes</h4>
+                    <p className="text-xs text-text-secondary">Enviar notificações automáticas para pacientes.</p>
                   </div>
                   <button
                     type="button"
@@ -410,38 +424,40 @@ export const Agenda: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Canal</label>
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Canal</label>
                     <select
                       value={notifSettings.type}
                       onChange={e => setNotifSettings({ ...notifSettings, type: e.target.value as any })}
-                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
                     >
                       <option value="sms">SMS</option>
                       <option value="email">E-mail</option>
+                      <option value="whatsapp">WhatsApp</option>
                       <option value="both">Ambos (SMS e E-mail)</option>
+                      <option value="all">Todos (SMS, E-mail e WhatsApp)</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Antecedência (horas)</label>
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Antecedência (horas)</label>
                     <input
                       type="number"
                       value={notifSettings.hoursBefore}
                       onChange={e => setNotifSettings({ ...notifSettings, hoursBefore: parseInt(e.target.value) })}
-                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Modelo da Mensagem</label>
+                  <label className="block text-sm font-medium text-text-secondary mb-1">Modelo da Mensagem</label>
                   <textarea
                     value={notifSettings.messageTemplate}
                     onChange={e => setNotifSettings({ ...notifSettings, messageTemplate: e.target.value })}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 resize-none h-32"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-32"
                   />
                   <div className="mt-2 flex flex-wrap gap-2">
                     {['{paciente}', '{data}', '{hora}'].map(tag => (
-                      <span key={tag} className="text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-md text-zinc-500 dark:text-zinc-400">{tag}</span>
+                      <span key={tag} className="text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-md text-text-secondary">{tag}</span>
                     ))}
                   </div>
                 </div>
@@ -454,7 +470,7 @@ export const Agenda: React.FC = () => {
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4">
-                  <button type="button" onClick={() => setIsSettingsOpen(false)} className="px-6 py-2 rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button>
+                  <button type="button" onClick={() => setIsSettingsOpen(false)} className="px-6 py-2 rounded-xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button>
                   <button type="submit" className="px-6 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-200 dark:shadow-none font-medium">Salvar Configurações</button>
                 </div>
               </form>
@@ -462,6 +478,17 @@ export const Agenda: React.FC = () => {
           </div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        isOpen={!!appointmentToDelete}
+        title="Excluir Agendamento"
+        message={`Tem certeza que deseja excluir o agendamento de ${appointmentToDelete?.patientName}? Ele será movido para a lixeira.`}
+        confirmLabel="Excluir"
+        cancelLabel="Cancelar"
+        onConfirm={confirmDelete}
+        onCancel={() => setAppointmentToDelete(null)}
+        variant="danger"
+      />
     </div>
   );
 };

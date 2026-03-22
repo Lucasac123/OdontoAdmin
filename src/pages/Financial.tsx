@@ -5,6 +5,7 @@ import { Finance } from '../types';
 import { Plus, Trash2, DollarSign, TrendingUp, TrendingDown, PieChart, Edit2, Check, X, BarChart as BarChartIcon, Wallet, CreditCard, QrCode, ArrowRightLeft, User } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Patient } from '../types';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 interface SplitCategory {
   id: string;
@@ -24,6 +25,7 @@ export const Financial: React.FC = () => {
     patientId: '',
     paymentMethod: 'pix' as Finance['paymentMethod']
   });
+  const [financeToDelete, setFinanceToDelete] = useState<Finance | null>(null);
 
   // Dynamic percentage splits
   const [splits, setSplits] = useState<SplitCategory[]>([
@@ -99,14 +101,16 @@ export const Financial: React.FC = () => {
   };
 
   const handleDelete = async (finance: Finance) => {
-    console.log('handleDelete called', finance.id, auth.currentUser?.uid);
-    if (window.confirm('Excluir este lançamento?')) {
-      try {
-        await moveToTrash('finances', finance.id, finance);
-        console.log('moveToTrash successful');
-      } catch (error) {
-        handleFirestoreError(error, OperationType.DELETE, `finances/${finance.id}`);
-      }
+    setFinanceToDelete(finance);
+  };
+
+  const confirmDelete = async () => {
+    if (!financeToDelete) return;
+    try {
+      await moveToTrash('finances', financeToDelete.id, financeToDelete);
+      setFinanceToDelete(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `finances/${financeToDelete.id}`);
     }
   };
 
@@ -174,7 +178,7 @@ export const Financial: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">Financeiro</h1>
+        <h1 className="text-3xl font-bold text-text-primary">Financeiro</h1>
         <button
           onClick={() => setIsAdding(true)}
           className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors"
@@ -185,9 +189,9 @@ export const Financial: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800">
+        <div className="bg-surface p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-zinc-900 dark:text-white">Receitas</h3>
+            <h3 className="text-lg font-medium text-text-primary">Receitas</h3>
             <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
               <TrendingUp className="w-5 h-5" />
             </div>
@@ -197,9 +201,9 @@ export const Financial: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800">
+        <div className="bg-surface p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-zinc-900 dark:text-white">Despesas</h3>
+            <h3 className="text-lg font-medium text-text-primary">Despesas</h3>
             <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-600 dark:text-red-400">
               <TrendingDown className="w-5 h-5" />
             </div>
@@ -209,23 +213,23 @@ export const Financial: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800">
+        <div className="bg-surface p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-zinc-900 dark:text-white">Saldo</h3>
+            <h3 className="text-lg font-medium text-text-primary">Saldo</h3>
             <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
               <DollarSign className="w-5 h-5" />
             </div>
           </div>
-          <p className={`text-3xl font-bold ${balance >= 0 ? 'text-zinc-900 dark:text-white' : 'text-red-600 dark:text-red-400'}`}>
+          <p className={`text-3xl font-bold ${balance >= 0 ? 'text-text-primary' : 'text-red-600 dark:text-red-400'}`}>
             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balance)}
           </p>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800">
+      <div className="bg-surface p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center gap-2 mb-6">
           <BarChartIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-          <h3 className="text-lg font-medium text-zinc-900 dark:text-white">Desempenho Mensal</h3>
+          <h3 className="text-lg font-medium text-text-primary">Desempenho Mensal</h3>
         </div>
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -263,25 +267,25 @@ export const Financial: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+        <div className="lg:col-span-2 bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
           <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h3 className="text-lg font-medium text-zinc-900 dark:text-white">Histórico de Lançamentos</h3>
+            <h3 className="text-lg font-medium text-text-primary">Histórico de Lançamentos</h3>
             <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
               <button
                 onClick={() => setFilter('all')}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === 'all' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === 'all' ? 'bg-surface text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
               >
                 Todos
               </button>
               <button
                 onClick={() => setFilter('income')}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === 'income' ? 'bg-white dark:bg-zinc-700 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === 'income' ? 'bg-surface text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
               >
                 Receitas
               </button>
               <button
                 onClick={() => setFilter('expense')}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === 'expense' ? 'bg-white dark:bg-zinc-700 text-red-600 dark:text-red-400 shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === 'expense' ? 'bg-surface text-red-600 dark:text-red-400 shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
               >
                 Despesas
               </button>
@@ -292,32 +296,32 @@ export const Financial: React.FC = () => {
             <form onSubmit={handleAdd} className="p-6 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Descrição</label>
-                  <input type="text" required value={newFinance.description} onChange={e => setNewFinance({...newFinance, description: e.target.value})} className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500" />
+                  <label className="block text-sm font-medium text-text-secondary mb-1">Descrição</label>
+                  <input type="text" required value={newFinance.description} onChange={e => setNewFinance({...newFinance, description: e.target.value})} className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Valor (R$)</label>
-                  <input type="number" step="0.01" required value={newFinance.amount} onChange={e => setNewFinance({...newFinance, amount: e.target.value})} className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500" />
+                  <label className="block text-sm font-medium text-text-secondary mb-1">Valor (R$)</label>
+                  <input type="number" step="0.01" required value={newFinance.amount} onChange={e => setNewFinance({...newFinance, amount: e.target.value})} className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Tipo</label>
-                  <select value={newFinance.type} onChange={e => setNewFinance({...newFinance, type: e.target.value as any})} className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500">
+                  <label className="block text-sm font-medium text-text-secondary mb-1">Tipo</label>
+                  <select value={newFinance.type} onChange={e => setNewFinance({...newFinance, type: e.target.value as any})} className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500">
                     <option value="income">Receita</option>
                     <option value="expense">Despesa</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Data</label>
-                  <input type="date" required value={newFinance.date} onChange={e => setNewFinance({...newFinance, date: e.target.value})} className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500" />
+                  <label className="block text-sm font-medium text-text-secondary mb-1">Data</label>
+                  <input type="date" required value={newFinance.date} onChange={e => setNewFinance({...newFinance, date: e.target.value})} className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" />
                 </div>
                 {newFinance.type === 'income' && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Paciente (Opcional)</label>
+                      <label className="block text-sm font-medium text-text-secondary mb-1">Paciente (Opcional)</label>
                       <select 
                         value={newFinance.patientId} 
                         onChange={e => setNewFinance({...newFinance, patientId: e.target.value})} 
-                        className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                        className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
                       >
                         <option value="">Nenhum</option>
                         {Object.entries(patients).map(([id, name]) => (
@@ -326,11 +330,11 @@ export const Financial: React.FC = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Forma de Pagamento</label>
+                      <label className="block text-sm font-medium text-text-secondary mb-1">Forma de Pagamento</label>
                       <select 
                         value={newFinance.paymentMethod} 
                         onChange={e => setNewFinance({...newFinance, paymentMethod: e.target.value as any})} 
-                        className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                        className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
                       >
                         <option value="money">Dinheiro</option>
                         <option value="card">Cartão</option>
@@ -343,7 +347,7 @@ export const Financial: React.FC = () => {
                 )}
               </div>
               <div className="flex justify-end gap-3">
-                <button type="button" onClick={() => setIsAdding(false)} className="px-4 py-2 rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button>
+                <button type="button" onClick={() => setIsAdding(false)} className="px-4 py-2 rounded-xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">Salvar</button>
               </div>
             </form>
@@ -351,7 +355,7 @@ export const Financial: React.FC = () => {
 
           <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
             {filteredFinances.length === 0 ? (
-              <div className="p-8 text-center text-zinc-500 dark:text-zinc-400">Nenhum lançamento encontrado.</div>
+              <div className="p-8 text-center text-text-secondary">Nenhum lançamento encontrado.</div>
             ) : (
               filteredFinances.map(finance => (
                 <div key={finance.id} className="p-4 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
@@ -360,8 +364,8 @@ export const Financial: React.FC = () => {
                       {finance.type === 'income' ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
                     </div>
                     <div>
-                      <p className="font-medium text-zinc-900 dark:text-white">{finance.description}</p>
-                      <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+                      <p className="font-medium text-text-primary">{finance.description}</p>
+                      <div className="flex items-center gap-3 text-xs text-text-secondary">
                         <span>{new Date(finance.date).toLocaleDateString('pt-BR')}</span>
                         {finance.patientId && patients[finance.patientId] && (
                           <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400">
@@ -381,7 +385,7 @@ export const Financial: React.FC = () => {
                     <span className={`font-semibold ${finance.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                       {finance.type === 'income' ? '+' : '-'} {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(finance.amount)}
                     </span>
-                    <button onClick={() => handleDelete(finance)} className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors">
+                    <button onClick={() => handleDelete(finance)} className="p-2 text-text-secondary hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors">
                       <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
@@ -391,15 +395,15 @@ export const Financial: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6 h-fit">
+        <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6 h-fit">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <PieChart className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-              <h3 className="text-lg font-medium text-zinc-900 dark:text-white">Divisão de Receitas</h3>
+              <h3 className="text-lg font-medium text-text-primary">Divisão de Receitas</h3>
             </div>
             <button
               onClick={() => setIsAddingSplit(true)}
-              className="p-1.5 text-zinc-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-colors"
+              className="p-1.5 text-text-secondary hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-colors"
               title="Adicionar categoria"
             >
               <Plus className="w-5 h-5" />
@@ -414,14 +418,14 @@ export const Financial: React.FC = () => {
                   placeholder="Nome"
                   value={newSplit.name}
                   onChange={e => setNewSplit({...newSplit, name: e.target.value})}
-                  className="flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm text-zinc-900 dark:text-white"
+                  className="flex-1 min-w-0 bg-surface border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm text-text-primary"
                 />
                 <input
                   type="number"
                   placeholder="%"
                   value={newSplit.percentage}
                   onChange={e => setNewSplit({...newSplit, percentage: Number(e.target.value)})}
-                  className="w-16 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm text-zinc-900 dark:text-white"
+                  className="w-16 bg-surface border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm text-text-primary"
                 />
                 <button onClick={handleAddSplit} className="p-1 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded">
                   <Check className="w-4 h-4" />
@@ -440,36 +444,36 @@ export const Financial: React.FC = () => {
                       type="text"
                       value={editSplitData.name}
                       onChange={e => setEditSplitData({...editSplitData, name: e.target.value})}
-                      className="flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm text-zinc-900 dark:text-white"
+                      className="flex-1 min-w-0 bg-surface border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm text-text-primary"
                     />
                     <input
                       type="number"
                       value={editSplitData.percentage}
                       onChange={e => setEditSplitData({...editSplitData, percentage: Number(e.target.value)})}
-                      className="w-16 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm text-zinc-900 dark:text-white"
+                      className="w-16 bg-surface border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm text-text-primary"
                     />
                     <button onClick={saveEditSplit} className="p-1 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded">
                       <Check className="w-4 h-4" />
                     </button>
-                    <button onClick={() => setEditingSplitId(null)} className="p-1 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded">
+                    <button onClick={() => setEditingSplitId(null)} className="p-1 text-text-secondary hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                 ) : (
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-zinc-600 dark:text-zinc-400 flex items-center gap-2">
+                      <span className="text-text-secondary flex items-center gap-2">
                         {split.name} ({split.percentage}%)
                         <div className="hidden group-hover:flex items-center gap-1">
-                          <button onClick={() => startEditSplit(split)} className="p-0.5 text-zinc-400 hover:text-indigo-600">
+                          <button onClick={() => startEditSplit(split)} className="p-0.5 text-text-secondary hover:text-indigo-600">
                             <Edit2 className="w-3 h-3" />
                           </button>
-                          <button onClick={() => handleDeleteSplit(split.id)} className="p-0.5 text-zinc-400 hover:text-red-600">
+                          <button onClick={() => handleDeleteSplit(split.id)} className="p-0.5 text-text-secondary hover:text-red-600">
                             <Trash2 className="w-3 h-3" />
                           </button>
                         </div>
                       </span>
-                      <span className="font-medium text-zinc-900 dark:text-white">
+                      <span className="font-medium text-text-primary">
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((totalIncome * split.percentage) / 100)}
                       </span>
                     </div>
@@ -489,7 +493,7 @@ export const Financial: React.FC = () => {
             ))}
 
             <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center">
+              <p className="text-xs text-text-secondary text-center">
                 Total: {totalPercentage}% 
                 {totalPercentage !== 100 && <span className="text-red-500 ml-1">(Ajuste para 100%)</span>}
               </p>
@@ -497,6 +501,17 @@ export const Financial: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={!!financeToDelete}
+        title="Excluir Lançamento"
+        message="Tem certeza que deseja excluir este lançamento? Ele será movido para a lixeira."
+        confirmLabel="Excluir"
+        cancelLabel="Cancelar"
+        onConfirm={confirmDelete}
+        onCancel={() => setFinanceToDelete(null)}
+        variant="danger"
+      />
     </div>
   );
 };

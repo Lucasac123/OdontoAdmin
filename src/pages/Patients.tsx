@@ -4,6 +4,7 @@ import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../f
 import { Patient } from '../types';
 import { Plus, Search, Trash2, Edit, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 export const Patients: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -15,6 +16,7 @@ export const Patients: React.FC = () => {
     status: 'Ativo' as const
   });
   const [error, setError] = useState<string | null>(null);
+  const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -70,15 +72,17 @@ export const Patients: React.FC = () => {
   };
 
   const handleDelete = async (e: React.MouseEvent, patient: Patient) => {
-    console.log('handleDelete called', patient.id, auth.currentUser?.uid);
     e.stopPropagation();
-    if (window.confirm('Tem certeza que deseja apagar este paciente?')) {
-      try {
-        await moveToTrash('patients', patient.id, patient);
-        console.log('moveToTrash successful');
-      } catch (error) {
-        handleFirestoreError(error, OperationType.DELETE, `patients/${patient.id}`);
-      }
+    setPatientToDelete(patient);
+  };
+
+  const confirmDelete = async () => {
+    if (!patientToDelete) return;
+    try {
+      await moveToTrash('patients', patientToDelete.id, patientToDelete);
+      setPatientToDelete(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `patients/${patientToDelete.id}`);
     }
   };
 
@@ -90,15 +94,15 @@ export const Patients: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto">
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">Pacientes</h1>
+          <h1 className="text-3xl font-bold text-text-primary">Pacientes</h1>
           <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar paciente por nome..."
-              className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl pl-9 pr-4 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+              className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl pl-9 pr-4 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
             />
           </div>
         </div>
@@ -113,7 +117,7 @@ export const Patients: React.FC = () => {
 
       {isAdding && (
         <div className="space-y-2">
-          <form onSubmit={handleAddPatient} className="bg-white dark:bg-zinc-900 p-4 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row gap-3">
+          <form onSubmit={handleAddPatient} className="bg-surface p-4 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row gap-3">
             <input
               type="text"
               value={newPatient.name}
@@ -122,7 +126,7 @@ export const Patients: React.FC = () => {
                 if (error) setError(null);
               }}
               placeholder="Nome do paciente"
-              className={`flex-1 bg-zinc-50 dark:bg-zinc-950 border ${error ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-800'} rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500`}
+              className={`flex-1 bg-zinc-50 dark:bg-zinc-950 border ${error ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-800'} rounded-xl px-4 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500`}
               autoFocus
             />
             <input
@@ -130,12 +134,12 @@ export const Patients: React.FC = () => {
               value={newPatient.source}
               onChange={(e) => setNewPatient({...newPatient, source: e.target.value})}
               placeholder="Procedência (Ex: Indicação)"
-              className="flex-1 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="flex-1 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
             <select
               value={newPatient.status}
               onChange={(e) => setNewPatient({...newPatient, status: e.target.value as any})}
-              className="flex-1 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="flex-1 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="Ativo">Ativo</option>
               <option value="Inativo">Inativo</option>
@@ -164,9 +168,9 @@ export const Patients: React.FC = () => {
         </div>
       )}
 
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+      <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
         {filteredPatients.length === 0 ? (
-          <div className="p-8 text-center text-zinc-500 dark:text-zinc-400">
+          <div className="p-8 text-center text-text-secondary">
             Nenhum paciente encontrado.
           </div>
         ) : (
@@ -179,7 +183,7 @@ export const Patients: React.FC = () => {
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
-                    <h3 className="font-medium text-zinc-900 dark:text-white">{patient.name}</h3>
+                    <h3 className="font-medium text-text-primary">{patient.name}</h3>
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                       patient.status === 'Inativo' 
                         ? 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
@@ -190,7 +194,7 @@ export const Patients: React.FC = () => {
                       {patient.status || 'Ativo'}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+                  <div className="flex items-center gap-2 text-sm text-text-secondary">
                     <span>Cadastrado em {new Date(patient.createdAt).toLocaleDateString()}</span>
                     {patient.source && (
                       <>
@@ -214,6 +218,17 @@ export const Patients: React.FC = () => {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={!!patientToDelete}
+        title="Excluir Paciente"
+        message={`Tem certeza que deseja apagar o paciente ${patientToDelete?.name}? Todos os dados relacionados serão movidos para a lixeira.`}
+        confirmLabel="Excluir"
+        cancelLabel="Cancelar"
+        onConfirm={confirmDelete}
+        onCancel={() => setPatientToDelete(null)}
+        variant="danger"
+      />
     </div>
   );
 };

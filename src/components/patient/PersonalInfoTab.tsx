@@ -138,7 +138,7 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Dados Pessoais</h2>
+        <h2 className="text-xl font-bold text-text-primary">Dados Pessoais</h2>
         <button
           onClick={handleSave}
           disabled={isSaving}
@@ -152,37 +152,37 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Basic Info */}
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-2">
             <User className="w-4 h-4" /> Informações Básicas
           </h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Nome Completo</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Nome Completo</label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Data de Nascimento</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Data de Nascimento</label>
               <input
                 type="date"
                 name="dob"
                 value={formData.dob}
                 onChange={handleChange}
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Estado Civil</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Estado Civil</label>
               <select
                 name="maritalStatus"
                 value={formData.maritalStatus}
                 onChange={handleChange}
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
               >
                 <option value="">Selecione...</option>
                 <option value="Solteiro(a)">Solteiro(a)</option>
@@ -193,12 +193,12 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Sexo</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Sexo</label>
               <select
                 name="sex"
                 value={formData.sex}
                 onChange={handleChange}
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
               >
                 <option value="">Selecione...</option>
                 <option value="Masculino">Masculino</option>
@@ -207,43 +207,43 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Nacionalidade</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Nacionalidade</label>
               <input
                 type="text"
                 name="nationality"
                 value={formData.nationality}
                 onChange={handleChange}
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Naturalidade</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Naturalidade</label>
               <input
                 type="text"
                 name="placeOfBirth"
                 value={formData.placeOfBirth}
                 onChange={handleChange}
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Procedência</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Procedência</label>
               <input
                 type="text"
                 name="source"
                 value={formData.source}
                 onChange={handleChange}
                 placeholder="Ex: Indicação, Publicidade"
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Status do Paciente</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Status do Paciente</label>
               <select
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
               >
                 <option value="Ativo">Ativo</option>
                 <option value="Inativo">Inativo</option>
@@ -255,40 +255,40 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
 
         {/* Contact & Profession */}
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-2">
             <Mail className="w-4 h-4" /> Contato e Profissão
           </h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">E-mail</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">E-mail</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`w-full bg-zinc-50 dark:bg-zinc-950 border ${emailError ? 'border-red-500 focus:ring-red-500' : 'border-zinc-200 dark:border-zinc-800 focus:ring-indigo-500'} rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 outline-none transition-all`}
+                className={`w-full bg-surface border ${emailError ? 'border-red-500 focus:ring-red-500' : 'border-zinc-200 dark:border-zinc-800 focus:ring-indigo-500'} rounded-xl px-4 py-2 text-text-primary focus:ring-2 outline-none transition-all`}
               />
               {emailError && <p className="mt-1 text-xs text-red-500">{emailError}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Telefone</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Telefone</label>
               <input
                 type="tel"
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="(00) 00000-0000"
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Profissão</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Profissão</label>
               <input
                 type="text"
                 name="profession"
                 value={formData.profession}
                 onChange={handleChange}
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
               />
             </div>
           </div>
@@ -296,12 +296,12 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
 
         {/* Documents */}
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-2">
             <CreditCard className="w-4 h-4" /> Documentação
           </h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">CPF</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">CPF</label>
               <input
                 type="text"
                 name="cpf"
@@ -309,41 +309,41 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
                 onChange={handleChange}
                 placeholder="000.000.000-00"
                 maxLength={14}
-                className={`w-full bg-zinc-50 dark:bg-zinc-950 border ${cpfError ? 'border-red-500 focus:ring-red-500' : 'border-zinc-200 dark:border-zinc-800 focus:ring-indigo-500'} rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 outline-none transition-all`}
+                className={`w-full bg-surface border ${cpfError ? 'border-red-500 focus:ring-red-500' : 'border-zinc-200 dark:border-zinc-800 focus:ring-indigo-500'} rounded-xl px-4 py-2 text-text-primary focus:ring-2 outline-none transition-all`}
               />
               {cpfError && <p className="mt-1 text-xs text-red-500">{cpfError}</p>}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">RG</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">RG</label>
                 <input
                   type="text"
                   name="rg"
                   value={formData.rg}
                   onChange={handleChange}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Órgão Exp.</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Órgão Exp.</label>
                 <input
                   type="text"
                   name="issuingBody"
                   value={formData.issuingBody}
                   onChange={handleChange}
                   placeholder="SSP/UF"
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Responsável Legal (se houver)</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Responsável Legal (se houver)</label>
               <input
                 type="text"
                 name="legalRepresentative"
                 value={formData.legalRepresentative}
                 onChange={handleChange}
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
               />
             </div>
           </div>
@@ -351,33 +351,33 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
 
         {/* Address */}
         <div className="md:col-span-2 lg:col-span-3 space-y-4">
-          <h3 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-2">
             <MapPin className="w-4 h-4" /> Endereço
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Rua, Número e Complemento</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Rua, Número e Complemento</label>
               <input
                 type="text"
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Cidade</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Cidade</label>
               <input
                 type="text"
                 name="city"
                 value={formData.city}
                 onChange={handleChange}
-                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Estado</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Estado</label>
                 <input
                   type="text"
                   name="state"
@@ -385,18 +385,18 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
                   onChange={handleChange}
                   maxLength={2}
                   placeholder="UF"
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">CEP</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">CEP</label>
                 <input
                   type="text"
                   name="zipCode"
                   value={formData.zipCode}
                   onChange={handleChange}
                   placeholder="00000-000"
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
             </div>
@@ -407,61 +407,61 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
         <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-zinc-100 dark:border-zinc-800">
           {/* Legal Representative */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-2">
               <Users className="w-4 h-4" /> Responsável Legal
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Nome do Responsável</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Nome do Responsável</label>
                 <input
                   type="text"
                   value={legalRep.name}
                   onChange={(e) => setLegalRep({ ...legalRep, name: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Parentesco</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Parentesco</label>
                 <input
                   type="text"
                   value={legalRep.relation}
                   onChange={(e) => setLegalRep({ ...legalRep, relation: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">CPF</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">CPF</label>
                 <input
                   type="text"
                   value={legalRep.cpf}
                   onChange={(e) => setLegalRep({ ...legalRep, cpf: formatCPF(e.target.value) })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">RG</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">RG</label>
                 <input
                   type="text"
                   value={legalRep.rg}
                   onChange={(e) => setLegalRep({ ...legalRep, rg: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Órgão Exp.</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Órgão Exp.</label>
                 <input
                   type="text"
                   value={legalRep.issuingBody}
                   onChange={(e) => setLegalRep({ ...legalRep, issuingBody: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Estado Civil</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Estado Civil</label>
                 <select
                   value={legalRep.maritalStatus}
                   onChange={(e) => setLegalRep({ ...legalRep, maritalStatus: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 >
                   <option value="">Selecione...</option>
                   <option value="Solteiro(a)">Solteiro(a)</option>
@@ -476,44 +476,44 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
 
           {/* Spouse Details */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-2">
               <Users className="w-4 h-4" /> Dados do Cônjuge
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Nome do Cônjuge</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Nome do Cônjuge</label>
                 <input
                   type="text"
                   value={spouse.name}
                   onChange={(e) => setSpouse({ ...spouse, name: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">CPF</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">CPF</label>
                 <input
                   type="text"
                   value={spouse.cpf}
                   onChange={(e) => setSpouse({ ...spouse, cpf: formatCPF(e.target.value) })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">RG</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">RG</label>
                 <input
                   type="text"
                   value={spouse.rg}
                   onChange={(e) => setSpouse({ ...spouse, rg: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Órgão Exp.</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Órgão Exp.</label>
                 <input
                   type="text"
                   value={spouse.issuingBody}
                   onChange={(e) => setSpouse({ ...spouse, issuingBody: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
             </div>
@@ -521,37 +521,37 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
 
           {/* Reference Doctor & Previous Dentist */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-2">
               <Stethoscope className="w-4 h-4" /> Referências
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Médico de Referência</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Médico de Referência</label>
                 <input
                   type="text"
                   value={refDoctor.name}
                   onChange={(e) => setRefDoctor({ ...refDoctor, name: e.target.value })}
                   placeholder="Nome do médico"
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Telefone do Médico</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Telefone do Médico</label>
                 <input
                   type="tel"
                   value={refDoctor.phone}
                   onChange={(e) => setRefDoctor({ ...refDoctor, phone: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
               <div className="col-span-2 pt-2">
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Dentista Anterior</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Dentista Anterior</label>
                 <input
                   type="text"
                   value={prevDentist.name}
                   onChange={(e) => setPrevDentist({ ...prevDentist, name: e.target.value })}
                   placeholder="Nome do dentista anterior"
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
             </div>
@@ -559,16 +559,16 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
 
           {/* Appointment Preference */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-2">
               <Calendar className="w-4 h-4" /> Preferência de Agendamento
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Dia da Semana</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Dia da Semana</label>
                 <select
                   value={apptPref.date}
                   onChange={(e) => setApptPref({ ...apptPref, date: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 >
                   <option value="">Selecione...</option>
                   <option value="Segunda">Segunda-feira</option>
@@ -580,11 +580,11 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Período</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Período</label>
                 <select
                   value={apptPref.period}
                   onChange={(e) => setApptPref({ ...apptPref, period: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
                 >
                   <option value="">Selecione...</option>
                   <option value="Manhã">Manhã</option>

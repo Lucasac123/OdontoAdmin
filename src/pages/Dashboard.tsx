@@ -5,6 +5,7 @@ import { Appointment, Finance, Patient, QuickNote } from '../types';
 import { Users, Calendar, DollarSign, TrendingUp, Clock, BrainCircuit, Trash2, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 export const Dashboard: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -12,6 +13,7 @@ export const Dashboard: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [quickNotes, setQuickNotes] = useState<QuickNote[]>([]);
   const [newNote, setNewNote] = useState('');
+  const [noteToDelete, setNoteToDelete] = useState<QuickNote | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -84,12 +86,16 @@ export const Dashboard: React.FC = () => {
   };
 
   const handleDeleteNote = async (note: QuickNote) => {
-    console.log('handleDeleteNote called', note.id, auth.currentUser?.uid);
+    setNoteToDelete(note);
+  };
+
+  const confirmDeleteNote = async () => {
+    if (!noteToDelete) return;
     try {
-      await moveToTrash('quickNotes', note.id, note);
-      console.log('moveToTrash successful');
+      await moveToTrash('quickNotes', noteToDelete.id, noteToDelete);
+      setNoteToDelete(null);
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `quickNotes/${note.id}`);
+      handleFirestoreError(error, OperationType.DELETE, `quickNotes/${noteToDelete.id}`);
     }
   };
 
@@ -115,50 +121,50 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800">
+        <div className="bg-surface p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-zinc-900 dark:text-white">Consultas Hoje</h3>
+            <h3 className="text-lg font-medium text-text-primary">Consultas Hoje</h3>
             <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
               <Calendar className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-3xl font-bold text-zinc-900 dark:text-white">{appointments.length}</p>
+          <p className="text-3xl font-bold text-text-primary">{appointments.length}</p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800">
+        <div className="bg-surface p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-zinc-900 dark:text-white">Receita Mensal</h3>
+            <h3 className="text-lg font-medium text-text-primary">Receita Mensal</h3>
             <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
               <TrendingUp className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-3xl font-bold text-zinc-900 dark:text-white">
+          <p className="text-3xl font-bold text-text-primary">
             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalIncome)}
           </p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800">
+        <div className="bg-surface p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-zinc-900 dark:text-white">Saldo</h3>
+            <h3 className="text-lg font-medium text-text-primary">Saldo</h3>
             <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
               <DollarSign className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-3xl font-bold text-zinc-900 dark:text-white">
+          <p className="text-3xl font-bold text-text-primary">
             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balance)}
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+        <div className="lg:col-span-2 bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
           <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-            <h3 className="text-lg font-medium text-zinc-900 dark:text-white">Próximas Consultas</h3>
+            <h3 className="text-lg font-medium text-text-primary">Próximas Consultas</h3>
             <button onClick={() => navigate('/agenda')} className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Ver todas</button>
           </div>
           <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
             {appointments.length === 0 ? (
-              <div className="p-6 text-center text-zinc-500 dark:text-zinc-400">Nenhuma consulta para hoje.</div>
+              <div className="p-6 text-center text-text-secondary">Nenhuma consulta para hoje.</div>
             ) : (
               appointments.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(app => (
                 <div key={app.id} className="p-4 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
@@ -167,8 +173,8 @@ export const Dashboard: React.FC = () => {
                       <span className="text-xs font-semibold">{new Date(app.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     <div>
-                      <p className="font-medium text-zinc-900 dark:text-white">{app.patientName || 'Paciente não identificado'}</p>
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                      <p className="font-medium text-text-primary">{app.patientName || 'Paciente não identificado'}</p>
+                      <p className="text-sm text-text-secondary flex items-center gap-1">
                         <Clock className="w-3 h-3" /> {app.duration || 30} min
                       </p>
                     </div>
@@ -186,38 +192,38 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
-          <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Ações Rápidas</h3>
+        <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
+          <h3 className="text-lg font-medium text-text-primary mb-4">Ações Rápidas</h3>
           <div className="grid grid-cols-2 gap-3">
             <button onClick={() => navigate('/patients')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors border border-zinc-200 dark:border-zinc-700">
               <Users className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-              <span className="text-xs font-medium text-zinc-900 dark:text-white">Pacientes</span>
+              <span className="text-xs font-medium text-text-primary">Pacientes</span>
             </button>
             <button onClick={() => navigate('/agenda')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors border border-zinc-200 dark:border-zinc-700">
               <Calendar className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-xs font-medium text-zinc-900 dark:text-white">Agenda</span>
+              <span className="text-xs font-medium text-text-primary">Agenda</span>
             </button>
             <button onClick={() => navigate('/financial')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors border border-zinc-200 dark:border-zinc-700">
               <DollarSign className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-              <span className="text-xs font-medium text-zinc-900 dark:text-white">Financeiro</span>
+              <span className="text-xs font-medium text-text-primary">Financeiro</span>
             </button>
             <button onClick={() => navigate('/ai-assistant')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors border border-zinc-200 dark:border-zinc-700">
               <BrainCircuit className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-              <span className="text-xs font-medium text-zinc-900 dark:text-white">IA</span>
+              <span className="text-xs font-medium text-text-primary">IA</span>
             </button>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
-          <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Notas Rápidas</h3>
+        <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
+          <h3 className="text-lg font-medium text-text-primary mb-4">Notas Rápidas</h3>
           <form onSubmit={handleAddNote} className="mb-4">
             <textarea
               value={newNote}
               onChange={e => setNewNote(e.target.value)}
               placeholder="Escreva um lembrete..."
-              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 resize-none h-24"
+              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-24"
             />
             <button type="submit" className="mt-2 w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors">
               <Plus className="w-4 h-4" /> Adicionar Nota
@@ -226,7 +232,7 @@ export const Dashboard: React.FC = () => {
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {quickNotes.map(note => (
               <div key={note.id} className="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg flex items-start justify-between gap-2 border border-zinc-200 dark:border-zinc-700">
-                <p className="text-sm text-zinc-700 dark:text-zinc-300">{note.content}</p>
+                <p className="text-sm text-text-secondary">{note.content}</p>
                 <button onClick={() => handleDeleteNote(note)} className="text-zinc-400 hover:text-red-500">
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -235,8 +241,8 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
-          <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Composição de Pacientes</h3>
+        <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
+          <h3 className="text-lg font-medium text-text-primary mb-4">Composição de Pacientes</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -252,6 +258,17 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={!!noteToDelete}
+        title="Excluir Nota"
+        message="Tem certeza que deseja apagar esta nota? Ela será movida para a lixeira."
+        confirmLabel="Excluir"
+        cancelLabel="Cancelar"
+        onConfirm={confirmDeleteNote}
+        onCancel={() => setNoteToDelete(null)}
+        variant="danger"
+      />
     </div>
   );
 };
