@@ -3,9 +3,10 @@ import { useAuth } from '../context/AuthContext';
 import { motion } from 'motion/react';
 import { Logo } from '../components/Logo';
 import { useNavigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 
 export const Login: React.FC = () => {
-  const { signIn, user } = useAuth();
+  const { signIn, user, isSigningIn } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,10 +31,17 @@ export const Login: React.FC = () => {
         
         <button
           onClick={signIn}
-          className="w-full flex items-center justify-center gap-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-6 py-4 rounded-xl font-medium hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors"
+          disabled={isSigningIn}
+          className="w-full flex items-center justify-center gap-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-6 py-4 rounded-xl font-medium hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors disabled:opacity-50"
         >
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
-          Entrar com Google
+          {isSigningIn ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <>
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
+              Entrar com Google
+            </>
+          )}
         </button>
       </motion.div>
     </div>

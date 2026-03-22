@@ -3,17 +3,27 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, addDoc, collection, deleteDoc, doc, getDocFromServer } from 'firebase/firestore';
 import configFromJson from '../firebase-applet-config.json';
 
-// Use environment variables if available, otherwise fallback to JSON config
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || configFromJson.apiKey,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || configFromJson.authDomain,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || configFromJson.projectId,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || configFromJson.appId,
-  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID || configFromJson.firestoreDatabaseId
+const getEnvVar = (val: string | undefined, fallback: string) => {
+  if (!val || val === 'undefined' || val === 'null' || val === '') return fallback;
+  return val;
 };
 
+// Use environment variables if available, otherwise fallback to JSON config
+const firebaseConfig = {
+  apiKey: getEnvVar(import.meta.env.VITE_FIREBASE_API_KEY, configFromJson.apiKey),
+  authDomain: getEnvVar(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN, configFromJson.authDomain),
+  projectId: getEnvVar(import.meta.env.VITE_FIREBASE_PROJECT_ID, configFromJson.projectId),
+  appId: getEnvVar(import.meta.env.VITE_FIREBASE_APP_ID, configFromJson.appId),
+  firestoreDatabaseId: getEnvVar(import.meta.env.VITE_FIREBASE_DATABASE_ID, configFromJson.firestoreDatabaseId)
+};
+
+console.log("Firebase Config:", firebaseConfig);
+console.log("Initializing Firestore with database ID:", firebaseConfig.firestoreDatabaseId);
+
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)' 
+  ? getFirestore(app, firebaseConfig.firestoreDatabaseId) 
+  : getFirestore(app);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
