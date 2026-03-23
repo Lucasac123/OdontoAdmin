@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, writeBatch, getDocs } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../../firebase';
 import { Patient, FileRecord } from '../../types';
-import { Upload, FileImage, FileText, Trash2, Download, Eye, X, ZoomIn, ZoomOut, RotateCcw, Music, Clock, Calendar, Printer } from 'lucide-react';
+import { Upload, FileImage, FileText, Trash2, Download, Eye, X, ZoomIn, ZoomOut, RotateCcw, Music, Clock, Calendar, Printer, Link as LinkIcon, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from '../ConfirmModal';
 
@@ -16,6 +16,9 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [expirationDays, setExpirationDays] = useState<string>('0');
   const [fileToDelete, setFileToDelete] = useState<FileRecord | null>(null);
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [linkName, setLinkName] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -60,18 +63,17 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
     setIsUploading(true);
     setUploadProgress(0);
 
-    try {
-      // Compress image to fit in Firestore (1MB limit)
-      const reader = new FileReader();
-      
-      reader.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const progress = Math.round((event.loaded / event.total) * 50);
-          setUploadProgress(progress);
-        }
-      };
+    const reader = new FileReader();
+    
+    reader.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const progress = Math.round((event.loaded / event.total) * 50);
+        setUploadProgress(progress);
+      }
+    };
 
-      reader.onloadend = async () => {
+    reader.onloadend = async () => {
+      try {
         setUploadProgress(60);
         let base64 = reader.result as string;
         
@@ -94,6 +96,13 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
               resolve(null);
             };
           });
+        }
+
+        if (base64.length > 1000000) {
+          alert("O arquivo é muito grande. O tamanho máximo permitido é de aproximadamente 700KB.");
+          setIsUploading(false);
+          setUploadProgress(0);
+          return;
         }
 
         let typeToSave = uploadType;
@@ -120,13 +129,44 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
           setIsUploading(false);
           setUploadProgress(0);
         }, 500);
-      };
-      reader.readAsDataURL(file);
+      } catch (error) {
+        console.error(error);
+        setIsUploading(false);
+        setUploadProgress(0);
+        handleFirestoreError(error, OperationType.CREATE, 'files');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleAddLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!linkName || !linkUrl || !auth.currentUser) return;
+    
+    try {
+      const now = new Date();
+      let expiresAt: string | null = null;
+      if (expirationDays !== '0') {
+        const expirationDate = new Date(now);
+        expirationDate.setDate(now.getDate() + parseInt(expirationDays));
+        expiresAt = expirationDate.toISOString();
+      }
+
+      await addDoc(collection(db, 'files'), {
+        dentistId: auth.currentUser.uid,
+        patientId: patient.id,
+        name: linkName,
+        url: linkUrl,
+        type: uploadType,
+        uploadedAt: now.toISOString(),
+        isLink: true,
+        ...(expiresAt && { expiresAt })
+      });
+      setIsLinkModalOpen(false);
+      setLinkName('');
+      setLinkUrl('');
     } catch (error) {
-      console.error(error);
       handleFirestoreError(error, OperationType.CREATE, 'files');
-      setIsUploading(false);
-      setUploadProgress(0);
     }
   };
 
@@ -202,7 +242,7 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
               <option value="extraoral">Foto Extraoral</option>
               <option value="xray">Radiografia</option>
               <option value="tomography">Tomografia</option>
-              <option value="consent">Consentimento</option>
+              <option value="consent">Termo de Consentimento</option>
               <option value="audio">Áudio</option>
               <option value="other">Outro</option>
             </select>
@@ -224,37 +264,45 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
             </select>
           </div>
 
-          <div className="relative flex-1 lg:flex-none">
-            <input 
-              type="file" 
-              onChange={handleFileUpload} 
-              disabled={isUploading}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-              accept="image/*,.pdf,audio/*"
-            />
+          <div className="flex gap-2 w-full lg:w-auto">
             <button 
-              className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-sm shadow-indigo-200 dark:shadow-none relative overflow-hidden"
-              disabled={isUploading}
+              onClick={() => setIsLinkModalOpen(true)}
+              className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-surface border border-zinc-200 dark:border-zinc-700 text-text-primary px-4 py-2.5 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all font-medium text-sm"
             >
-              {isUploading ? (
-                <div className="flex flex-col items-center w-full">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span className="text-sm font-medium">{uploadProgress}%</span>
-                  </div>
-                  <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
-                    <motion.div 
-                      className="h-full bg-white"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${uploadProgress}%` }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <><Upload className="w-5 h-5" /> Upload</>
-              )}
+              <LinkIcon className="w-4 h-4" /> Adicionar Link
             </button>
+            <div className="relative flex-1 lg:flex-none">
+              <input 
+                type="file" 
+                onChange={handleFileUpload} 
+                disabled={isUploading}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                accept="image/*,.pdf,audio/*"
+              />
+              <button 
+                className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-sm shadow-indigo-200 dark:shadow-none relative overflow-hidden text-sm font-medium"
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <div className="flex flex-col items-center w-full">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span className="text-sm font-medium">{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
+                      <motion.div 
+                        className="h-full bg-white"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${uploadProgress}%` }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <><Upload className="w-4 h-4" /> Upload</>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -289,9 +337,13 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
             <div key={file.id} className="bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden group hover:shadow-md transition-all">
               <div 
                 className="aspect-square bg-surface flex items-center justify-center relative cursor-pointer overflow-hidden"
-                onClick={() => setSelectedFile(file)}
+                onClick={() => file.isLink ? window.open(file.url, '_blank') : setSelectedFile(file)}
               >
-                {file.url.startsWith('data:image') ? (
+                {file.isLink ? (
+                  <div className="w-full h-full flex items-center justify-center bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600">
+                    <LinkIcon className="w-12 h-12" />
+                  </div>
+                ) : file.url.startsWith('data:image') ? (
                   <img src={file.url} alt={file.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 ) : file.url.startsWith('data:audio') ? (
                   <div className="w-full h-full flex items-center justify-center bg-amber-50 dark:bg-amber-500/10 text-amber-600">
@@ -301,7 +353,11 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
                   getIcon(file.type)
                 )}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                  <Eye className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                  {file.isLink ? (
+                    <ExternalLink className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                  ) : (
+                    <Eye className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                  )}
                 </div>
               </div>
               <div className="p-4 flex items-start justify-between gap-2">
@@ -318,15 +374,17 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  <a 
-                    href={file.url} 
-                    download={file.name}
-                    className="p-1.5 text-zinc-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-colors"
-                    title="Download"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Download className="w-4 h-4" />
-                  </a>
+                  {!file.isLink && (
+                    <a 
+                      href={file.url} 
+                      download={file.name}
+                      className="p-1.5 text-zinc-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-colors"
+                      title="Download"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Download className="w-4 h-4" />
+                    </a>
+                  )}
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
@@ -431,6 +489,12 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
                   <div className="w-full max-w-md p-6 bg-zinc-800 rounded-2xl">
                     <audio controls src={selectedFile.url} className="w-full" />
                   </div>
+                ) : selectedFile.url.startsWith('data:application/pdf') ? (
+                  <iframe 
+                    src={selectedFile.url} 
+                    title={selectedFile.name}
+                    className="w-full h-[70vh] rounded-lg bg-white"
+                  />
                 ) : (
                   <div className="text-center text-zinc-400">
                     <FileText className="w-24 h-24 mx-auto mb-4 opacity-50" />
@@ -454,6 +518,70 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
         onCancel={() => setFileToDelete(null)}
         variant="danger"
       />
+
+      <AnimatePresence>
+        {isLinkModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-surface w-full max-w-md rounded-2xl shadow-xl overflow-hidden"
+            >
+              <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                <h3 className="text-lg font-bold text-text-primary">Adicionar Link Externo</h3>
+                <button onClick={() => setIsLinkModalOpen(false)} className="text-text-secondary hover:text-text-primary">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <form onSubmit={handleAddLink} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-1">Nome do Arquivo/Link</label>
+                  <input
+                    type="text"
+                    required
+                    value={linkName}
+                    onChange={(e) => setLinkName(e.target.value)}
+                    placeholder="Ex: Tomografia Panorâmica"
+                    className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-1">URL (Link do Drive, OneDrive, etc.)</label>
+                  <input
+                    type="url"
+                    required
+                    value={linkUrl}
+                    onChange={(e) => setLinkUrl(e.target.value)}
+                    placeholder="https://drive.google.com/..."
+                    className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="pt-4 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsLinkModalOpen(false)}
+                    className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-colors"
+                  >
+                    Salvar Link
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

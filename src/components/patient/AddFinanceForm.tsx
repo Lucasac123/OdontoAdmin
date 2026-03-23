@@ -1,5 +1,5 @@
 import React from 'react';
-import { Finance } from '../types';
+import { Finance } from '../../types';
 import { Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 

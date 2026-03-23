@@ -13,7 +13,6 @@ import { FilesTab } from '../components/patient/FilesTab';
 import { TreatmentPlanTab } from '../components/patient/TreatmentPlanTab';
 import { PersonalInfoTab } from '../components/patient/PersonalInfoTab';
 import { PaymentsTab } from '../components/patient/PaymentsTab';
-import { ConsentTab } from '../components/patient/ConsentTab';
 
 export const PatientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,7 +45,6 @@ export const PatientDetail: React.FC = () => {
     { id: 'odontogram', label: 'Odontograma', icon: ClipboardList, component: OdontogramTab },
     { id: 'prescription', label: 'Receituário', icon: Pill, component: PrescriptionTab },
     { id: 'files', label: 'Arquivos', icon: FileImage, component: FilesTab },
-    { id: 'consent', label: 'Consentimento', icon: FileText, component: ConsentTab },
     { id: 'treatment', label: 'Plano de Tratamento', icon: ClipboardList, component: TreatmentPlanTab },
     { id: 'payments', label: 'Pagamentos', icon: DollarSign, component: PaymentsTab },
   ];

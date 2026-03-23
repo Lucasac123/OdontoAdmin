@@ -72,6 +72,7 @@ export interface FileRecord {
   type: 'extraoral' | 'intraoral' | 'xray' | 'tomography' | 'consent' | 'audio' | 'other';
   uploadedAt: string;
   expiresAt?: string;
+  isLink?: boolean;
 }
 
 export interface NotificationSettings {

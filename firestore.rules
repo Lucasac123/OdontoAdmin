@@ -134,9 +134,10 @@ service cloud.firestore {
              data.patientId is string && data.patientId.size() > 0 && data.patientId.size() < 100 &&
              data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
              data.url is string && data.url.size() > 0 && data.url.size() < 1048576 &&
-             data.type in ['extraoral', 'intraoral', 'xray', 'tomography', 'consent', 'other'] &&
+             data.type in ['extraoral', 'intraoral', 'xray', 'tomography', 'consent', 'audio', 'other'] &&
              isValidDateString(data.uploadedAt) &&
-             (!( 'expiresAt' in data ) || data.expiresAt == null || isValidDateString(data.expiresAt));
+             (!( 'expiresAt' in data ) || data.expiresAt == null || isValidDateString(data.expiresAt)) &&
+             (!( 'isLink' in data ) || data.isLink is bool);
     }
 
     // ===============================================================
