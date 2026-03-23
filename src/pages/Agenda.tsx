@@ -273,36 +273,45 @@ export const Agenda: React.FC = () => {
             </div>
           </div>
 
-          {isAdding && (
-            <form onSubmit={handleAdd} className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6 space-y-4">
-              <h3 className="text-lg font-medium text-text-primary">Agendar para {format(selectedDate, 'dd/MM/yyyy')}</h3>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">Paciente</label>
-                <select required value={newAppt.patientId} onChange={e => setNewAppt({...newAppt, patientId: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500">
-                  <option value="">Selecione um paciente...</option>
-                  {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+          <AnimatePresence>
+            {isAdding && (
+              <motion.form 
+                initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
+                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                transition={{ duration: 0.2 }}
+                onSubmit={handleAdd} 
+                className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6 space-y-4 overflow-hidden"
+              >
+                <h3 className="text-lg font-medium text-text-primary">Agendar para {format(selectedDate, 'dd/MM/yyyy')}</h3>
                 <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-1">Horário</label>
-                  <input type="time" required value={newAppt.time} onChange={e => setNewAppt({...newAppt, time: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" />
+                  <label className="block text-sm font-medium text-text-secondary mb-1">Paciente</label>
+                  <select required value={newAppt.patientId} onChange={e => setNewAppt({...newAppt, patientId: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Selecione um paciente...</option>
+                    {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Horário</label>
+                    <input type="time" required value={newAppt.time} onChange={e => setNewAppt({...newAppt, time: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Duração (min)</label>
+                    <input type="number" step="15" required value={newAppt.duration} onChange={e => setNewAppt({...newAppt, duration: parseInt(e.target.value)})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" />
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-1">Duração (min)</label>
-                  <input type="number" step="15" required value={newAppt.duration} onChange={e => setNewAppt({...newAppt, duration: parseInt(e.target.value)})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" />
+                  <label className="block text-sm font-medium text-text-secondary mb-1">Observações</label>
+                  <textarea value={newAppt.notes} onChange={e => setNewAppt({...newAppt, notes: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-20" />
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">Observações</label>
-                <textarea value={newAppt.notes} onChange={e => setNewAppt({...newAppt, notes: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-20" />
-              </div>
-              <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setIsAdding(false)} className="px-4 py-2 rounded-xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button>
-                <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">Salvar</button>
-              </div>
-            </form>
-          )}
+                <div className="flex justify-end gap-3 pt-2">
+                  <button type="button" onClick={() => setIsAdding(false)} className="px-4 py-2 rounded-xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button>
+                  <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">Salvar</button>
+                </div>
+              </motion.form>
+            )}
+          </AnimatePresence>
         </div>
 
         <div className="flex-1 bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col">
@@ -331,58 +340,67 @@ export const Agenda: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {dayAppointments.map(app => (
-                  <div key={app.id} className={`p-4 rounded-2xl border ${
-                    app.status === 'completed' ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/30' :
-                    app.status === 'cancelled' ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/30' :
-                    'bg-surface border-zinc-200 dark:border-zinc-700'
-                  } flex flex-col sm:flex-row gap-4 sm:items-center justify-between transition-colors`}>
-                    
-                    <div className="flex items-start gap-4">
-                      <div className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0 ${
-                        app.status === 'completed' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
-                        app.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' :
-                        'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400'
-                      }`}>
-                        <span className="text-sm font-bold">{format(parseISO(app.date), 'HH:mm')}</span>
-                      </div>
+                <AnimatePresence initial={false}>
+                  {dayAppointments.map(app => (
+                    <motion.div 
+                      key={app.id} 
+                      initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, height: 'auto', scale: 1 }}
+                      exit={{ opacity: 0, height: 0, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className={`p-4 rounded-2xl border ${
+                        app.status === 'completed' ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/30' :
+                        app.status === 'cancelled' ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/30' :
+                        'bg-surface border-zinc-200 dark:border-zinc-700'
+                      } flex flex-col sm:flex-row gap-4 sm:items-center justify-between transition-colors overflow-hidden`}
+                    >
                       
-                      <div>
-                        <h4 className="font-bold text-lg text-text-primary">{app.patientName}</h4>
-                        <div className="flex items-center gap-3 text-sm text-text-secondary mt-1">
-                          <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {app.duration} min</span>
-                          {app.notes && <span className="truncate max-w-[200px]">- {app.notes}</span>}
+                      <div className="flex items-start gap-4">
+                        <div className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0 ${
+                          app.status === 'completed' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
+                          app.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' :
+                          'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400'
+                        }`}>
+                          <span className="text-sm font-bold">{format(parseISO(app.date), 'HH:mm')}</span>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-bold text-lg text-text-primary">{app.patientName}</h4>
+                          <div className="flex items-center gap-3 text-sm text-text-secondary mt-1">
+                            <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {app.duration} min</span>
+                            {app.notes && <span className="truncate max-w-[200px]">- {app.notes}</span>}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-2 self-end sm:self-auto">
-                      {app.status === 'scheduled' && (
-                        <>
-                          <a 
-                            href={generateGoogleCalendarLink(app)} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg flex items-center gap-2 text-sm font-medium"
-                            title="Adicionar ao Google Agenda"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                            Google Agenda
-                          </a>
-                          <button onClick={() => handleStatusChange(app.id, 'completed')} className="p-2 text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg" title="Marcar como concluída">
-                            <CheckCircle className="w-5 h-5" />
-                          </button>
-                          <button onClick={() => handleStatusChange(app.id, 'cancelled')} className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg" title="Cancelar consulta">
-                            <XCircle className="w-5 h-5" />
-                          </button>
-                        </>
-                      )}
-                      <button onClick={() => handleDelete(app)} className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg">
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-2 self-end sm:self-auto">
+                        {app.status === 'scheduled' && (
+                          <>
+                            <a 
+                              href={generateGoogleCalendarLink(app)} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg flex items-center gap-2 text-sm font-medium"
+                              title="Adicionar ao Google Agenda"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              Google Agenda
+                            </a>
+                            <button onClick={() => handleStatusChange(app.id, 'completed')} className="p-2 text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg" title="Marcar como concluída">
+                              <CheckCircle className="w-5 h-5" />
+                            </button>
+                            <button onClick={() => handleStatusChange(app.id, 'cancelled')} className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg" title="Cancelar consulta">
+                              <XCircle className="w-5 h-5" />
+                            </button>
+                          </>
+                        )}
+                        <button onClick={() => handleDelete(app)} className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg">
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               </div>
             )}
           </div>

@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { Patient } from '../../types';
 import { Printer, Calculator, Pill, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
   const [prescriptionText, setPrescriptionText] = useState(`Para: ${patient.name}\nData: ${new Date().toLocaleDateString('pt-BR')}\n\nUso Interno:\n1. Amoxicilina 500mg\nTomar 1 cápsula de 8 em 8 horas por 7 dias.\n\nUso Externo:\n1. Periogard\nBochechar 15ml por 1 minuto a cada 12 horas.\n\n\n\n___________________________________\nAssinatura e Carimbo`);
+  const [prescriptionStatus, setPrescriptionStatus] = useState<'não impresso' | 'não assinado' | 'assinado'>('não impresso');
   
   const [childWeight, setChildWeight] = useState('');
   const [selectedDrug, setSelectedDrug] = useState('amoxicilina');
-  const [calculatedDose, setCalculatedDose] = useState('');
+  const [calculatedDose, setCalculatedDose] = useState<{name: string, dose: string, posology: string} | null>(null);
 
   const [anestheticWeight, setAnestheticWeight] = useState('');
   const [selectedAnesthetic, setSelectedAnesthetic] = useState('lidocaina_2_epi');
@@ -67,38 +69,49 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
   const calculatePosology = () => {
     const weight = parseFloat(childWeight);
     if (isNaN(weight) || weight <= 0) {
-      setCalculatedDose('Peso inválido.');
+      setCalculatedDose(null);
       return;
     }
 
-    let result = '';
+    let result = { name: '', dose: '', posology: '' };
     switch (selectedDrug) {
       case 'amoxicilina':
-        // Amoxicilina 250mg/5ml - Dose: 50mg/kg/dia dividida em 3 doses (8/8h)
-        const doseDiaAmox = weight * 50; // mg
-        const dosePorTomadaAmox = doseDiaAmox / 3; // mg
-        const mlPorTomadaAmox = (dosePorTomadaAmox * 5) / 250; // ml
-        result = `Amoxicilina Suspensão 250mg/5ml\nTomar ${mlPorTomadaAmox.toFixed(1)} ml de 8 em 8 horas.`;
+        const doseDiaAmox = weight * 50;
+        const dosePorTomadaAmox = doseDiaAmox / 3;
+        const mlPorTomadaAmox = (dosePorTomadaAmox * 5) / 250;
+        result = {
+          name: 'Amoxicilina Suspensão 250mg/5ml',
+          dose: `${mlPorTomadaAmox.toFixed(1)} ml`,
+          posology: 'de 8 em 8 horas'
+        };
         break;
       case 'dipirona':
-        // Dipirona Gotas 500mg/ml - Dose: 1 gota por kg (máx 40 gotas)
         const gotasDipirona = Math.min(Math.floor(weight), 40);
-        result = `Dipirona Gotas 500mg/ml\nTomar ${gotasDipirona} gotas de 6 em 6 horas em caso de dor ou febre.`;
+        result = {
+          name: 'Dipirona Gotas 500mg/ml',
+          dose: `${gotasDipirona} gotas`,
+          posology: 'de 6 em 6 horas em caso de dor ou febre'
+        };
         break;
       case 'ibuprofeno':
-        // Ibuprofeno Gotas 50mg/ml - Dose: 1 a 2 gotas por kg (máx 40 gotas)
         const gotasIbuprofeno = Math.min(Math.floor(weight), 40);
-        result = `Ibuprofeno Gotas 50mg/ml\nTomar ${gotasIbuprofeno} gotas de 6 em 6 horas em caso de dor ou inflamação.`;
+        result = {
+          name: 'Ibuprofeno Gotas 50mg/ml',
+          dose: `${gotasIbuprofeno} gotas`,
+          posology: 'de 6 em 6 horas em caso de dor ou inflamação'
+        };
         break;
       default:
-        result = 'Medicamento não configurado.';
+        setCalculatedDose(null);
+        return;
     }
     setCalculatedDose(result);
   };
 
   const addDoseToPrescription = () => {
     if (calculatedDose) {
-      setPrescriptionText(prev => prev.replace('\n\n\n\n___________________________________', `\n\nPosologia Pediátrica Calculada:\n${calculatedDose}\n\n\n\n___________________________________`));
+      const template = `\n\nMedicamento: ${calculatedDose.name}\nDose: ${calculatedDose.dose}\nPosologia: ${calculatedDose.posology}\n\n___________________________________`;
+      setPrescriptionText(prev => prev.replace('\n\n\n\n___________________________________', `${template}\n\n\n\n___________________________________`));
     }
   };
 
@@ -110,13 +123,24 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
             <Pill className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
             Receituário Interativo
           </h2>
-          <button 
-            onClick={handlePrint}
-            className="flex items-center gap-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-4 py-2 rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors"
-          >
-            <Printer className="w-4 h-4" />
-            Imprimir
-          </button>
+          <div className="flex items-center gap-4">
+            <select
+              value={prescriptionStatus}
+              onChange={(e) => setPrescriptionStatus(e.target.value as any)}
+              className="bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="não impresso">Não impresso</option>
+              <option value="não assinado">Não assinado</option>
+              <option value="assinado">Assinado</option>
+            </select>
+            <button 
+              onClick={handlePrint}
+              className="flex items-center gap-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-4 py-2 rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors"
+            >
+              <Printer className="w-4 h-4" />
+              Imprimir
+            </button>
+          </div>
         </div>
 
         <div className="bg-surface rounded-3xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm">
@@ -168,18 +192,29 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
               Calcular Dose
             </button>
 
-            {calculatedDose && (
-              <div className="mt-6 p-4 bg-surface rounded-xl border border-indigo-200 dark:border-indigo-700 shadow-sm">
-                <h4 className="text-sm font-bold text-indigo-900 dark:text-indigo-200 mb-2">Resultado:</h4>
-                <p className="text-sm text-text-secondary whitespace-pre-wrap mb-4">{calculatedDose}</p>
-                <button 
-                  onClick={addDoseToPrescription}
-                  className="w-full text-sm bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-200 py-2 rounded-lg font-medium hover:bg-indigo-200 dark:hover:bg-indigo-700 transition-colors"
+            <AnimatePresence>
+              {calculatedDose && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0, y: -10 }}
+                  animate={{ opacity: 1, height: 'auto', y: 0 }}
+                  exit={{ opacity: 0, height: 0, y: -10 }}
+                  className="mt-6 p-4 bg-surface rounded-xl border border-indigo-200 dark:border-indigo-700 shadow-sm overflow-hidden"
                 >
-                  Adicionar ao Receituário
-                </button>
-              </div>
-            )}
+                  <h4 className="text-sm font-bold text-indigo-900 dark:text-indigo-200 mb-2">Resultado:</h4>
+                  <div className="text-sm text-text-secondary mb-4">
+                    <p><strong>Medicamento:</strong> {calculatedDose.name}</p>
+                    <p><strong>Dose:</strong> {calculatedDose.dose}</p>
+                    <p><strong>Posologia:</strong> {calculatedDose.posology}</p>
+                  </div>
+                  <button 
+                    onClick={addDoseToPrescription}
+                    className="w-full text-sm bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-200 py-2 rounded-lg font-medium hover:bg-indigo-200 dark:hover:bg-indigo-700 transition-colors"
+                  >
+                    Adicionar ao Receituário
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
@@ -222,18 +257,25 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
               Calcular Limite
             </button>
 
-            {maxTubetes !== null && (
-              <div className="mt-6 p-4 bg-surface rounded-xl border border-emerald-200 dark:border-emerald-700 shadow-sm">
-                <h4 className="text-sm font-bold text-emerald-900 dark:text-emerald-200 mb-2">Limite Máximo:</h4>
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-emerald-600">{maxTubetes.toFixed(1)}</span>
-                  <span className="text-sm text-text-secondary">tubetes</span>
-                </div>
-                <p className="text-[10px] text-text-secondary mt-2 leading-tight">
-                  Baseado na dose máxima de {ANESTHETICS[selectedAnesthetic as keyof typeof ANESTHETICS].maxDose} mg/kg.
-                </p>
-              </div>
-            )}
+            <AnimatePresence>
+              {maxTubetes !== null && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0, y: -10 }}
+                  animate={{ opacity: 1, height: 'auto', y: 0 }}
+                  exit={{ opacity: 0, height: 0, y: -10 }}
+                  className="mt-6 p-4 bg-surface rounded-xl border border-emerald-200 dark:border-emerald-700 shadow-sm overflow-hidden"
+                >
+                  <h4 className="text-sm font-bold text-emerald-900 dark:text-emerald-200 mb-2">Limite Máximo:</h4>
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-bold text-emerald-600">{maxTubetes.toFixed(1)}</span>
+                    <span className="text-sm text-text-secondary">tubetes</span>
+                  </div>
+                  <p className="text-[10px] text-text-secondary mt-2 leading-tight">
+                    Baseado na dose máxima de {ANESTHETICS[selectedAnesthetic as keyof typeof ANESTHETICS].maxDose} mg/kg.
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 

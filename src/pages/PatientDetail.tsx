@@ -13,6 +13,7 @@ import { FilesTab } from '../components/patient/FilesTab';
 import { TreatmentPlanTab } from '../components/patient/TreatmentPlanTab';
 import { PersonalInfoTab } from '../components/patient/PersonalInfoTab';
 import { PaymentsTab } from '../components/patient/PaymentsTab';
+import { ConsentTab } from '../components/patient/ConsentTab';
 
 export const PatientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,6 +46,7 @@ export const PatientDetail: React.FC = () => {
     { id: 'odontogram', label: 'Odontograma', icon: ClipboardList, component: OdontogramTab },
     { id: 'prescription', label: 'Receituário', icon: Pill, component: PrescriptionTab },
     { id: 'files', label: 'Arquivos', icon: FileImage, component: FilesTab },
+    { id: 'consent', label: 'Consentimento', icon: FileText, component: ConsentTab },
     { id: 'treatment', label: 'Plano de Tratamento', icon: ClipboardList, component: TreatmentPlanTab },
     { id: 'payments', label: 'Pagamentos', icon: DollarSign, component: PaymentsTab },
   ];
@@ -106,34 +108,30 @@ export const PatientDetail: React.FC = () => {
         </div>
         
         <div className="p-6 min-h-[400px] overflow-hidden">
-          <AnimatePresence mode="wait" custom={direction}>
+          <AnimatePresence mode="popLayout" custom={direction}>
             <motion.div
               key={activeTab}
               custom={direction}
               variants={{
                 enter: (direction: number) => ({
-                  x: direction > 0 ? 20 : -20,
+                  x: direction > 0 ? 10 : -10,
                   opacity: 0,
-                  scale: 0.98
                 }),
                 center: {
                   x: 0,
                   opacity: 1,
-                  scale: 1
                 },
                 exit: (direction: number) => ({
-                  x: direction > 0 ? -20 : 20,
+                  x: direction > 0 ? -10 : 10,
                   opacity: 0,
-                  scale: 0.98
                 })
               }}
               initial="enter"
               animate="center"
               exit="exit"
               transition={{
-                x: { type: "spring", stiffness: 300, damping: 30 },
-                opacity: { duration: 0.2 },
-                scale: { duration: 0.2 }
+                x: { type: "tween", ease: "easeInOut", duration: 0.15 },
+                opacity: { duration: 0.15 }
               }}
             >
               <ActiveComponent patient={patient} />

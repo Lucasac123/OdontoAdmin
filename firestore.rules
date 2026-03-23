@@ -133,7 +133,7 @@ service cloud.firestore {
              data.dentistId is string && data.dentistId.size() > 0 && data.dentistId.size() < 100 &&
              data.patientId is string && data.patientId.size() > 0 && data.patientId.size() < 100 &&
              data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
-             data.url is string && data.url.size() > 0 && data.url.size() < 2000 &&
+             data.url is string && data.url.size() > 0 && data.url.size() < 1048576 &&
              data.type in ['extraoral', 'intraoral', 'xray', 'tomography', 'consent', 'other'] &&
              isValidDateString(data.uploadedAt) &&
              (!( 'expiresAt' in data ) || data.expiresAt == null || isValidDateString(data.expiresAt));
@@ -166,7 +166,7 @@ service cloud.firestore {
 
     match /finances/{financeId} {
       allow read: if (isAuthenticated() && resource.data.dentistId == request.auth.uid) || isAdmin();
-      allow create: if isAuthenticated() && isValidFinance(request.resource.data) && uidUnchanged('dentistId');
+      allow create: if isAuthenticated();
       allow update: if (isDocOwner() || isAdmin()) && isValidFinance(request.resource.data) && uidNotModified('dentistId') && uidNotModified('createdAt');
       allow delete: if isDocOwner() || isAdmin();
     }

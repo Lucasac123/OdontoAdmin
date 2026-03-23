@@ -1,8 +1,9 @@
 import React from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Logo } from './Logo';
+import { GlobalSearch } from './GlobalSearch';
 import { 
   LayoutDashboard, 
   Users, 
@@ -15,7 +16,8 @@ import {
   Menu,
   X,
   Download,
-  Trash2
+  Trash2,
+  Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -29,13 +31,20 @@ const SidebarContent = ({
   navigate,
   deferredPrompt,
   handleInstallPWA
-}: any) => (
+}: any) => {
+  const [showSettings, setShowSettings] = React.useState(false);
+
+  return (
   <div className="flex flex-col h-full bg-surface border-r border-zinc-200 dark:border-white/5 w-64">
-    <div className="p-6">
+    <div className="p-6 pb-2">
       <Logo />
     </div>
     
-    <nav className="flex-1 px-4 space-y-2 mt-4">
+    <div className="px-4 mb-2">
+      <GlobalSearch variant="sidebar" />
+    </div>
+
+    <nav className="flex-1 px-4 space-y-2 mt-2">
       {navItems.map((item: any) => (
         <NavLink
           key={item.to}
@@ -56,31 +65,7 @@ const SidebarContent = ({
     </nav>
 
     <div className="p-4 border-t border-zinc-200 dark:border-white/5">
-      {deferredPrompt && (
-        <button
-          onClick={handleInstallPWA}
-          className="w-full flex items-center gap-3 px-4 py-3 mb-4 rounded-xl bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600/20 transition-all border border-indigo-500/20 group"
-        >
-          <Download className="w-5 h-5 group-hover:bounce" />
-          <span className="text-sm font-bold">Baixar App (PWA)</span>
-        </button>
-      )}
-
-      <div className="flex flex-col gap-4 mb-4 px-2">
-        <div className="flex items-center gap-3">
-          {user?.photoURL && (
-            <img 
-              src={user.photoURL} 
-              alt={user.displayName || 'User'} 
-              className="w-8 h-8 rounded-full border border-zinc-200 dark:border-white/10"
-              referrerPolicy="no-referrer"
-            />
-          )}
-          <span className="text-sm font-medium text-text-primary truncate max-w-[100px]">
-            {user?.displayName || user?.email}
-          </span>
-        </div>
-        
+      <div className="flex flex-col gap-4 px-2">
         <div className="flex bg-zinc-100 dark:bg-black/20 p-1 rounded-xl relative">
           <motion.div 
             className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-zinc-800 rounded-lg shadow-sm"
@@ -105,31 +90,65 @@ const SidebarContent = ({
             <Moon className="w-4 h-4" />
           </button>
         </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => navigate('/trash')}
-          className="px-4 py-3 text-text-secondary hover:text-white hover:bg-white/5 rounded-xl transition-colors"
-          title="Lixeira"
-        >
-          <Trash2 className="w-5 h-5" />
-        </button>
-        <button
-          onClick={handleLogout}
-          className="flex-1 flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors"
-        >
-          <LogOut className="w-5 h-5" />
-          Sair
-        </button>
+
+        <div className="relative flex items-center gap-2">
+          <button 
+            onClick={() => setShowSettings(!showSettings)}
+            className="flex-1 flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          >
+            {user?.photoURL && (
+              <img 
+                src={user.photoURL} 
+                alt={user.displayName || 'User'} 
+                className="w-8 h-8 rounded-full border border-zinc-200 dark:border-white/10"
+                referrerPolicy="no-referrer"
+              />
+            )}
+            <span className="text-sm font-medium text-text-primary truncate flex-1 text-left">
+              {user?.displayName || user?.email}
+            </span>
+          </button>
+          
+          {deferredPrompt && (
+            <button
+              onClick={handleInstallPWA}
+              className="p-2 rounded-xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600/20 transition-all border border-indigo-500/20"
+              title="Instalar App"
+            >
+              <Download className="w-5 h-5" />
+            </button>
+          )}
+          
+          <AnimatePresence>
+            {showSettings && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className="absolute bottom-full left-0 right-0 mb-2 bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg overflow-hidden z-50 p-1"
+              >
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors text-sm font-medium"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sair da conta
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   </div>
-);
+  );
+};
 
 export const Layout: React.FC = () => {
   const { user, logOut, firestoreError } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [deferredPrompt, setDeferredPrompt] = React.useState<any>(null);
 
@@ -161,6 +180,7 @@ export const Layout: React.FC = () => {
     { to: '/agenda', icon: Calendar, label: 'Agenda' },
     { to: '/financial', icon: DollarSign, label: 'Financeiro' },
     { to: '/ai-assistant', icon: BrainCircuit, label: 'IA Assistente' },
+    { to: '/trash', icon: Trash2, label: 'Lixeira' },
   ];
 
   const handleLogout = async () => {
@@ -188,50 +208,68 @@ export const Layout: React.FC = () => {
       {/* Mobile Header & Menu */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-surface border-b border-zinc-200 dark:border-white/5 z-50 flex items-center justify-between px-4">
         <Logo />
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-text-secondary">
-          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <GlobalSearch variant="header" />
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-text-secondary">
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>
         {isMobileMenuOpen && (
-          <motion.div 
-            initial={{ x: '-100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '-100%' }}
-            transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
-            className="fixed inset-0 z-40 md:hidden pt-16"
-          >
-            <SidebarContent 
-              user={user}
-              theme={theme}
-              setTheme={setTheme}
-              handleLogout={handleLogout}
-              setIsMobileMenuOpen={setIsMobileMenuOpen}
-              navItems={navItems}
-              navigate={navigate}
-              deferredPrompt={deferredPrompt}
-              handleInstallPWA={handleInstallPWA}
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 bg-black/20 dark:bg-black/50 backdrop-blur-sm z-40 md:hidden"
             />
-          </motion.div>
+            <motion.div 
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              className="fixed inset-y-0 left-0 z-50 md:hidden pt-16 w-64"
+            >
+              <SidebarContent 
+                user={user}
+                theme={theme}
+                setTheme={setTheme}
+                handleLogout={handleLogout}
+                setIsMobileMenuOpen={setIsMobileMenuOpen}
+                navItems={navItems}
+                navigate={navigate}
+                deferredPrompt={deferredPrompt}
+                handleInstallPWA={handleInstallPWA}
+              />
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
+      <main className="flex-1 overflow-y-auto pt-16 md:pt-0 relative bg-bg">
         {firestoreError && (
           <div className="bg-red-500 text-white px-4 py-2 text-sm text-center font-medium">
             {firestoreError}
           </div>
         )}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="p-4 md:p-8 max-w-7xl mx-auto min-h-full"
-        >
-          <Outlet />
-        </motion.div>
+        <div className="p-4 md:p-8 max-w-7xl mx-auto min-h-full">
+          <AnimatePresence mode="popLayout">
+            <motion.div 
+              key={location.pathname}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15, ease: 'easeInOut' }}
+              className="h-full"
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </main>
     </div>
   );

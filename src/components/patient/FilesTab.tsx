@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, writeBatch, getDocs } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../../firebase';
 import { Patient, FileRecord } from '../../types';
-import { Upload, FileImage, FileText, Trash2, Download, Eye, X, ZoomIn, ZoomOut, RotateCcw, Music, Clock, Calendar } from 'lucide-react';
+import { Upload, FileImage, FileText, Trash2, Download, Eye, X, ZoomIn, ZoomOut, RotateCcw, Music, Clock, Calendar, Printer } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from '../ConfirmModal';
 
@@ -141,6 +141,28 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
       setFileToDelete(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `files/${fileToDelete.id}`);
+    }
+  };
+
+  const handlePrintFile = (file: FileRecord) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>${file.name}</title>
+            <style>
+              body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+              img { max-width: 100%; }
+            </style>
+          </head>
+          <body>
+            <img src="${file.url}" />
+            <script>window.print(); window.close();</script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
     }
   };
 
@@ -374,9 +396,17 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
                     href={selectedFile.url} 
                     download={selectedFile.name}
                     className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-xl transition-colors"
+                    title="Download"
                   >
                     <Download className="w-5 h-5" />
                   </a>
+                  <button 
+                    onClick={() => handlePrintFile(selectedFile)}
+                    className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-xl transition-colors"
+                    title="Imprimir"
+                  >
+                    <Printer className="w-5 h-5" />
+                  </button>
                   <button 
                     onClick={() => {
                       setSelectedFile(null);

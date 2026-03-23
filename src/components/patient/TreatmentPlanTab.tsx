@@ -3,6 +3,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../../firebase';
 import { Patient } from '../../types';
 import { Save, Loader2, Plus, Trash2, Printer, DollarSign } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface Procedure {
   id: string;
@@ -270,29 +271,37 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                 Nenhum procedimento adicionado ao plano.
               </div>
             ) : (
-              procedures.map(proc => (
-                <div key={proc.id} className="p-4 flex items-center justify-between hover:bg-surface transition-colors">
-                  <div className="flex-1">
-                    <p className="font-medium text-text-primary">{proc.name}</p>
-                    <div className="flex gap-4 text-sm text-text-secondary">
-                      {proc.tooth && <span>Dente/Região: {proc.tooth}</span>}
-                      <span>Qtd: {proc.quantity || 1}</span>
-                      <span>Unit: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(proc.unitPrice || proc.cost)}</span>
+              <AnimatePresence initial={false}>
+                {procedures.map(proc => (
+                  <motion.div 
+                    key={proc.id} 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="p-4 flex items-center justify-between hover:bg-surface transition-colors overflow-hidden"
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium text-text-primary">{proc.name}</p>
+                      <div className="flex gap-4 text-sm text-text-secondary">
+                        {proc.tooth && <span>Dente/Região: {proc.tooth}</span>}
+                        <span>Qtd: {proc.quantity || 1}</span>
+                        <span>Unit: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(proc.unitPrice || proc.cost)}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="font-semibold text-text-primary">
-                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(proc.cost)}
-                    </span>
-                    <button 
-                      onClick={() => handleDeleteProcedure(proc.id)}
-                      className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              ))
+                    <div className="flex items-center gap-4">
+                      <span className="font-semibold text-text-primary">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(proc.cost)}
+                      </span>
+                      <button 
+                        onClick={() => handleDeleteProcedure(proc.id)}
+                        className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             )}
           </div>
         </div>

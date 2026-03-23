@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
 import { Send, Bot, Search, Image as ImageIcon, Sparkles, Loader2, Upload } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -182,8 +183,10 @@ export const AIAssistant: React.FC = () => {
             { id: 'analyze', label: 'Análise de Imagem', icon: ImageIcon },
             { id: 'generate', label: 'Gerar Ilustração', icon: Sparkles },
           ].map((tab) => (
-            <button
+            <motion.button
               key={tab.id}
+              whileHover={{ backgroundColor: 'rgba(0,0,0,0.02)' }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors relative ${
                 activeTab === tab.id 
@@ -194,14 +197,16 @@ export const AIAssistant: React.FC = () => {
               <tab.icon className="w-4 h-4" />
               {tab.label}
               {activeTab === tab.id && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 dark:bg-indigo-400" />
+                <motion.div 
+                  layoutId="aiActiveTab"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 dark:bg-indigo-400" 
+                />
               )}
-            </button>
+            </motion.button>
           ))}
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 bg-zinc-50/50 dark:bg-zinc-950/50">
-          {/* Chat Tab */}
           {activeTab === 'chat' && (
             <div className="h-full flex flex-col">
               <div className="flex-1 overflow-y-auto space-y-4 pb-4">
@@ -253,7 +258,6 @@ export const AIAssistant: React.FC = () => {
             </div>
           )}
 
-          {/* Search Tab */}
           {activeTab === 'search' && (
             <div className="h-full flex flex-col space-y-6">
               <form onSubmit={handleSearchSubmit} className="shrink-0 relative">
@@ -288,7 +292,6 @@ export const AIAssistant: React.FC = () => {
             </div>
           )}
 
-          {/* Analyze Tab */}
           {activeTab === 'analyze' && (
             <div className="h-full flex flex-col md:flex-row gap-6">
               <div className="w-full md:w-1/3 flex flex-col gap-4">
@@ -343,7 +346,6 @@ export const AIAssistant: React.FC = () => {
             </div>
           )}
 
-          {/* Generate Tab */}
           {activeTab === 'generate' && (
             <div className="h-full flex flex-col md:flex-row gap-6">
               <div className="w-full md:w-1/3 flex flex-col gap-4">

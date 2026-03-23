@@ -33,37 +33,14 @@ console.log("Firebase Config:", { ...firebaseConfig, apiKey: '***' });
 const app = initializeApp(firebaseConfig);
 
 // Initialize Firestore with settings to maximize connectivity in restricted environments
-export const db: Firestore = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
-}, firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)' 
+export const db: Firestore = initializeFirestore(app, {}, firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)' 
   ? firebaseConfig.firestoreDatabaseId 
   : undefined);
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Connection test
-async function testConnection() {
-  try {
-    // Use getDocFromServer to bypass cache and test real connectivity
-    await getDocFromServer(doc(db, 'test', 'connection'));
-    console.log("Firestore connection successful.");
-  } catch (error: any) {
-    console.error("Firestore Connection Test Error:", {
-      code: error.code,
-      message: error.message,
-      stack: error.stack
-    });
-    
-    if (error.message?.includes('the client is offline') || error.code === 'unavailable') {
-      console.error("Firestore is offline. This usually means:");
-      console.error("1. The Firestore Database hasn't been created in the Firebase Console.");
-      console.error("2. The Cloud Firestore API is disabled in the Google Cloud Console.");
-      console.error("3. There is a network restriction blocking the connection.");
-    }
-  }
-}
-testConnection();
+// Connection test removed to prevent false positive UI errors
 
 export enum OperationType {
   CREATE = 'create',

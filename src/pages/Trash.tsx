@@ -4,6 +4,7 @@ import { db, auth, handleFirestoreError, OperationType } from '../firebase';
 import { TrashItem } from '../types';
 import { Trash2, RotateCcw, Loader2 } from 'lucide-react';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { motion, AnimatePresence } from 'motion/react';
 
 export const Trash = () => {
   const [trashItems, setTrashItems] = useState<TrashItem[]>([]);
@@ -59,22 +60,31 @@ export const Trash = () => {
     <div className="p-6">
       <h1 className="text-2xl font-bold text-text-primary mb-6">Lixeira</h1>
       <div className="grid gap-4">
-        {trashItems.map(item => (
-          <div key={item.id} className="p-4 bg-surface rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
-            <div>
-              <p className="font-medium text-text-primary">{item.originalCollection}</p>
-              <p className="text-sm text-text-secondary">Apagado em: {new Date(item.deletedAt).toLocaleString()}</p>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => handleRestore(item)} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg">
-                <RotateCcw className="w-5 h-5" />
-              </button>
-              <button onClick={() => handlePermanentDelete(item.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
-                <Trash2 className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        ))}
+        <AnimatePresence initial={false}>
+          {trashItems.map(item => (
+            <motion.div 
+              key={item.id} 
+              initial={{ opacity: 0, height: 0, scale: 0.9 }}
+              animate={{ opacity: 1, height: 'auto', scale: 1 }}
+              exit={{ opacity: 0, height: 0, scale: 0.9 }}
+              transition={{ duration: 0.2 }}
+              className="p-4 bg-surface rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-between"
+            >
+              <div>
+                <p className="font-medium text-text-primary">{item.originalCollection}</p>
+                <p className="text-sm text-text-secondary">Apagado em: {new Date(item.deletedAt).toLocaleString()}</p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => handleRestore(item)} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg">
+                  <RotateCcw className="w-5 h-5" />
+                </button>
+                <button onClick={() => handlePermanentDelete(item.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
 
       <ConfirmModal

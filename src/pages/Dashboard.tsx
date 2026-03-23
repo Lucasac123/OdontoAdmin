@@ -6,6 +6,7 @@ import { Users, Calendar, DollarSign, TrendingUp, Clock, BrainCircuit, Trash2, P
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { motion, AnimatePresence } from 'motion/react';
 
 export const Dashboard: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -99,9 +100,32 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const totalIncome = finances.filter(f => f.type === 'income').reduce((acc, curr) => acc + curr.amount, 0);
-  const totalExpense = finances.filter(f => f.type === 'expense').reduce((acc, curr) => acc + curr.amount, 0);
+  const currentMonth = new Date().toISOString().substring(0, 7);
+  const financesInMonth = finances.filter(f => f.date.substring(0, 7) === currentMonth);
+
+  const totalIncome = financesInMonth.filter(f => f.type === 'income').reduce((acc, curr) => acc + curr.amount, 0);
+  const totalExpense = financesInMonth.filter(f => f.type === 'expense').reduce((acc, curr) => acc + curr.amount, 0);
   const balance = totalIncome - totalExpense;
+
+  const today = new Date();
+  const next7Days = new Date();
+  next7Days.setDate(today.getDate() + 7);
+
+  const upcomingBirthdays = patients.filter(p => {
+    if (!p.dob) return false;
+    const [year, month, day] = p.dob.split('-').map(Number);
+    const birthdayThisYear = new Date(today.getFullYear(), month - 1, day);
+    const birthday = birthdayThisYear < today ?
+                     new Date(today.getFullYear() + 1, month - 1, day) :
+                     birthdayThisYear;
+    return birthday >= today && birthday <= next7Days;
+  }).sort((a, b) => {
+    const [yearA, monthA, dayA] = a.dob!.split('-').map(Number);
+    const [yearB, monthB, dayB] = b.dob!.split('-').map(Number);
+    const bdayA = new Date(today.getFullYear(), monthA - 1, dayA) < today ? new Date(today.getFullYear() + 1, monthA - 1, dayA) : new Date(today.getFullYear(), monthA - 1, dayA);
+    const bdayB = new Date(today.getFullYear(), monthB - 1, dayB) < today ? new Date(today.getFullYear() + 1, monthB - 1, dayB) : new Date(today.getFullYear(), monthB - 1, dayB);
+    return bdayA.getTime() - bdayB.getTime();
+  });
 
   const patientStatusData = [
     { name: 'Ativo', value: patients.filter(p => p.status === 'Ativo').length },
@@ -113,7 +137,7 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">Dashboard</h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           {new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -145,7 +169,7 @@ export const Dashboard: React.FC = () => {
 
         <div className="bg-surface p-6 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-text-primary">Saldo</h3>
+            <h3 className="text-lg font-medium text-text-primary">Saldo Mensal</h3>
             <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
               <DollarSign className="w-5 h-5" />
             </div>
@@ -166,28 +190,36 @@ export const Dashboard: React.FC = () => {
             {appointments.length === 0 ? (
               <div className="p-6 text-center text-text-secondary">Nenhuma consulta para hoje.</div>
             ) : (
-              appointments.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(app => (
-                <div key={app.id} className="p-4 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex flex-col items-center justify-center text-indigo-600 dark:text-indigo-400">
-                      <span className="text-xs font-semibold">{new Date(app.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+              <AnimatePresence initial={false}>
+                {appointments.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(app => (
+                  <motion.div 
+                    key={app.id} 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="p-4 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors overflow-hidden"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex flex-col items-center justify-center text-indigo-600 dark:text-indigo-400">
+                        <span className="text-xs font-semibold">{new Date(app.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-text-primary">{app.patientName || 'Paciente não identificado'}</p>
+                        <p className="text-sm text-text-secondary flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> {app.duration || 30} min
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-text-primary">{app.patientName || 'Paciente não identificado'}</p>
-                      <p className="text-sm text-text-secondary flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {app.duration || 30} min
-                      </p>
-                    </div>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    app.status === 'completed' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
-                    app.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' :
-                    'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
-                  }`}>
-                    {app.status === 'completed' ? 'Concluída' : app.status === 'cancelled' ? 'Cancelada' : 'Agendada'}
-                  </span>
-                </div>
-              ))
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      app.status === 'completed' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
+                      app.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' :
+                      'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
+                    }`}>
+                      {app.status === 'completed' ? 'Concluída' : app.status === 'cancelled' ? 'Cancelada' : 'Agendada'}
+                    </span>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             )}
           </div>
         </div>
@@ -217,6 +249,25 @@ export const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
+          <h3 className="text-lg font-medium text-text-primary mb-4">Aniversariantes (Próximos 7 dias)</h3>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {upcomingBirthdays.length === 0 ? (
+              <p className="text-sm text-text-secondary">Nenhum aniversário nos próximos 7 dias.</p>
+            ) : (
+              upcomingBirthdays.map(patient => {
+                const [year, month, day] = patient.dob!.split('-').map(Number);
+                return (
+                  <div key={patient.id} className="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg flex items-center justify-between gap-2 border border-zinc-200 dark:border-zinc-700">
+                    <p className="text-sm font-medium text-text-primary">{patient.name}</p>
+                    <p className="text-sm text-text-secondary">{day}/{month}</p>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
           <h3 className="text-lg font-medium text-text-primary mb-4">Notas Rápidas</h3>
           <form onSubmit={handleAddNote} className="mb-4">
             <textarea
@@ -230,22 +281,33 @@ export const Dashboard: React.FC = () => {
             </button>
           </form>
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {quickNotes.map(note => (
-              <div key={note.id} className="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg flex items-start justify-between gap-2 border border-zinc-200 dark:border-zinc-700">
-                <p className="text-sm text-text-secondary">{note.content}</p>
-                <button onClick={() => handleDeleteNote(note)} className="text-zinc-400 hover:text-red-500">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+            <AnimatePresence initial={false}>
+              {quickNotes.map(note => (
+                <motion.div 
+                  key={note.id} 
+                  initial={{ opacity: 0, height: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, height: 'auto', scale: 1 }}
+                  exit={{ opacity: 0, height: 0, scale: 0.9 }}
+                  transition={{ duration: 0.2 }}
+                  className="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg flex items-start justify-between gap-2 border border-zinc-200 dark:border-zinc-700"
+                >
+                  <p className="text-sm text-text-secondary">{note.content}</p>
+                  <button onClick={() => handleDeleteNote(note)} className="text-zinc-400 hover:text-red-500">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         </div>
+      </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
           <h3 className="text-lg font-medium text-text-primary mb-4">Composição de Pacientes</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+          <div className="h-64 outline-none focus:outline-none">
+            <ResponsiveContainer width="100%" height="100%" className="outline-none focus:outline-none">
+              <PieChart style={{ outline: 'none' }}>
                 <Pie data={patientStatusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
                   {patientStatusData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

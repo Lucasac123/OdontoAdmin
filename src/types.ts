@@ -26,6 +26,9 @@ export interface Patient {
   zipCode?: string;
   source?: string;
   status?: 'Ativo' | 'Inativo' | 'Em Tratamento';
+  tcleStatus?: 'nao_impresso' | 'nao_assinado' | 'assinado';
+  tcleSignedAt?: string;
+  tcleSignatureUrl?: string;
   anamnesis?: string; // JSON string
   odontogram?: string; // JSON string
   treatmentStatus?: 'Planejado' | 'Em Andamento' | 'Concluído';
