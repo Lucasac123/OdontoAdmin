@@ -22,6 +22,8 @@ const firebaseConfig = {
   apiKey: getEnvVar(import.meta.env.VITE_FIREBASE_API_KEY, configFromJson.apiKey),
   authDomain: getEnvVar(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN, configFromJson.authDomain),
   projectId: getEnvVar(import.meta.env.VITE_FIREBASE_PROJECT_ID, configFromJson.projectId),
+  storageBucket: getEnvVar(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET, configFromJson.storageBucket),
+  messagingSenderId: getEnvVar(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID, configFromJson.messagingSenderId),
   appId: getEnvVar(import.meta.env.VITE_FIREBASE_APP_ID, configFromJson.appId),
   firestoreDatabaseId: getEnvVar(import.meta.env.VITE_FIREBASE_DATABASE_ID, configFromJson.firestoreDatabaseId)
 };
@@ -30,9 +32,10 @@ console.log("Firebase Config:", { ...firebaseConfig, apiKey: '***' });
 
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firestore with experimentalForceLongPolling to avoid WebSocket issues in some environments
+// Initialize Firestore with settings to maximize connectivity in restricted environments
 export const db: Firestore = initializeFirestore(app, {
   experimentalForceLongPolling: true,
+  useFetchStreams: false, // Helps in some environments where streams are blocked
 }, firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)' 
   ? firebaseConfig.firestoreDatabaseId 
   : undefined);

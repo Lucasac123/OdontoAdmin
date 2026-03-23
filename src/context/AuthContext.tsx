@@ -21,9 +21,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      try {
-        setUser(currentUser);
-        if (currentUser) {
+      setUser(currentUser);
+      
+      // Set loading to false as soon as we have the auth state
+      // This makes the app feel much faster
+      setLoading(false);
+
+      if (currentUser) {
+        try {
           const userRef = doc(db, 'users', currentUser.uid);
           const userSnap = await getDoc(userRef);
           if (!userSnap.exists()) {
@@ -35,22 +40,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               createdAt: new Date().toISOString()
             });
           }
-        }
-      } catch (error) {
-        console.error("Auth state change error:", error);
-        // We don't want to throw here as it would crash the listener
-        // and prevent setLoading(false) from running.
-        // If it's a Firestore error, we can log it.
-        if (currentUser) {
+        } catch (error) {
+          console.error("Firestore user sync error:", error);
           try {
             handleFirestoreError(error, OperationType.WRITE, 'users');
           } catch (e) {
-            // handleFirestoreError throws, so we catch it here to allow setLoading(false)
             console.error("Handled Firestore Error:", e);
           }
         }
-      } finally {
-        setLoading(false);
       }
     });
     return () => unsubscribe();
