@@ -62,7 +62,8 @@ export const AIAssistant: React.FC = () => {
       setChatMessages(prev => [...prev, { role: 'model', text: response.text || 'Desculpe, não consegui gerar uma resposta.' }]);
     } catch (error) {
       console.error(error);
-      setChatMessages(prev => [...prev, { role: 'model', text: 'Ocorreu um erro ao processar sua solicitação.' }]);
+      const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro ao processar sua solicitação.';
+      setChatMessages(prev => [...prev, { role: 'model', text: `Erro: ${errorMessage}` }]);
     } finally {
       setIsChatLoading(false);
     }
@@ -86,7 +87,8 @@ export const AIAssistant: React.FC = () => {
       setSearchResult(response.text || 'Nenhum resultado encontrado.');
     } catch (error) {
       console.error(error);
-      setSearchResult('Ocorreu um erro ao realizar a pesquisa.');
+      const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro ao realizar a pesquisa.';
+      setSearchResult(`Erro: ${errorMessage}`);
     } finally {
       setIsSearchLoading(false);
     }
