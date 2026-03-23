@@ -276,7 +276,7 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
                 type="file" 
                 onChange={handleFileUpload} 
                 disabled={isUploading}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed z-10"
                 accept="image/*,.pdf,audio/*"
               />
               <button 
