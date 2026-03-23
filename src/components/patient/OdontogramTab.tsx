@@ -122,7 +122,7 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
         contents: {
           parts: [
             ...imageParts,
-            { text: `Analyze these dental images for tooth number ${toothId}. Suggest possible diagnoses like caries, restorations, etc. Keep it brief.` }
+            { text: `Analise estas imagens odontológicas para o dente número ${toothId}. Sugira possíveis diagnósticos como cáries, restaurações, etc. Seja breve.` }
           ]
         }
       });

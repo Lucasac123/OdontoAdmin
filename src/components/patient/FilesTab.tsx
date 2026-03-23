@@ -429,7 +429,7 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
                       <button 
                         onClick={handleZoomOut}
                         className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-700 rounded-lg transition-colors"
-                        title="Zoom Out"
+                        title="Diminuir Zoom"
                       >
                         <ZoomOut className="w-4 h-4" />
                       </button>
@@ -437,14 +437,14 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
                       <button 
                         onClick={handleZoomIn}
                         className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-700 rounded-lg transition-colors"
-                        title="Zoom In"
+                        title="Aumentar Zoom"
                       >
                         <ZoomIn className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={handleResetZoom}
                         className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-700 rounded-lg transition-colors"
-                        title="Reset Zoom"
+                        title="Redefinir Zoom"
                       >
                         <RotateCcw className="w-4 h-4" />
                       </button>

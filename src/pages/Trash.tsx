@@ -75,7 +75,7 @@ export const Trash = () => {
                 <p className="text-sm text-text-secondary">Apagado em: {new Date(item.deletedAt).toLocaleString()}</p>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => handleRestore(item)} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg">
+                <button onClick={() => handleRestore(item)} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg" title="Restaurar">
                   <RotateCcw className="w-5 h-5" />
                 </button>
                 <button onClick={() => handlePermanentDelete(item.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
