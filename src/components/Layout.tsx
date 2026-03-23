@@ -127,7 +127,7 @@ const SidebarContent = ({
 );
 
 export const Layout: React.FC = () => {
-  const { user, logOut } = useAuth();
+  const { user, logOut, firestoreError } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
@@ -219,6 +219,11 @@ export const Layout: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
+        {firestoreError && (
+          <div className="bg-red-500 text-white px-4 py-2 text-sm text-center font-medium">
+            {firestoreError}
+          </div>
+        )}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

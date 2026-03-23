@@ -1,10 +1,10 @@
 {
-  "projectId": "studio-9284928461-51a5b",
-  "appId": "1:906706564009:web:8d67bc751a49d59a7c0ab8",
-  "apiKey": "AIzaSyCJ7n4a2H0JsqZoQCPR9HbewYlWgZOcasE",
-  "authDomain": "studio-9284928461-51a5b.firebaseapp.com",
-  "firestoreDatabaseId": "(default)",
-  "storageBucket": "studio-9284928461-51a5b.firebasestorage.app",
-  "messagingSenderId": "906706564009",
+  "projectId": "grounded-chain-479502-s6",
+  "appId": "1:531539311792:web:15fed50929d21e77328f75",
+  "apiKey": "AIzaSyAQrLwWiF_IxvTmsryu_9PyiqgHKZj9HUQ",
+  "authDomain": "grounded-chain-479502-s6.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-6576334e-db85-49e0-9945-85b457a53344",
+  "storageBucket": "grounded-chain-479502-s6.firebasestorage.app",
+  "messagingSenderId": "531539311792",
   "measurementId": ""
 }

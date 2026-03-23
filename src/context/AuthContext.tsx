@@ -8,6 +8,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isSigningIn: boolean;
+  firestoreError: string | null;
   signIn: () => Promise<void>;
   logOut: () => Promise<void>;
 }
@@ -18,19 +19,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [firestoreError, setFirestoreError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      
-      // Set loading to false as soon as we have the auth state
-      // This makes the app feel much faster
       setLoading(false);
 
       if (currentUser) {
         try {
           const userRef = doc(db, 'users', currentUser.uid);
           const userSnap = await getDoc(userRef);
+          setFirestoreError(null); // Clear error if successful
           if (!userSnap.exists()) {
             await setDoc(userRef, {
               uid: currentUser.uid,
@@ -40,8 +40,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               createdAt: new Date().toISOString()
             });
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error("Firestore user sync error:", error);
+          if (error.message?.includes('the client is offline') || error.code === 'unavailable') {
+            setFirestoreError('O Firestore está offline. Verifique se o banco de dados foi criado no Console do Firebase e se a API está ativa.');
+          }
           try {
             handleFirestoreError(error, OperationType.WRITE, 'users');
           } catch (e) {
@@ -54,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async () => {
+    // ... rest of the code
     try {
       setIsSigningIn(true);
       console.log("Starting sign in with popup...");
@@ -84,7 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, isSigningIn, signIn, logOut }}>
+    <AuthContext.Provider value={{ user, loading, isSigningIn, firestoreError, signIn, logOut }}>
       {children}
     </AuthContext.Provider>
   );
