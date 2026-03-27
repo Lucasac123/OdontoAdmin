@@ -17,6 +17,9 @@ const getEnvVar = (val: string | undefined, fallback: string) => {
   return val;
 };
 
+// Determine if we are using a custom project from environment variables
+const isCustomProject = !!import.meta.env.VITE_FIREBASE_PROJECT_ID && import.meta.env.VITE_FIREBASE_PROJECT_ID !== configFromJson.projectId;
+
 // Use environment variables if available, otherwise fallback to JSON config
 const firebaseConfig = {
   apiKey: getEnvVar(import.meta.env.VITE_FIREBASE_API_KEY, configFromJson.apiKey),
@@ -25,7 +28,9 @@ const firebaseConfig = {
   storageBucket: getEnvVar(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET, configFromJson.storageBucket),
   messagingSenderId: getEnvVar(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID, configFromJson.messagingSenderId),
   appId: getEnvVar(import.meta.env.VITE_FIREBASE_APP_ID, configFromJson.appId),
-  firestoreDatabaseId: getEnvVar(import.meta.env.VITE_FIREBASE_DATABASE_ID, configFromJson.firestoreDatabaseId)
+  firestoreDatabaseId: isCustomProject 
+    ? getEnvVar(import.meta.env.VITE_FIREBASE_DATABASE_ID, '(default)') 
+    : getEnvVar(import.meta.env.VITE_FIREBASE_DATABASE_ID, configFromJson.firestoreDatabaseId)
 };
 
 console.log("Firebase Config:", { ...firebaseConfig, apiKey: '***' });
