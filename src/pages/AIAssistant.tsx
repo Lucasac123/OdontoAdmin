@@ -116,7 +116,7 @@ export const AIAssistant: React.FC = () => {
       const mimeType = analyzeImage.match(/data:(.*?);/)?.[1] || 'image/jpeg';
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3.1-pro-preview',
+        model: 'gemini-3-flash-preview',
         contents: {
           parts: [
             { inlineData: { data: base64Data, mimeType } },
@@ -144,7 +144,7 @@ export const AIAssistant: React.FC = () => {
       // Note: gemini-3-pro-image-preview requires user API key selection in a real app,
       // but we use the provided GEMINI_API_KEY here.
       const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-image-preview',
+        model: 'gemini-2.5-flash-image',
         contents: { parts: [{ text: generatePrompt }] },
         config: {
           imageConfig: {
