@@ -11,6 +11,8 @@ import {
   BrainCircuit, 
   MessageSquare, 
   ChevronRight, 
+  ChevronDown,
+  Settings,
   Plus, 
   History, 
   Trash2, 
@@ -26,6 +28,17 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export const AIAssistant: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'chat' | 'search' | 'analyze'>('chat');
+  const [selectedModel, setSelectedModel] = useState('gemini-flash-latest');
+  const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
+
+  const MODELS = [
+    { id: 'gemini-flash-latest', name: 'Flash', fullName: 'Gemini Flash (Padrão)', description: 'Equilíbrio entre velocidade e inteligência' },
+    { id: 'gemini-3.1-flash-lite-preview', name: 'Lite', fullName: 'Gemini Flash Lite', description: 'Mais rápido, menor latência' },
+    { id: 'gemini-3.1-pro-preview', name: 'Pro', fullName: 'Gemini Pro', description: 'Mais inteligente, maior raciocínio' },
+    { id: 'gemini-3-flash-preview', name: 'G3 Flash', fullName: 'Gemini 3 Flash', description: 'Modelo de última geração' },
+  ];
+  
+  const currentModel = MODELS.find(m => m.id === selectedModel) || MODELS[0];
   
   // Chat State
   const [chatMessages, setChatMessages] = useState<{role: 'user' | 'model', text: string, isError?: boolean}[]>([]);
@@ -68,7 +81,7 @@ export const AIAssistant: React.FC = () => {
       const code = errorObj.code || errorObj.error?.code;
       
       if (code === 429) {
-        return "Limite de uso atingido. O plano gratuito do Gemini possui limites de requisições por minuto. Por favor, aguarde um momento e tente novamente.";
+        return "Limite de uso atingido. O plano gratuito do Gemini possui limites de requisições por minuto. Tente aguardar um momento ou trocar para um modelo mais leve (como o Lite) no topo da tela.";
       }
       if (code === 503 || code === 500) {
         return "O serviço está temporariamente indisponível devido à alta demanda. Por favor, tente novamente em alguns instantes.";
@@ -100,12 +113,13 @@ export const AIAssistant: React.FC = () => {
     setIsChatLoading(true);
 
     try {
+      const isGemini3 = selectedModel.includes('gemini-3');
       const response = await ai.models.generateContent({
-        model: 'gemini-flash-latest',
+        model: selectedModel,
         contents: userMessage,
         config: {
           systemInstruction: 'Você é um assistente especializado em odontologia. Ajude dentistas com diagnósticos, planos de tratamento, legislação e dúvidas gerais.',
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }
+          ...(isGemini3 ? { thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } } : {})
         }
       });
       
@@ -139,7 +153,7 @@ export const AIAssistant: React.FC = () => {
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-flash-latest',
+        model: selectedModel,
         contents: searchQuery,
         config: {
           tools: [{ googleSearch: {} }]
@@ -195,7 +209,7 @@ export const AIAssistant: React.FC = () => {
       const mimeType = analyzeImage.match(/data:(.*?);/)?.[1] || 'image/jpeg';
 
       const response = await ai.models.generateContent({
-        model: 'gemini-flash-latest',
+        model: selectedModel,
         contents: {
           parts: [
             { inlineData: { data: base64Data, mimeType } },
@@ -214,14 +228,91 @@ export const AIAssistant: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6 h-full min-h-0 max-w-5xl mx-auto w-full">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 shrink-0">
-            <Sparkles className="w-6 h-6" />
+      <div className="flex flex-col gap-4 shrink-0">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 shrink-0">
+              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black text-text-primary tracking-tight leading-tight">IA Assistente</h1>
+              <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest hidden sm:block">Google Gemini Intelligence</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-black text-text-primary tracking-tight">IA Assistente</h1>
-            <p className="text-xs text-text-secondary font-bold uppercase tracking-widest">Google Gemini</p>
+
+          <div className="relative">
+            <button 
+              onClick={() => setIsModelMenuOpen(!isModelMenuOpen)}
+              className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:border-indigo-500 transition-all shadow-sm active:scale-95"
+            >
+              <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                <BrainCircuit className="w-4 h-4" />
+              </div>
+              <div className="flex flex-col items-start leading-none pr-1">
+                <span className="text-[9px] font-black uppercase tracking-widest text-text-secondary mb-0.5">Modelo</span>
+                <span className="text-xs font-bold text-text-primary">{currentModel.name}</span>
+              </div>
+              <ChevronDown className={`w-3.5 h-3.5 text-text-secondary transition-transform duration-200 ${isModelMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            <AnimatePresence>
+              {isModelMenuOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setIsModelMenuOpen(false)} 
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute right-0 mt-2 w-72 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2 overflow-hidden"
+                  >
+                    <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 mb-1">
+                      <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Configurações do Modelo</p>
+                    </div>
+                    <div className="space-y-1">
+                      {MODELS.map((model) => (
+                        <button
+                          key={model.id}
+                          onClick={() => {
+                            setSelectedModel(model.id);
+                            setIsModelMenuOpen(false);
+                          }}
+                          className={`w-full text-left p-3 rounded-xl transition-all flex items-start gap-3 ${
+                            selectedModel === model.id 
+                              ? 'bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20' 
+                              : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border border-transparent'
+                          }`}
+                        >
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                            selectedModel === model.id 
+                              ? 'bg-indigo-600 text-white' 
+                              : 'bg-zinc-100 dark:bg-zinc-800 text-text-secondary'
+                          }`}>
+                            <BrainCircuit className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-xs font-bold ${selectedModel === model.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-text-primary'}`}>
+                              {model.fullName}
+                            </p>
+                            <p className="text-[10px] text-text-secondary line-clamp-2 leading-relaxed mt-0.5">{model.description}</p>
+                          </div>
+                          {selectedModel === model.id && (
+                            <div className="w-2 h-2 rounded-full bg-indigo-600 mt-1.5" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-2 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                      <p className="text-[9px] text-text-secondary leading-relaxed">
+                        Modelos Pro e G3 possuem maior capacidade de raciocínio, enquanto Flash e Lite priorizam velocidade.
+                      </p>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
           </div>
         </div>
         
