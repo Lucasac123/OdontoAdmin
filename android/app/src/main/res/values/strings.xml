@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">OdontoAdmin</string>
+    <string name="title_activity_main">OdontoAdmin</string>
+    <string name="package_name">com.odontoadmin.app</string>
+    <string name="custom_url_scheme">com.odontoadmin.app</string>
+</resources>
