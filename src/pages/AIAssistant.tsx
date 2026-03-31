@@ -30,12 +30,12 @@ export const AIAssistant: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'chat' | 'search' | 'analyze'>('chat');
   const [selectedModel, setSelectedModel] = useState('gemini-flash-latest');
   const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
 
   const MODELS = [
     { id: 'gemini-flash-latest', name: 'Flash', fullName: 'Gemini Flash (Padrão)', description: 'Equilíbrio entre velocidade e inteligência' },
     { id: 'gemini-3.1-flash-lite-preview', name: 'Lite', fullName: 'Gemini Flash Lite', description: 'Mais rápido, menor latência' },
     { id: 'gemini-3.1-pro-preview', name: 'Pro', fullName: 'Gemini Pro', description: 'Mais inteligente, maior raciocínio' },
-    { id: 'gemini-2.5-flash-image', name: '2.5 Flash', fullName: 'Gemini 2.5 Flash', description: 'Multimodal e rápido' },
     { id: 'gemini-3-flash-preview', name: 'G3 Flash', fullName: 'Gemini 3 Flash', description: 'Modelo de última geração' },
   ];
   
@@ -50,6 +50,7 @@ export const AIAssistant: React.FC = () => {
   // Search State
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResult, setSearchResult] = useState('');
+  const [isSearchError, setIsSearchError] = useState(false);
   const [searchLinks, setSearchLinks] = useState<{title: string, url: string}[]>([]);
   const [isSearchLoading, setIsSearchLoading] = useState(false);
 
@@ -57,6 +58,7 @@ export const AIAssistant: React.FC = () => {
   const [analyzeImage, setAnalyzeImage] = useState<string | null>(null);
   const [analyzePrompt, setAnalyzePrompt] = useState('Analise esta imagem odontológica e descreva os achados.');
   const [analyzeResult, setAnalyzeResult] = useState('');
+  const [isAnalyzeError, setIsAnalyzeError] = useState(false);
   const [isAnalyzeLoading, setIsAnalyzeLoading] = useState(false);
 
   useEffect(() => {
@@ -71,6 +73,15 @@ export const AIAssistant: React.FC = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (cooldown > 0) {
+      const timer = setInterval(() => {
+        setCooldown(prev => Math.max(0, prev - 1));
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [cooldown]);
+
   const formatAIError = (error: any) => {
     console.error('AI Error:', error);
     
@@ -82,6 +93,7 @@ export const AIAssistant: React.FC = () => {
       const code = errorObj.code || errorObj.error?.code;
       
       if (code === 429) {
+        setCooldown(60);
         return "Limite de uso atingido. O plano gratuito do Gemini possui limites de requisições por minuto. Tente aguardar um momento ou trocar para um modelo mais leve (como o Lite) no topo da tela.";
       }
       if (code === 503 || code === 500) {
@@ -151,6 +163,7 @@ export const AIAssistant: React.FC = () => {
 
     setIsSearchLoading(true);
     setSearchResult('');
+    setIsSearchError(false);
 
     try {
       const response = await ai.models.generateContent({
@@ -183,9 +196,15 @@ export const AIAssistant: React.FC = () => {
     } catch (error) {
       const errorMessage = formatAIError(error);
       setSearchResult(errorMessage);
+      setIsSearchError(true);
     } finally {
       setIsSearchLoading(false);
     }
+  };
+
+  const handleSearchRetry = () => {
+    const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+    handleSearchSubmit(fakeEvent);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -204,6 +223,7 @@ export const AIAssistant: React.FC = () => {
 
     setIsAnalyzeLoading(true);
     setAnalyzeResult('');
+    setIsAnalyzeError(false);
 
     try {
       const base64Data = analyzeImage.split(',')[1];
@@ -222,9 +242,14 @@ export const AIAssistant: React.FC = () => {
     } catch (error) {
       const errorMessage = formatAIError(error);
       setAnalyzeResult(errorMessage);
+      setIsAnalyzeError(true);
     } finally {
       setIsAnalyzeLoading(false);
     }
+  };
+
+  const handleAnalyzeRetry = () => {
+    handleAnalyzeSubmit();
   };
 
   return (
@@ -241,11 +266,23 @@ export const AIAssistant: React.FC = () => {
             </div>
           </div>
 
-          <div className="relative">
-            <button 
-              onClick={() => setIsModelMenuOpen(!isModelMenuOpen)}
-              className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:border-indigo-500 transition-all shadow-sm active:scale-95"
-            >
+          <div className="flex items-center gap-3">
+            {cooldown > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl text-amber-600 dark:text-amber-400"
+              >
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span className="text-[10px] font-black tabular-nums">{cooldown}s</span>
+              </motion.div>
+            )}
+
+            <div className="relative">
+              <button 
+                onClick={() => setIsModelMenuOpen(!isModelMenuOpen)}
+                className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:border-indigo-500 transition-all shadow-sm active:scale-95"
+              >
               <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
                 <BrainCircuit className="w-4 h-4" />
               </div>
@@ -316,8 +353,9 @@ export const AIAssistant: React.FC = () => {
             </AnimatePresence>
           </div>
         </div>
+      </div>
         
-        <div className="flex bg-zinc-100 dark:bg-zinc-800/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-x-auto no-scrollbar shrink-0">
+      <div className="flex bg-zinc-100 dark:bg-zinc-800/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-x-auto no-scrollbar shrink-0">
           {[
             { id: 'chat', label: 'Chat', icon: MessageSquare },
             { id: 'search', label: 'Pesquisa', icon: Search },
@@ -471,14 +509,14 @@ export const AIAssistant: React.FC = () => {
                         handleChatSubmit(e);
                       }
                     }}
-                    placeholder="Envie uma mensagem para a IA..."
+                    placeholder={cooldown > 0 ? `Aguarde ${cooldown}s para nova mensagem...` : "Envie uma mensagem para a IA..."}
                     className="w-full bg-transparent border-none resize-none max-h-32 min-h-[44px] py-3 px-4 text-sm text-text-primary focus:outline-none focus:ring-0 placeholder:text-zinc-400"
                     rows={1}
-                    disabled={isChatLoading}
+                    disabled={isChatLoading || cooldown > 0}
                   />
                   <button 
                     type="submit" 
-                    disabled={isChatLoading || !chatInput.trim()}
+                    disabled={isChatLoading || !chatInput.trim() || cooldown > 0}
                     className="w-11 h-11 shrink-0 flex items-center justify-center bg-indigo-600 text-white rounded-2xl disabled:opacity-50 hover:bg-indigo-700 transition-all shadow-md active:scale-95"
                   >
                     <Send className="w-5 h-5" />
@@ -511,7 +549,7 @@ export const AIAssistant: React.FC = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="O que você deseja pesquisar?"
                   className="w-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-full pl-16 pr-6 py-5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm text-lg font-medium"
-                  disabled={isSearchLoading}
+                  disabled={isSearchLoading || cooldown > 0}
                 />
               </form>
 
@@ -530,6 +568,16 @@ export const AIAssistant: React.FC = () => {
                     <div className="markdown-body prose dark:prose-invert max-w-none text-sm">
                       <Markdown>{searchResult}</Markdown>
                     </div>
+
+                    {isSearchError && (
+                      <button 
+                        onClick={handleSearchRetry}
+                        className="mt-4 flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors"
+                      >
+                        <Loader2 className="w-3 h-3" />
+                        Tentar novamente
+                      </button>
+                    )}
 
                     {searchLinks.length > 0 && (
                       <div className="mt-8 pt-8 border-t border-zinc-200 dark:border-zinc-800">
@@ -607,7 +655,7 @@ export const AIAssistant: React.FC = () => {
 
               <button
                 onClick={handleAnalyzeSubmit}
-                disabled={!analyzeImage || isAnalyzeLoading}
+                disabled={!analyzeImage || isAnalyzeLoading || cooldown > 0}
                 className="w-full bg-indigo-600 text-white py-4 rounded-[20px] font-black uppercase tracking-[0.2em] text-xs hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-3 transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
               >
                 {isAnalyzeLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
@@ -631,9 +679,20 @@ export const AIAssistant: React.FC = () => {
                 <motion.div 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="markdown-body prose dark:prose-invert max-w-none text-sm"
+                  className="space-y-6"
                 >
-                  <Markdown>{analyzeResult}</Markdown>
+                  <div className="markdown-body prose dark:prose-invert max-w-none text-sm">
+                    <Markdown>{analyzeResult}</Markdown>
+                  </div>
+                  {isAnalyzeError && (
+                    <button 
+                      onClick={handleAnalyzeRetry}
+                      className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors"
+                    >
+                      <Loader2 className="w-3 h-3" />
+                      Tentar novamente
+                    </button>
+                  )}
                 </motion.div>
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-center space-y-6 opacity-50">
