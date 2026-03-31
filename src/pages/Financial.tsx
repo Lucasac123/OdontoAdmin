@@ -113,6 +113,7 @@ export const Financial: React.FC = () => {
   };
 
   const [inventoryValue, setInventoryValue] = useState(0);
+  const [inventoryAssetsValue, setInventoryAssetsValue] = useState(0);
   const [assetsValue, setAssetsValue] = useState(0);
   const [isEditingAssets, setIsEditingAssets] = useState(false);
   const [tempAssetsValue, setTempAssetsValue] = useState('');
@@ -145,14 +146,20 @@ export const Financial: React.FC = () => {
     // Fetch inventory value
     const invQuery = query(collection(db, 'inventory'), where('dentistId', '==', auth.currentUser.uid));
     const unsubscribeInv = onSnapshot(invQuery, (snapshot) => {
-      let total = 0;
+      let consumo = 0;
+      let patrimonio = 0;
       snapshot.docs.forEach(doc => {
         const item = doc.data();
         if (item.quantity && item.price) {
-          total += item.quantity * item.price;
+          if (item.category === 'Patrimônio') {
+            patrimonio += item.quantity * item.price;
+          } else {
+            consumo += item.quantity * item.price;
+          }
         }
       });
-      setInventoryValue(total);
+      setInventoryValue(consumo);
+      setInventoryAssetsValue(patrimonio);
     });
 
     // Fetch assets value
@@ -401,7 +408,7 @@ export const Financial: React.FC = () => {
   };
 
   const totalAllTimeIncome = finances.filter(f => f.type === 'income').reduce((acc, curr) => acc + curr.amount, 0);
-  const companyValuation = totalAllTimeIncome + inventoryValue + assetsValue;
+  const companyValuation = totalAllTimeIncome + inventoryValue + assetsValue + inventoryAssetsValue;
 
   return (
     <div className="space-y-8">
@@ -444,7 +451,7 @@ export const Financial: React.FC = () => {
               setIsAdding={setIsAdding}
               newFinance={newFinance}
               setNewFinance={setNewFinance}
-              patients={Object.fromEntries(Object.entries(patients).map(([id, p]) => [id, p.name]))}
+              patients={Object.fromEntries(Object.entries(patients).map(([id, p]: [string, any]) => [id, p.name]))}
               splits={splits}
               handleAdd={handleAdd}
               isLoading={isSavingFinance}
@@ -628,11 +635,11 @@ export const Financial: React.FC = () => {
                 <span className="font-black text-text-primary">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalAllTimeIncome)}</span>
               </div>
               <div className="flex justify-between items-center p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">Estoque</span>
+                <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">Estoque de Consumo</span>
                 <span className="font-black text-text-primary">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(inventoryValue)}</span>
               </div>
               <div className="flex justify-between items-center p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800 group relative">
-                <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">Patrimônio</span>
+                <span className="text-xs font-bold text-text-secondary uppercase tracking-widest" title="Soma dos ativos cadastrados no almoxarifado com os valores informados manualmente">Patrimônio Físico</span>
                 {isEditingAssets ? (
                   <div className="flex items-center gap-2">
                     <input
@@ -652,12 +659,13 @@ export const Financial: React.FC = () => {
                   </div>
                 ) : (
                   <>
-                    <span className="font-black text-text-primary">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(assetsValue)}</span>
+                    <span className="font-black text-text-primary">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(assetsValue + inventoryAssetsValue)}</span>
                     <button 
                       onClick={() => { setTempAssetsValue(assetsValue.toString()); setIsEditingAssets(true); }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-text-secondary hover:text-indigo-600 transition-all"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-text-secondary hover:text-indigo-600 transition-all cursor-pointer bg-white dark:bg-zinc-800 rounded shadow-md border border-zinc-200 dark:border-zinc-700 z-10"
+                      title="Forçar valor manual do Patrimônio (seus móveis e propriedades)"
                     >
-                      <Edit2 className="w-3.5 h-3.5" />
+                      <Edit2 className="w-4 h-4" />
                     </button>
                   </>
                 )}
