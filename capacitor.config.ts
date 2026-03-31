@@ -5,6 +5,9 @@ const config: CapacitorConfig = {
   appName: 'OdontoAdmin',
   webDir: 'dist',
   plugins: {
+    CapacitorHttp: {
+      enabled: true,
+    },
     GoogleAuth: {
       scopes: ['profile', 'email'],
       serverClientId: '531539311792-07banoj8gike53of1ra4u4cin42cdt20.apps.googleusercontent.com',
