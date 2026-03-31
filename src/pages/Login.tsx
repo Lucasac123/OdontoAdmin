@@ -57,6 +57,7 @@ export const Login: React.FC = () => {
               <input
                 type="text"
                 placeholder="Nome completo"
+                aria-label="Nome completo"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-indigo-500 outline-none"
@@ -65,6 +66,7 @@ export const Login: React.FC = () => {
               <input
                 type="date"
                 placeholder="Data de nascimento"
+                aria-label="Data de nascimento"
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-indigo-500 outline-none"
@@ -73,6 +75,7 @@ export const Login: React.FC = () => {
               <input
                 type="tel"
                 placeholder="Celular"
+                aria-label="Celular"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-indigo-500 outline-none"
@@ -81,6 +84,7 @@ export const Login: React.FC = () => {
               <input
                 type="text"
                 placeholder="CRO (Opcional)"
+                aria-label="CRO (Opcional)"
                 value={cro}
                 onChange={(e) => setCro(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-indigo-500 outline-none"
@@ -90,6 +94,7 @@ export const Login: React.FC = () => {
           <input
             type="email"
             placeholder="E-mail"
+            aria-label="E-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-indigo-500 outline-none"
@@ -100,6 +105,7 @@ export const Login: React.FC = () => {
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Senha"
+                aria-label="Senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-indigo-500 outline-none pr-12"
@@ -109,6 +115,7 @@ export const Login: React.FC = () => {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -118,6 +125,7 @@ export const Login: React.FC = () => {
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirme a senha"
+                  aria-label="Confirme a senha"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-transparent focus:ring-2 focus:ring-indigo-500 outline-none pr-12"
@@ -127,6 +135,7 @@ export const Login: React.FC = () => {
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  aria-label={showConfirmPassword ? "Ocultar confirmação de senha" : "Mostrar confirmação de senha"}
                 >
                   {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>

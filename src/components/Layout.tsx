@@ -62,6 +62,7 @@ const SidebarContent = ({
       <button 
         onClick={() => setIsMobileMenuOpen(false)}
         className="md:hidden p-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl"
+        aria-label="Fechar menu"
       >
         <X className="w-6 h-6" />
       </button>
@@ -71,6 +72,7 @@ const SidebarContent = ({
         onClick={() => setIsCollapsed(!isCollapsed)}
         className={`hidden md:flex items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 text-text-secondary hover:text-indigo-600 transition-all duration-300 w-10 h-10 shrink-0`}
         title={isCollapsed ? "Expandir" : "Recolher"}
+        aria-label={isCollapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
       >
         {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
       </button>
@@ -133,6 +135,7 @@ const SidebarContent = ({
             onClick={() => setTheme('light')}
             className={`flex-1 flex items-center justify-center p-1.5 rounded-lg transition-colors relative z-10 ${theme === 'light' ? 'text-indigo-600 dark:text-white bg-white dark:bg-zinc-800 shadow-sm md:bg-transparent md:shadow-none' : 'text-text-secondary hover:text-indigo-600 dark:hover:text-white'}`}
             title="Modo Claro"
+            aria-label="Ativar modo claro"
           >
             <Sun className="w-3.5 h-3.5" />
           </button>
@@ -140,6 +143,7 @@ const SidebarContent = ({
             onClick={() => setTheme('dark')}
             className={`flex-1 flex items-center justify-center p-1.5 rounded-lg transition-colors relative z-10 ${theme === 'dark' ? 'text-indigo-600 dark:text-white bg-white dark:bg-zinc-800 shadow-sm md:bg-transparent md:shadow-none' : 'text-text-secondary hover:text-indigo-600 dark:hover:text-white'}`}
             title="Modo Escuro"
+            aria-label="Ativar modo escuro"
           >
             <Moon className="w-3.5 h-3.5" />
           </button>
@@ -150,6 +154,7 @@ const SidebarContent = ({
           onClick={toggleCalculator}
           className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-900 text-text-secondary hover:text-indigo-600 dark:hover:text-white transition-all border border-zinc-200 dark:border-white/5 shrink-0"
           title="Calculadora"
+          aria-label="Abrir calculadora"
         >
           <Calculator className="w-4 h-4" />
         </button>
@@ -167,11 +172,13 @@ const SidebarContent = ({
           <button 
             onClick={() => setShowSettings(!showSettings)}
             className={`flex items-center gap-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-300 ${isCollapsed ? 'w-10 h-10 justify-center mx-auto' : 'flex-1 p-2'}`}
+            aria-label="Configurações do usuário"
+            aria-expanded={showSettings}
           >
             {user?.photoURL && (
               <img 
                 src={user.photoURL} 
-                alt={user.displayName || 'User'} 
+                alt="" 
                 className="w-8 h-8 rounded-full border border-zinc-200 dark:border-white/10 shrink-0 object-cover"
                 referrerPolicy="no-referrer"
               />
@@ -188,6 +195,7 @@ const SidebarContent = ({
               onClick={handleInstallPWA}
               className="p-2 rounded-xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600/20 transition-all border border-indigo-500/20"
               title="Instalar App"
+              aria-label="Instalar aplicativo"
             >
               <Download className="w-5 h-5" />
             </button>
@@ -308,6 +316,8 @@ export const Layout: React.FC = () => {
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
               className="md:hidden p-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+              aria-label={isMobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+              aria-expanded={isMobileMenuOpen}
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>

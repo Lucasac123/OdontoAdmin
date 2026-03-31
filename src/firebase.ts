@@ -35,7 +35,7 @@ const firebaseConfig = {
   storageBucket: getEnvVar(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET, configFromJson.storageBucket),
   messagingSenderId: getEnvVar(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID, configFromJson.messagingSenderId),
   appId: getEnvVar(import.meta.env.VITE_FIREBASE_APP_ID, configFromJson.appId),
-  firestoreDatabaseId: configFromJson.firestoreDatabaseId
+  firestoreDatabaseId: getEnvVar(import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID, configFromJson.firestoreDatabaseId)
 };
 
 console.log("firebaseConfig:", firebaseConfig);

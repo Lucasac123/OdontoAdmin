@@ -276,7 +276,7 @@ export const Dashboard: React.FC = () => {
         <div className="lg:col-span-2 bg-surface rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
           <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-800/20">
             <div>
-              <h3 className="text-lg font-bold text-text-primary">Próximas Consultas</h3>
+              <h2 className="text-lg font-bold text-text-primary">Próximas Consultas</h2>
               <p className="text-xs text-text-secondary">Sua agenda para o dia de hoje</p>
             </div>
             <button 
@@ -338,11 +338,12 @@ export const Dashboard: React.FC = () => {
         <div className="space-y-6">
           <div className="bg-surface rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-text-primary">Acesso Rápido</h3>
+              <h2 className="text-lg font-bold text-text-primary">Acesso Rápido</h2>
               <button 
                 onClick={() => setIsQuickAccessModalOpen(true)}
                 className="p-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                 title="Personalizar Acesso Rápido"
+                aria-label="Personalizar Acesso Rápido"
               >
                 <Settings className="w-4 h-4" />
               </button>
@@ -366,7 +367,7 @@ export const Dashboard: React.FC = () => {
 
           <div className="bg-surface rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-text-primary">Aniversariantes</h3>
+              <h2 className="text-lg font-bold text-text-primary">Aniversariantes</h2>
               <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg uppercase tracking-wider">7 Dias</span>
             </div>
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
@@ -397,10 +398,10 @@ export const Dashboard: React.FC = () => {
         <div className="lg:col-span-3 bg-surface rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-8">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h3 className="text-xl font-bold text-text-primary flex items-center gap-2">
+              <h2 className="text-xl font-bold text-text-primary flex items-center gap-2">
                 <Briefcase className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
                 Controle de Orçamentos
-              </h3>
+              </h2>
               <p className="text-sm text-text-secondary mt-1">Acompanhe o funil de vendas e negociações</p>
             </div>
           </div>
@@ -408,9 +409,9 @@ export const Dashboard: React.FC = () => {
             {/* Em Negociação */}
             <div className="bg-zinc-50/50 dark:bg-zinc-800/20 rounded-3xl p-6 border border-zinc-100 dark:border-zinc-800">
                <div className="flex items-center justify-between mb-4">
-                 <h4 className="font-bold text-yellow-700 dark:text-yellow-500 flex items-center gap-2 uppercase text-[10px] tracking-widest">
+                 <h3 className="font-bold text-yellow-800 dark:text-yellow-500 flex items-center gap-2 uppercase text-[10px] tracking-widest">
                    <Clock className="w-4 h-4"/> Em Negociação
-                 </h4>
+                 </h3>
                  <span className="bg-yellow-100 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-500 px-2 py-0.5 rounded-lg text-[10px] font-bold">
                    {deals.filter(d => d.status === 'negotiation').length}
                  </span>
@@ -429,7 +430,7 @@ export const Dashboard: React.FC = () => {
                         <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
                           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(deal.value)}
                         </span>
-                        <span className="text-[10px] font-medium text-zinc-400">{new Date(deal.updatedAt || deal.createdAt).toLocaleDateString('pt-BR')}</span>
+                        <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400">{new Date(deal.updatedAt || deal.createdAt).toLocaleDateString('pt-BR')}</span>
                       </div>
                     </motion.div>
                  ))}
@@ -443,9 +444,9 @@ export const Dashboard: React.FC = () => {
             {/* Aprovados */}
             <div className="bg-zinc-50/50 dark:bg-zinc-800/20 rounded-3xl p-6 border border-zinc-100 dark:border-zinc-800">
                <div className="flex items-center justify-between mb-4">
-                 <h4 className="font-bold text-emerald-700 dark:text-emerald-500 flex items-center gap-2 uppercase text-[10px] tracking-widest">
+                 <h3 className="font-bold text-emerald-800 dark:text-emerald-500 flex items-center gap-2 uppercase text-[10px] tracking-widest">
                    <CheckCircle className="w-4 h-4"/> Aprovados
-                 </h4>
+                 </h3>
                  <span className="bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-500 px-2 py-0.5 rounded-lg text-[10px] font-bold">
                    {deals.filter(d => d.status === 'approved').length}
                  </span>
@@ -464,7 +465,7 @@ export const Dashboard: React.FC = () => {
                         <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
                           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(deal.value)}
                         </span>
-                        <span className="text-[10px] font-medium text-zinc-400">{new Date(deal.updatedAt || deal.createdAt).toLocaleDateString('pt-BR')}</span>
+                        <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400">{new Date(deal.updatedAt || deal.createdAt).toLocaleDateString('pt-BR')}</span>
                       </div>
                     </motion.div>
                  ))}
@@ -478,9 +479,9 @@ export const Dashboard: React.FC = () => {
             {/* Recusados */}
             <div className="bg-zinc-50/50 dark:bg-zinc-800/20 rounded-3xl p-6 border border-zinc-100 dark:border-zinc-800">
                <div className="flex items-center justify-between mb-4">
-                 <h4 className="font-bold text-red-700 dark:text-red-500 flex items-center gap-2 uppercase text-[10px] tracking-widest">
+                 <h3 className="font-bold text-red-800 dark:text-red-500 flex items-center gap-2 uppercase text-[10px] tracking-widest">
                    <XCircle className="w-4 h-4"/> Recusados
-                 </h4>
+                 </h3>
                  <span className="bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-500 px-2 py-0.5 rounded-lg text-[10px] font-bold">
                    {deals.filter(d => d.status === 'rejected').length}
                  </span>
@@ -499,7 +500,7 @@ export const Dashboard: React.FC = () => {
                         <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
                           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(deal.value)}
                         </span>
-                        <span className="text-[10px] font-medium text-zinc-400">{new Date(deal.updatedAt || deal.createdAt).toLocaleDateString('pt-BR')}</span>
+                        <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400">{new Date(deal.updatedAt || deal.createdAt).toLocaleDateString('pt-BR')}</span>
                       </div>
                     </motion.div>
                  ))}
@@ -516,7 +517,7 @@ export const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
-          <h3 className="text-lg font-medium text-text-primary mb-4">Aniversariantes (Próximos 7 dias)</h3>
+          <h2 className="text-lg font-bold text-text-primary mb-4">Aniversariantes (Próximos 7 dias)</h2>
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {upcomingBirthdays.length === 0 ? (
               <p className="text-sm text-text-secondary">Nenhum aniversário nos próximos 7 dias.</p>
@@ -537,7 +538,7 @@ export const Dashboard: React.FC = () => {
         <div className="bg-surface rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-lg font-bold text-text-primary">Notas Rápidas</h3>
+              <h2 className="text-lg font-bold text-text-primary">Notas Rápidas</h2>
               <p className="text-xs text-text-secondary mt-1">Lembretes e anotações importantes</p>
             </div>
             <div className="w-10 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center">
@@ -580,7 +581,11 @@ export const Dashboard: React.FC = () => {
                   className="p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl flex items-start justify-between gap-3 border border-zinc-100 dark:border-zinc-700 group"
                 >
                   <p className="text-sm text-text-secondary leading-relaxed">{note.content}</p>
-                  <button onClick={() => handleDeleteNote(note)} className="text-zinc-400 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100">
+                  <button 
+                    onClick={() => handleDeleteNote(note)} 
+                    className="text-zinc-400 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                    aria-label="Excluir nota"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </motion.div>
@@ -597,14 +602,14 @@ export const Dashboard: React.FC = () => {
         <div className="bg-surface rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-8">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h3 className="text-lg font-bold text-text-primary">Distribuição de Pacientes</h3>
+              <h2 className="text-lg font-bold text-text-primary">Distribuição de Pacientes</h2>
               <p className="text-xs text-text-secondary mt-1">Visão geral do status da sua base</p>
             </div>
           </div>
           <div className="h-64 w-full min-h-[256px] min-w-[256px]">
             {patientStatusData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <PieChart>
+                <PieChart role="img" aria-label="Gráfico de distribuição de pacientes por status">
                   <Pie 
                     data={patientStatusData} 
                     dataKey="value" 
@@ -642,7 +647,7 @@ export const Dashboard: React.FC = () => {
         <div className="bg-surface rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-8">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h3 className="text-lg font-bold text-text-primary">Retornos Preventivos</h3>
+              <h2 className="text-lg font-bold text-text-primary">Retornos Preventivos</h2>
               <p className="text-xs text-text-secondary mt-1">Pacientes sem visita há mais de 6 meses</p>
             </div>
             <span className="bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs font-bold px-3 py-1.5 rounded-xl uppercase tracking-wider">

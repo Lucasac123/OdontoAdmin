@@ -102,6 +102,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ variant = 'sidebar',
           onClick={() => setIsOpen(true)}
           className={`flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800/50 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 rounded-xl transition-all duration-300 ${isCollapsed ? 'w-10 h-10 justify-center p-0 mx-auto' : 'px-3 py-2 w-full'}`}
           title={isCollapsed ? "Buscar (Ctrl+K)" : undefined}
+          aria-label="Buscar (Ctrl+K)"
         >
           <Search className="w-4 h-4 shrink-0" />
           {!isCollapsed && <span className="text-sm flex-1 text-left">Buscar...</span>}
@@ -110,6 +111,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ variant = 'sidebar',
         <button
           onClick={() => setIsOpen(true)}
           className="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:bg-zinc-800 rounded-xl transition-all border border-zinc-200 dark:border-white/5"
+          aria-label="Buscar"
         >
           <Search className="w-4 h-4 md:w-5 md:h-5" />
           <span className="hidden sm:inline text-sm font-medium">Buscar...</span>
@@ -142,7 +144,11 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ variant = 'sidebar',
                   onChange={e => setSearchTerm(e.target.value)}
                   className="flex-1 bg-transparent border-none focus:ring-0 px-4 py-4 text-text-primary placeholder:text-zinc-400 outline-none"
                 />
-                <button onClick={() => setIsOpen(false)} className="p-2 text-zinc-400 hover:text-text-primary rounded-lg">
+                <button 
+                  onClick={() => setIsOpen(false)} 
+                  className="p-2 text-zinc-400 hover:text-text-primary rounded-lg"
+                  aria-label="Fechar busca"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
