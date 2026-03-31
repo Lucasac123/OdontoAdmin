@@ -93,11 +93,11 @@ const SidebarContent = ({
           to={item.to}
           onClick={() => setIsMobileMenuOpen(false)}
           className={({ isActive }) =>
-            `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+            `flex items-center gap-3 rounded-xl transition-all duration-300 ${
               isActive 
                 ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-white border-l-2 border-indigo-500 shadow-sm dark:shadow-none' 
                 : 'text-text-secondary hover:text-indigo-600 dark:hover:text-white hover:bg-indigo-50/50 dark:hover:bg-white/5'
-            } ${isCollapsed ? 'justify-center px-0' : ''}`
+            } ${isCollapsed ? 'w-10 h-10 justify-center px-0 mx-auto' : 'px-4 py-3 w-full'}`
           }
           title={isCollapsed ? item.label : undefined}
         >
