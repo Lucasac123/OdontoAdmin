@@ -15,6 +15,14 @@
       "oauth_client": [
         {
           "client_id": "531539311792-07banoj8gike53of1ra4u4cin42cdt20.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.odontoadmin.app",
+            "certificate_hash": "34727f0da0603d83c4b4d346d8d878b46d319e51"
+          }
+        },
+        {
+          "client_id": "531539311792-07banoj8gike53of1ra4u4cin42cdt20.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
