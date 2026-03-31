@@ -293,6 +293,13 @@ service cloud.firestore {
       allow delete: if isDocOwner() || isAdmin();
     }
 
+    match /clinic_settings/{settingId} {
+      allow read: if (isAuthenticated() && (settingId == request.auth.uid || (resource != null && resource.data.dentistId == request.auth.uid))) || isAdmin();
+      allow create: if isAuthenticated() && isValidClinicSettings(request.resource.data) && uidUnchanged('dentistId');
+      allow update: if (isDocOwner() || isAdmin()) && isValidClinicSettings(request.resource.data) && uidNotModified('dentistId');
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
     match /documentTemplates/{templateId} {
       allow read: if (isAuthenticated() && resource.data.dentistId == request.auth.uid) || isAdmin();
       allow create: if isAuthenticated() && isValidDocumentTemplate(request.resource.data) && uidUnchanged('dentistId');

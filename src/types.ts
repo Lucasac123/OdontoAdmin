@@ -14,6 +14,7 @@ export interface Patient {
   sex?: string;
   nationality?: string;
   placeOfBirth?: string;
+  legalRepresentative?: string;
   legalRepDetails?: string; // JSON string
   spouseDetails?: string; // JSON string
   referenceDoctor?: string; // JSON string
@@ -55,7 +56,7 @@ export interface DocumentTemplate {
   id: string;
   dentistId: string;
   title: string;
-  type: 'prescription' | 'certificate' | 'attendance' | 'referral' | 'postop' | 'tcle' | 'image-release';
+  type: 'prescription' | 'certificate' | 'attendance' | 'referral' | 'postop' | 'tcle' | 'image-release' | 'laudo' | 'exame';
   content: string;
   createdAt: string;
 }

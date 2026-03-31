@@ -11,7 +11,7 @@ import { ConfirmModal } from '../ConfirmModal';
 interface PrescriptionTemplatesModalProps {
   isOpen: boolean;
   onClose: () => void;
-  currentType: 'prescription' | 'certificate' | 'attendance' | 'referral' | 'postop' | 'tcle' | 'image-release';
+  currentType: 'prescription' | 'certificate' | 'attendance' | 'referral' | 'postop' | 'tcle' | 'image-release' | 'laudo' | 'exame';
   currentText: string;
   onSelectTemplate: (text: string) => void;
 }

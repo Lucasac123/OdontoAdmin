@@ -277,19 +277,47 @@ export const Financial: React.FC = () => {
       </div>
     `;
 
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
+    const iframe = document.createElement('iframe');
+    console.log('Creating iframe for printing...');
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (doc) {
+      console.log('Iframe document found, writing content...');
+      doc.open();
+      doc.write(`
         <html>
           <head>
             <title>Recibo IR - ${patientName}</title>
+            <style>
+              body { font-family: sans-serif; padding: 40px; }
+            </style>
           </head>
-          <body onload="window.print(); window.close();">
+          <body>
             ${receiptContent}
           </body>
         </html>
       `);
-      printWindow.document.close();
+      doc.close();
+      
+      // Wait for content to load before printing
+      setTimeout(() => {
+        console.log('Attempting to print iframe...');
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+        
+        // Cleanup
+        setTimeout(() => {
+          console.log('Cleaning up iframe...');
+          document.body.removeChild(iframe);
+        }, 2000); // Increased cleanup timeout
+      }, 1000); // Increased print timeout
+    } else {
+      console.error('Could not access iframe document');
     }
   };
 
@@ -333,8 +361,12 @@ export const Financial: React.FC = () => {
   }, [finances, selectedMonth]);
 
   const handleAddSplit = () => {
-    if (newSplit.name && newSplit.percentage >= 0) {
-      setSplits([...splits, { id: Date.now().toString(), ...newSplit }]);
+    if (newSplit.name && newSplit.percentage !== '' && newSplit.percentage >= 0) {
+      setSplits([...splits, { 
+        id: Date.now().toString(), 
+        name: newSplit.name, 
+        percentage: Number(newSplit.percentage) 
+      }]);
       setIsAddingSplit(false);
       setNewSplit({ name: '', percentage: 0 });
     }
@@ -350,8 +382,12 @@ export const Financial: React.FC = () => {
   };
 
   const saveEditSplit = () => {
-    if (editingSplitId && editSplitData.name && editSplitData.percentage >= 0) {
-      setSplits(splits.map(s => s.id === editingSplitId ? { ...s, ...editSplitData } : s));
+    if (editingSplitId && editSplitData.name && editSplitData.percentage !== '' && editSplitData.percentage >= 0) {
+      setSplits(splits.map(s => s.id === editingSplitId ? { 
+        ...s, 
+        name: editSplitData.name, 
+        percentage: Number(editSplitData.percentage) 
+      } : s));
       setEditingSplitId(null);
     }
   };
@@ -367,7 +403,7 @@ export const Financial: React.FC = () => {
           <p className="text-text-secondary text-sm sm:text-base font-medium">Gestão inteligente e transparente do seu consultório</p>
         </div>
         
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto flex-shrink-0">
           <div className="relative w-full sm:w-auto">
             <input 
               type="month" 
@@ -400,7 +436,7 @@ export const Financial: React.FC = () => {
               setIsAdding={setIsAdding}
               newFinance={newFinance}
               setNewFinance={setNewFinance}
-              patients={patients}
+              patients={Object.fromEntries(Object.entries(patients).map(([id, p]) => [id, p.name]))}
               splits={splits}
               handleAdd={handleAdd}
             />
@@ -427,7 +463,7 @@ export const Financial: React.FC = () => {
               </div>
               <h3 className="text-xs font-black text-text-secondary uppercase tracking-[0.2em]">Receitas</h3>
             </div>
-            <p className="text-4xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalIncome)}
             </p>
             <div className="flex items-center gap-2 mt-4">
@@ -455,7 +491,7 @@ export const Financial: React.FC = () => {
               </div>
               <h3 className="text-xs font-black text-text-secondary uppercase tracking-[0.2em]">Despesas</h3>
             </div>
-            <p className="text-4xl font-black text-red-600 dark:text-red-400 tracking-tight">
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-black text-red-600 dark:text-red-400 tracking-tight">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalExpense)}
             </p>
             <div className="flex items-center gap-2 mt-4">
@@ -483,7 +519,7 @@ export const Financial: React.FC = () => {
               </div>
               <h3 className="text-xs font-black text-text-secondary uppercase tracking-[0.2em]">Saldo</h3>
             </div>
-            <p className={`text-4xl font-black tracking-tight ${balance >= 0 ? 'text-text-primary' : 'text-red-600 dark:text-red-400'}`}>
+            <p className={`text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight ${balance >= 0 ? 'text-text-primary' : 'text-red-600 dark:text-red-400'}`}>
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balance)}
             </p>
             <div className="flex items-center gap-2 mt-4">
@@ -525,7 +561,7 @@ export const Financial: React.FC = () => {
                   dataKey="name" 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fill: '#71717a', fontSize: 10, fontWeight: 700, textTransform: 'uppercase' }}
+                  tick={{ fill: '#71717a', fontSize: 10, fontWeight: 700 }}
                   dy={15}
                 />
                 <YAxis 
@@ -600,15 +636,15 @@ export const Financial: React.FC = () => {
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2">
+                  <>
                     <span className="font-black text-text-primary">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(assetsValue)}</span>
                     <button 
                       onClick={() => { setTempAssetsValue(assetsValue.toString()); setIsEditingAssets(true); }}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-text-secondary hover:text-indigo-600 transition-all"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-text-secondary hover:text-indigo-600 transition-all"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
-                  </div>
+                  </>
                 )}
               </div>
             </div>

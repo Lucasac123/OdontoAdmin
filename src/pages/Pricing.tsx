@@ -191,15 +191,15 @@ export const Pricing: React.FC = () => {
   const clinicalHourValue = hoursPerMonth > 0 ? monthlyExpenses / hoursPerMonth : 0;
 
   const calculateProcedurePrice = (form: typeof procForm) => {
-    const materialsCost = form.materials.reduce((acc, mat) => acc + (mat.quantity * mat.unitCost), 0);
-    const timeCost = (form.durationMinutes / 60) * clinicalHourValue;
+    const materialsCost = form.materials.reduce((acc, mat) => acc + (Number(mat.quantity) * Number(mat.unitCost)), 0);
+    const timeCost = (Number(form.durationMinutes) / 60) * clinicalHourValue;
     const baseCost = materialsCost + timeCost;
     
     // Price = Cost / (1 - (Taxes + CardFee + ProfitMargin))
-    const totalPercent = (form.taxesPercent + form.cardFeePercent + form.profitMarginPercent) / 100;
+    const totalPercent = (Number(form.taxesPercent) + Number(form.cardFeePercent) + Number(form.profitMarginPercent)) / 100;
     const finalPrice = totalPercent < 1 ? baseCost / (1 - totalPercent) : baseCost;
     
-    const finalPriceWithDifficulty = finalPrice * (1 + (form.difficultyPercent / 100));
+    const finalPriceWithDifficulty = finalPrice * (1 + (Number(form.difficultyPercent) / 100));
     
     return { finalPrice, finalPriceWithDifficulty, materialsCost, timeCost };
   };
@@ -640,7 +640,7 @@ export const Pricing: React.FC = () => {
                         <span>Preço Final Sugerido:</span> 
                         <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(finalPrice)}</span>
                       </div>
-                      {procForm.difficultyPercent > 0 && (
+                      {Number(procForm.difficultyPercent) > 0 && (
                         <div className="flex justify-between font-bold text-amber-600 dark:text-amber-400">
                           <span>Com Dificuldade (+{procForm.difficultyPercent}%):</span> 
                           <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(finalPriceWithDifficulty)}</span>
