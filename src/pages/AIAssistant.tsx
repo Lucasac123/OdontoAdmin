@@ -28,7 +28,7 @@ export const AIAssistant: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'chat' | 'search' | 'analyze'>('chat');
   
   // Chat State
-  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'model', text: string}[]>([]);
+  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'model', text: string, isError?: boolean}[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isChatLoading, setIsChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -49,6 +49,47 @@ export const AIAssistant: React.FC = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
+  const [isApiKeyMissing, setIsApiKeyMissing] = useState(false);
+
+  useEffect(() => {
+    if (!process.env.GEMINI_API_KEY) {
+      setIsApiKeyMissing(true);
+    }
+  }, []);
+
+  const formatAIError = (error: any) => {
+    console.error('AI Error:', error);
+    
+    let message = error instanceof Error ? error.message : String(error);
+    
+    try {
+      // Try to parse if it's a JSON string from the API
+      const errorObj = JSON.parse(message);
+      const code = errorObj.code || errorObj.error?.code;
+      
+      if (code === 429) {
+        return "Limite de uso atingido. O plano gratuito do Gemini possui limites de requisições por minuto. Por favor, aguarde um momento e tente novamente.";
+      }
+      if (code === 503 || code === 500) {
+        return "O serviço está temporariamente indisponível devido à alta demanda. Por favor, tente novamente em alguns instantes.";
+      }
+      if (errorObj.message || errorObj.error?.message) {
+        message = errorObj.message || errorObj.error?.message;
+      }
+    } catch (e) {
+      // Not a JSON string, continue with original message
+    }
+
+    if (message.includes('quota') || message.includes('429')) {
+      return "Limite de uso atingido. Por favor, aguarde um momento e tente novamente.";
+    }
+    if (message.includes('503') || message.includes('unavailable')) {
+      return "O serviço está temporariamente sobrecarregado. Tente novamente em instantes.";
+    }
+
+    return "Desculpe, ocorreu um erro ao processar sua solicitação. Verifique sua conexão ou tente novamente mais tarde.";
+  };
+
   const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
@@ -60,7 +101,7 @@ export const AIAssistant: React.FC = () => {
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-flash-latest',
         contents: userMessage,
         config: {
           systemInstruction: 'Você é um assistente especializado em odontologia. Ajude dentistas com diagnósticos, planos de tratamento, legislação e dúvidas gerais.',
@@ -70,11 +111,22 @@ export const AIAssistant: React.FC = () => {
       
       setChatMessages(prev => [...prev, { role: 'model', text: response.text || 'Desculpe, não consegui gerar uma resposta.' }]);
     } catch (error) {
-      console.error(error);
-      const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro ao processar sua solicitação.';
-      setChatMessages(prev => [...prev, { role: 'model', text: `Erro: ${errorMessage}` }]);
+      const errorMessage = formatAIError(error);
+      setChatMessages(prev => [...prev, { role: 'model', text: errorMessage, isError: true }]);
     } finally {
       setIsChatLoading(false);
+    }
+  };
+
+  const handleRetry = async () => {
+    const lastUserMessage = [...chatMessages].reverse().find(m => m.role === 'user');
+    if (lastUserMessage) {
+      setChatInput(lastUserMessage.text);
+      // Remove the last error message
+      setChatMessages(prev => prev.slice(0, -1));
+      // Trigger submit
+      const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+      handleChatSubmit(fakeEvent);
     }
   };
 
@@ -87,7 +139,7 @@ export const AIAssistant: React.FC = () => {
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-flash-latest',
         contents: searchQuery,
         config: {
           tools: [{ googleSearch: {} }]
@@ -114,9 +166,8 @@ export const AIAssistant: React.FC = () => {
         setSearchLinks([]);
       }
     } catch (error) {
-      console.error(error);
-      const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro ao realizar a pesquisa.';
-      setSearchResult(`Erro: ${errorMessage}`);
+      const errorMessage = formatAIError(error);
+      setSearchResult(errorMessage);
     } finally {
       setIsSearchLoading(false);
     }
@@ -144,7 +195,7 @@ export const AIAssistant: React.FC = () => {
       const mimeType = analyzeImage.match(/data:(.*?);/)?.[1] || 'image/jpeg';
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-flash-latest',
         contents: {
           parts: [
             { inlineData: { data: base64Data, mimeType } },
@@ -154,8 +205,8 @@ export const AIAssistant: React.FC = () => {
       });
       setAnalyzeResult(response.text || 'Não foi possível analisar a imagem.');
     } catch (error) {
-      console.error(error);
-      setAnalyzeResult('Ocorreu um erro ao analisar a imagem.');
+      const errorMessage = formatAIError(error);
+      setAnalyzeResult(errorMessage);
     } finally {
       setIsAnalyzeLoading(false);
     }
@@ -197,6 +248,29 @@ export const AIAssistant: React.FC = () => {
       </div>
 
       <div className="bg-surface rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 flex-1 flex flex-col min-h-0 overflow-hidden relative">
+        {isApiKeyMissing && (
+          <div className="absolute inset-0 z-50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm flex items-center justify-center p-6 text-center">
+            <div className="max-w-md space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-600 dark:text-red-400 mx-auto">
+                <X className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-black text-text-primary tracking-tight">API Key não configurada</h3>
+              <p className="text-sm text-text-secondary">
+                Para utilizar o assistente de IA, você precisa configurar a variável de ambiente <code className="bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded font-mono text-indigo-600 dark:text-indigo-400">GEMINI_API_KEY</code> no seu ambiente de hospedagem (Vercel).
+              </p>
+              <div className="pt-4">
+                <a 
+                  href="https://aistudio.google.com/app/apikey" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors"
+                >
+                  Obter API Key gratuita
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
         {activeTab === 'chat' && (
           <div className="h-full flex flex-col">
             <div className="flex-1 overflow-y-auto p-6 space-y-8 scroll-smooth">
@@ -253,8 +327,19 @@ export const AIAssistant: React.FC = () => {
                           {msg.role === 'user' ? (
                             msg.text
                           ) : (
-                            <div className="markdown-body">
-                              <Markdown>{msg.text}</Markdown>
+                            <div className="space-y-4">
+                              <div className="markdown-body">
+                                <Markdown>{msg.text}</Markdown>
+                              </div>
+                              {msg.isError && (
+                                <button 
+                                  onClick={handleRetry}
+                                  className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors"
+                                >
+                                  <Loader2 className="w-3 h-3" />
+                                  Tentar novamente
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>
