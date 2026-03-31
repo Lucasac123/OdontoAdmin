@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType } from '../firebase';
 import { TrashItem } from '../types';
-import { Trash2, RotateCcw, Loader2, User, FileText, Calendar, RefreshCw, DollarSign, Package, Microscope, UserCircle, Activity, StickyNote, LayoutDashboard, Clock } from 'lucide-react';
+import { Trash2, RotateCcw, Loader2, User, FileText, Calendar, RefreshCw, DollarSign, Package, Microscope, UserCircle, Activity, StickyNote, Clock } from 'lucide-react';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { motion, AnimatePresence } from 'motion/react';
 
