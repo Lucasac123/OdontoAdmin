@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../../firebase';
-import { Patient } from '../../types';
-import { Save, Loader2, User, Mail, Briefcase, CreditCard, MapPin, Phone, Calendar, Users, Stethoscope } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { doc, updateDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db, auth, handleFirestoreError, OperationType } from '../../firebase';
+import { Patient, Dentist } from '../../types';
+import { Save, Loader2, User, Mail, Briefcase, CreditCard, MapPin, Phone, Calendar, Users, Stethoscope, MessageCircle, UserCircle } from 'lucide-react';
 
 export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => {
   const [isSaving, setIsSaving] = useState(false);
+  const [dentists, setDentists] = useState<Dentist[]>([]);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [cpfError, setCpfError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -25,6 +26,7 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
     zipCode: patient.zipCode || '',
     source: patient.source || '',
     status: patient.status || 'Ativo',
+    responsibleDentistId: patient.responsibleDentistId || '',
     sex: patient.sex || '',
     nationality: patient.nationality || '',
     placeOfBirth: patient.placeOfBirth || '',
@@ -40,6 +42,24 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
   const [refDoctor, setRefDoctor] = useState(JSON.parse(patient.referenceDoctor || '{"name":"","phone":""}'));
   const [prevDentist, setPrevDentist] = useState(JSON.parse(patient.previousDentist || '{"name":"","date":""}'));
   const [apptPref, setApptPref] = useState(JSON.parse(patient.appointmentPreference || '{"date":"","period":""}'));
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+
+    const qDentists = query(
+      collection(db, 'dentists'),
+      where('dentistId', '==', auth.currentUser.uid)
+    );
+    const unsubscribeDentists = onSnapshot(qDentists, (snapshot) => {
+      const dentistsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Dentist[];
+      setDentists(dentistsData);
+    });
+
+    return () => unsubscribeDentists();
+  }, []);
 
   const formatCPF = (value: string) => {
     const digits = value.replace(/\D/g, '');
@@ -151,12 +171,12 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Basic Info */}
-        <div className="space-y-4">
+        <div className="md:col-span-2 lg:col-span-3 space-y-4">
           <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-2">
             <User className="w-4 h-4" /> Informações Básicas
           </h3>
-          <div className="space-y-4">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-3">
               <label className="block text-sm font-medium text-text-secondary mb-1">Nome Completo</label>
               <input
                 type="text"
@@ -192,6 +212,8 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
                 <option value="União Estável">União Estável</option>
               </select>
             </div>
+            <div className="hidden md:block"></div>
+            
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1">Sexo</label>
               <select
@@ -207,16 +229,6 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1">Nacionalidade</label>
-              <input
-                type="text"
-                name="nationality"
-                value={formData.nationality}
-                onChange={handleChange}
-                className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
-              />
-            </div>
-            <div>
               <label className="block text-sm font-medium text-text-secondary mb-1">Naturalidade</label>
               <input
                 type="text"
@@ -226,6 +238,17 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
                 className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Nacionalidade</label>
+              <input
+                type="text"
+                name="nationality"
+                value={formData.nationality}
+                onChange={handleChange}
+                className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
+              />
+            </div>
+            
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1">Procedência</label>
               <input
@@ -250,6 +273,25 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
                 <option value="Em Tratamento">Em Tratamento</option>
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Dentista Responsável</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <UserCircle className="h-5 w-5 text-zinc-400" />
+                </div>
+                <select
+                  name="responsibleDentistId"
+                  value={formData.responsibleDentistId}
+                  onChange={handleChange}
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none appearance-none"
+                >
+                  <option value="">Sem filiação a dentista específico</option>
+                  {dentists.map(d => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -272,14 +314,27 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
             </div>
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1">Telefone</label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="(00) 00000-0000"
-                className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="(00) 00000-0000"
+                  className="flex-1 bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
+                />
+                {formData.phone && (
+                  <a
+                    href={`https://wa.me/55${formData.phone.replace(/\D/g, '')}?text=Olá%20${encodeURIComponent(formData.name.split(' ')[0])},%20tudo%20bem?`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center px-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-colors"
+                    title="Enviar mensagem no WhatsApp"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                  </a>
+                )}
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1">Profissão</label>

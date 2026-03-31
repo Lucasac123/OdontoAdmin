@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { doc, updateDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType, auth } from '../../firebase';
 import { Patient, FileRecord } from '../../types';
-import { Save, Loader2, Info, ChevronRight, AlertCircle, CheckCircle2, BrainCircuit } from 'lucide-react';
+import { Save, Loader2, Info, ChevronRight, AlertCircle, CheckCircle2, BrainCircuit, Activity, XCircle, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI } from '@google/genai';
 
@@ -182,39 +182,49 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
     }
   };
 
-  const renderArch = (teeth: number[][]) => (
-    <svg viewBox="0 0 800 240" className="w-full h-auto max-w-4xl mx-auto">
-      {/* Upper Arch */}
-      <g transform="translate(40, 20)">
-        {teeth[0].map((id, index) => (
-          <g key={id} transform={`translate(${index * 45}, 0)`}>
-            <ToothIcon
-              id={id}
-              status={teethState[id]?.status || 'healthy'}
-              isSelected={selectedTooth === id}
-              onClick={() => handleToothClick(id)}
-            />
-          </g>
-        ))}
-        <text x={odontogramMode === 'adult' ? "360" : "225"} y="70" textAnchor="middle" className="fill-zinc-400 text-[10px] uppercase tracking-widest font-medium">Maxila (Superior)</text>
-      </g>
+  const renderArch = (teeth: number[][]) => {
+    const isAdult = teeth[0].length > 10;
+    const spacing = isAdult ? 46 : 60;
+    const archWidth = (teeth[0].length - 1) * spacing;
+    const offset = (800 - archWidth) / 2 - 20; // -20 because ToothIcon starts at x=5
 
-      {/* Lower Arch */}
-      <g transform="translate(40, 140)">
-        {teeth[1].map((id, index) => (
-          <g key={id} transform={`translate(${index * 45}, 0)`}>
-            <ToothIcon
-              id={id}
-              status={teethState[id]?.status || 'healthy'}
-              isSelected={selectedTooth === id}
-              onClick={() => handleToothClick(id)}
-            />
-          </g>
-        ))}
-        <text x={odontogramMode === 'adult' ? "360" : "225"} y="70" textAnchor="middle" className="fill-zinc-400 text-[10px] uppercase tracking-widest font-medium">Mandíbula (Inferior)</text>
-      </g>
-    </svg>
-  );
+    return (
+      <svg viewBox="0 0 800 240" className="w-full h-auto max-w-4xl mx-auto drop-shadow-sm">
+        {/* Upper Arch */}
+        <g transform={`translate(${offset}, 20)`}>
+          {teeth[0].map((id, index) => (
+            <g key={id} transform={`translate(${index * spacing}, 0)`}>
+              <ToothIcon
+                id={id}
+                status={teethState[id]?.status || 'healthy'}
+                isSelected={selectedTooth === id}
+                onClick={() => handleToothClick(id)}
+              />
+            </g>
+          ))}
+          <text x={archWidth / 2 + 20} y="75" textAnchor="middle" className="fill-zinc-400 text-[10px] uppercase tracking-widest font-bold opacity-60">Arcada Superior</text>
+        </g>
+
+        {/* Lower Arch */}
+        <g transform={`translate(${offset}, 140)`}>
+          {teeth[1].map((id, index) => (
+            <g key={id} transform={`translate(${index * spacing}, 0)`}>
+              <ToothIcon
+                id={id}
+                status={teethState[id]?.status || 'healthy'}
+                isSelected={selectedTooth === id}
+                onClick={() => handleToothClick(id)}
+              />
+            </g>
+          ))}
+          <text x={archWidth / 2 + 20} y="75" textAnchor="middle" className="fill-zinc-400 text-[10px] uppercase tracking-widest font-bold opacity-60">Arcada Inferior</text>
+        </g>
+        
+        {/* Center Line */}
+        <line x1="400" y1="10" x2="400" y2="230" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" className="text-zinc-200 dark:text-zinc-800" />
+      </svg>
+    );
+  };
 
   const adultTeeth = [
     [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28],
@@ -228,60 +238,69 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-surface p-4 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
         <div className="flex items-center gap-4">
-          <h2 className="text-xl font-bold text-text-primary">Odontograma Interativo</h2>
-          <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
+          <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center">
+            <Activity className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-text-primary">Odontograma Interativo</h2>
+            <p className="text-xs text-text-secondary">Selecione os dentes para registrar condições.</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl flex-1 sm:flex-none">
             <button
               onClick={() => setOdontogramMode('adult')}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${odontogramMode === 'adult' ? 'bg-surface text-text-primary shadow-sm' : 'text-text-secondary'}`}
+              className={`flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${odontogramMode === 'adult' ? 'bg-white dark:bg-zinc-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
             >
-              Adulto
+              ADULTO
             </button>
             <button
               onClick={() => setOdontogramMode('pediatric')}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${odontogramMode === 'pediatric' ? 'bg-surface text-text-primary shadow-sm' : 'text-text-secondary'}`}
+              className={`flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${odontogramMode === 'pediatric' ? 'bg-white dark:bg-zinc-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
             >
-              Infantil
+              INFANTIL
             </button>
           </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <AnimatePresence>
-            {showSuccess && (
-              <motion.div
-                initial={{ opacity: 0, x: 20, scale: 0.9 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 20, scale: 0.9 }}
-                className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-4 py-2 rounded-xl border border-emerald-100 dark:border-emerald-500/20 text-sm font-medium"
-              >
-                <CheckCircle2 className="w-4 h-4" />
-                Alterações salvas com sucesso!
-              </motion.div>
-            )}
-          </AnimatePresence>
+          
           <button 
             onClick={handleSave}
             disabled={isSaving}
-            className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-sm shadow-indigo-200 dark:shadow-none"
+            className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-sm shadow-indigo-200 dark:shadow-none text-sm font-bold"
           >
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Salvar Alterações
+            <span className="hidden sm:inline">Salvar</span>
           </button>
         </div>
       </div>
 
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-4 py-3 rounded-2xl border border-emerald-100 dark:border-emerald-500/20 text-sm font-medium"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            Alterações salvas com sucesso no prontuário!
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-        <div className="xl:col-span-3 bg-surface p-8 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-x-auto">
-          <div className="min-w-[800px]">
+        <div className="xl:col-span-3 bg-surface p-6 sm:p-10 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-x-auto no-scrollbar">
+          <div className="min-w-[700px] lg:min-w-0">
             {odontogramMode === 'adult' ? renderArch(adultTeeth) : renderArch(pediatricTeeth)}
           </div>
           
-          <div className="mt-8 flex flex-wrap justify-center gap-4 border-t border-zinc-100 dark:border-zinc-800 pt-6">
+          <div className="mt-10 flex flex-wrap justify-center gap-x-8 gap-y-4 border-t border-zinc-100 dark:border-zinc-800 pt-8">
             {Object.entries(statusConfig).map(([key, config]) => (
-              <div key={key} className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${config.bg}`} />
-                <span className="text-xs text-text-secondary">{config.label}</span>
+              <div key={key} className="flex items-center gap-2.5 group cursor-default">
+                <div className={`w-4 h-4 rounded-full ${config.bg} border border-zinc-200 dark:border-zinc-700 shadow-sm group-hover:scale-110 transition-transform`} />
+                <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">{config.label}</span>
               </div>
             ))}
           </div>

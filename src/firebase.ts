@@ -7,9 +7,11 @@ import {
   collection, 
   deleteDoc, 
   doc, 
+  getDoc,
   getDocFromServer,
   Firestore
 } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 import configFromJson from '../firebase-applet-config.json';
 
 const getEnvVar = (val: string | undefined, fallback: string) => {
@@ -33,17 +35,18 @@ const firebaseConfig = {
     : getEnvVar(import.meta.env.VITE_FIREBASE_DATABASE_ID, configFromJson.firestoreDatabaseId)
 };
 
-console.log("Firebase Config:", { ...firebaseConfig, apiKey: '***' });
-
 const app = initializeApp(firebaseConfig);
+console.log("Firebase config:", JSON.stringify(firebaseConfig, null, 2));
 
 // Initialize Firestore with settings to maximize connectivity in restricted environments
-export const db: Firestore = initializeFirestore(app, {}, firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)' 
+console.log("Initializing Firestore with database ID:", firebaseConfig.firestoreDatabaseId);
+export const db: Firestore = getFirestore(app, firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)' 
   ? firebaseConfig.firestoreDatabaseId 
   : undefined);
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+export const storage = getStorage(app);
 
 // Connection test removed to prevent false positive UI errors
 
@@ -75,13 +78,24 @@ export interface FirestoreErrorInfo {
   };
 }
 
-export async function moveToTrash(collectionName: string, docId: string, data: any) {
+export async function moveToTrash(collectionName: string, docId: string, data?: any) {
   if (!auth.currentUser) return;
+  
+  let itemData = data;
+  if (!itemData) {
+    const docSnap = await getDoc(doc(db, collectionName, docId));
+    if (docSnap.exists()) {
+      itemData = docSnap.data();
+    }
+  }
+
+  if (!itemData) return;
+
   await addDoc(collection(db, 'trash'), {
     dentistId: auth.currentUser.uid,
     originalCollection: collectionName,
     originalId: docId,
-    data: data,
+    data: itemData,
     deletedAt: new Date().toISOString()
   });
   await deleteDoc(doc(db, collectionName, docId));

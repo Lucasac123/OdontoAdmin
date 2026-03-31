@@ -1,6 +1,7 @@
 export interface Patient {
   id: string;
   dentistId: string;
+  responsibleDentistId?: string;
   name: string;
   dob?: string;
   phone?: string;
@@ -50,6 +51,15 @@ export interface Appointment {
   createdAt: string;
 }
 
+export interface DocumentTemplate {
+  id: string;
+  dentistId: string;
+  title: string;
+  type: 'prescription' | 'certificate' | 'attendance' | 'referral' | 'postop' | 'tcle' | 'image-release';
+  content: string;
+  createdAt: string;
+}
+
 export interface Finance {
   id: string;
   dentistId: string;
@@ -80,7 +90,7 @@ export interface NotificationSettings {
   dentistId: string;
   enabled: boolean;
   type: 'sms' | 'email' | 'whatsapp' | 'both' | 'all';
-  hoursBefore: number;
+  hoursBefore: number | '';
   messageTemplate: string;
   updatedAt: string;
 }
@@ -99,4 +109,90 @@ export interface TrashItem {
   originalId: string;
   data: any;
   deletedAt: string;
+}
+
+export interface Dentist {
+  id: string;
+  dentistId: string; // The owner/tenant ID
+  name: string;
+  cro?: string;
+  specialty?: string;
+  phone?: string;
+  email?: string;
+  createdAt: string;
+}
+
+export interface InventoryItem {
+  id: string;
+  dentistId: string;
+  name: string;
+  quantity: number;
+  minQuantity: number;
+  unit: string;
+  price?: number;
+  category: string;
+  updatedAt: string;
+}
+
+export interface LabJob {
+  id: string;
+  dentistId: string;
+  patientId: string;
+  patientName: string;
+  prosthesisType: string;
+  labName: string;
+  sendDate: string;
+  expectedDate: string;
+  status: 'Enviado' | 'Em Confecção' | 'Recebido' | 'Instalado';
+  cost: number;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface CRMDeal {
+  id: string;
+  dentistId: string;
+  patientId: string;
+  patientName: string;
+  title: string;
+  value: number;
+  status: 'negotiation' | 'approved' | 'rejected';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FixedExpense {
+  id: string;
+  dentistId: string;
+  name: string;
+  minValue: number;
+  maxValue: number;
+  periodicity: 'monthly' | 'yearly' | 'weekly' | 'one-time';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProcedureTemplate {
+  id: string;
+  dentistId: string;
+  name: string;
+  materials: { inventoryItemId: string; name: string; quantity: number; unitCost: number }[];
+  durationMinutes: number;
+  taxesPercent: number;
+  cardFeePercent: number;
+  profitMarginPercent: number;
+  difficultyPercent: number;
+  finalPrice: number;
+  finalPriceWithDifficulty: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClinicSettings {
+  id?: string;
+  dentistId: string;
+  workHoursPerDay: number;
+  workDaysPerWeek: number;
+  assetsValue?: number;
+  updatedAt: string;
 }

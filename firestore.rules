@@ -59,8 +59,10 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-          (request.auth.token.email == "luc.cunha04@gmail.com" && request.auth.token.email_verified == true));
+        (
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+          (request.auth.token.email == "luc.cunha04@gmail.com" && request.auth.token.email_verified == true)
+        );
     }
 
     // ===============================================================
@@ -140,6 +142,90 @@ service cloud.firestore {
              (!( 'isLink' in data ) || data.isLink is bool);
     }
 
+    function isValidInventoryItem(data) {
+      return hasRequiredFields(['dentistId', 'name', 'quantity', 'minQuantity', 'unit', 'category', 'updatedAt']) &&
+             data.dentistId is string && data.dentistId.size() > 0 && data.dentistId.size() < 100 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
+             data.quantity is number && data.quantity >= 0 &&
+             data.minQuantity is number && data.minQuantity >= 0 &&
+             data.unit is string && data.unit.size() > 0 && data.unit.size() < 50 &&
+             data.category is string && data.category.size() > 0 && data.category.size() < 100 &&
+             isValidDateString(data.updatedAt);
+    }
+
+    function isValidLabJob(data) {
+      return hasRequiredFields(['dentistId', 'patientId', 'patientName', 'prosthesisType', 'labName', 'sendDate', 'expectedDate', 'status', 'cost', 'createdAt']) &&
+             data.dentistId is string && data.dentistId.size() > 0 && data.dentistId.size() < 100 &&
+             data.patientId is string && data.patientId.size() > 0 && data.patientId.size() < 100 &&
+             data.patientName is string && data.patientName.size() > 0 && data.patientName.size() < 100 &&
+             data.prosthesisType is string && data.prosthesisType.size() > 0 && data.prosthesisType.size() < 200 &&
+             data.labName is string && data.labName.size() > 0 && data.labName.size() < 200 &&
+             isValidDateString(data.sendDate) &&
+             isValidDateString(data.expectedDate) &&
+             data.status in ['Enviado', 'Em Confecção', 'Recebido', 'Instalado'] &&
+             data.cost is number && data.cost >= 0 &&
+             (!( 'notes' in data ) || data.notes == null || (data.notes is string && data.notes.size() <= 1000)) &&
+             isValidDateString(data.createdAt);
+    }
+
+    function isValidCRMDeal(data) {
+      return hasRequiredFields(['dentistId', 'patientId', 'patientName', 'title', 'value', 'status', 'createdAt', 'updatedAt']) &&
+             data.dentistId is string && data.dentistId.size() > 0 && data.dentistId.size() < 100 &&
+             data.patientId is string && data.patientId.size() > 0 && data.patientId.size() < 100 &&
+             data.patientName is string && data.patientName.size() > 0 && data.patientName.size() < 100 &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.value is number && data.value >= 0 &&
+             data.status in ['negotiation', 'approved', 'rejected'] &&
+             isValidDateString(data.createdAt) &&
+             isValidDateString(data.updatedAt);
+    }
+
+    function isValidClinicSettings(data) {
+      return hasRequiredFields(['dentistId', 'workHoursPerDay', 'workDaysPerWeek', 'updatedAt']) &&
+             data.dentistId is string && data.dentistId.size() > 0 && data.dentistId.size() < 100 &&
+             data.workHoursPerDay is number && data.workHoursPerDay >= 0 && data.workHoursPerDay <= 24 &&
+             data.workDaysPerWeek is number && data.workDaysPerWeek >= 0 && data.workDaysPerWeek <= 7 &&
+             isValidDateString(data.updatedAt);
+    }
+
+    function isValidFixedExpense(data) {
+      return hasRequiredFields(['dentistId', 'name', 'minValue', 'maxValue', 'periodicity', 'createdAt', 'updatedAt']) &&
+             data.dentistId is string && data.dentistId.size() > 0 && data.dentistId.size() < 100 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
+             data.minValue is number && data.minValue >= 0 &&
+             data.maxValue is number && data.maxValue >= 0 &&
+             data.periodicity in ['monthly', 'yearly', 'weekly', 'one-time'] &&
+             isValidDateString(data.createdAt) &&
+             isValidDateString(data.updatedAt);
+    }
+
+    function isValidProcedureTemplate(data) {
+      return hasRequiredFields(['dentistId', 'name', 'materials', 'durationMinutes', 'taxesPercent', 'cardFeePercent', 'profitMarginPercent', 'difficultyPercent', 'finalPrice', 'finalPriceWithDifficulty', 'createdAt', 'updatedAt']) &&
+             data.dentistId is string && data.dentistId.size() > 0 && data.dentistId.size() < 100 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
+             data.materials is list &&
+             data.durationMinutes is number && data.durationMinutes >= 0 &&
+             data.taxesPercent is number && data.taxesPercent >= 0 &&
+             data.cardFeePercent is number && data.cardFeePercent >= 0 &&
+             data.profitMarginPercent is number && data.profitMarginPercent >= 0 &&
+             data.difficultyPercent is number && data.difficultyPercent >= 0 &&
+             data.finalPrice is number && data.finalPrice >= 0 &&
+             data.finalPriceWithDifficulty is number && data.finalPriceWithDifficulty >= 0 &&
+             isValidDateString(data.createdAt) &&
+             isValidDateString(data.updatedAt);
+    }
+
+    function isValidDentist(data) {
+      return hasRequiredFields(['dentistId', 'name', 'createdAt']) &&
+             data.dentistId is string && data.dentistId.size() > 0 && data.dentistId.size() < 100 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
+             isValidOptionalString('cro', 0, 50) &&
+             isValidOptionalString('specialty', 0, 100) &&
+             isValidOptionalString('phone', 0, 50) &&
+             (!( 'email' in data ) || data.email == '' || isValidEmail(data.email)) &&
+             isValidDateString(data.createdAt);
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -176,6 +262,71 @@ service cloud.firestore {
       allow read: if (isAuthenticated() && resource.data.dentistId == request.auth.uid) || isAdmin();
       allow create: if isAuthenticated() && isValidFileRecord(request.resource.data) && uidUnchanged('dentistId');
       allow update: if (isDocOwner() || isAdmin()) && isValidFileRecord(request.resource.data) && uidNotModified('dentistId') && uidNotModified('uploadedAt');
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /inventory/{itemId} {
+      allow read: if (isAuthenticated() && resource.data.dentistId == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() && isValidInventoryItem(request.resource.data) && uidUnchanged('dentistId');
+      allow update: if (isDocOwner() || isAdmin()) && isValidInventoryItem(request.resource.data) && uidNotModified('dentistId');
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /lab_jobs/{jobId} {
+      allow read: if (isAuthenticated() && resource.data.dentistId == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() && isValidLabJob(request.resource.data) && uidUnchanged('dentistId');
+      allow update: if (isDocOwner() || isAdmin()) && isValidLabJob(request.resource.data) && uidNotModified('dentistId') && uidNotModified('createdAt');
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /crm_deals/{dealId} {
+      allow read: if (isAuthenticated() && resource.data.dentistId == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() && isValidCRMDeal(request.resource.data) && uidUnchanged('dentistId');
+      allow update: if (isDocOwner() || isAdmin()) && isValidCRMDeal(request.resource.data) && uidNotModified('dentistId') && uidNotModified('createdAt');
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /clinicSettings/{settingId} {
+      allow read: if (isAuthenticated() && (settingId == request.auth.uid || (resource != null && resource.data.dentistId == request.auth.uid))) || isAdmin();
+      allow create: if isAuthenticated() && isValidClinicSettings(request.resource.data) && uidUnchanged('dentistId');
+      allow update: if (isDocOwner() || isAdmin()) && isValidClinicSettings(request.resource.data) && uidNotModified('dentistId');
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /documentTemplates/{templateId} {
+      allow read: if (isAuthenticated() && resource.data.dentistId == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() && isValidDocumentTemplate(request.resource.data) && uidUnchanged('dentistId');
+      allow update: if (isDocOwner() || isAdmin()) && isValidDocumentTemplate(request.resource.data) && uidNotModified('dentistId') && uidNotModified('createdAt');
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    function isValidDocumentTemplate(data) {
+      return hasRequiredFields(['dentistId', 'name', 'content', 'type', 'createdAt']) &&
+             data.dentistId is string && data.dentistId.size() > 0 && data.dentistId.size() < 100 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 50000 &&
+             data.type in ['prescription', 'certificate', 'attendance', 'referral', 'postop', 'laudo', 'exame'] &&
+             isValidDateString(data.createdAt);
+    }
+
+    match /fixed_expenses/{expenseId} {
+      allow read: if (isAuthenticated() && resource.data.dentistId == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() && isValidFixedExpense(request.resource.data) && uidUnchanged('dentistId');
+      allow update: if (isDocOwner() || isAdmin()) && isValidFixedExpense(request.resource.data) && uidNotModified('dentistId') && uidNotModified('createdAt');
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /procedure_templates/{templateId} {
+      allow read: if (isAuthenticated() && resource.data.dentistId == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() && isValidProcedureTemplate(request.resource.data) && uidUnchanged('dentistId');
+      allow update: if (isDocOwner() || isAdmin()) && isValidProcedureTemplate(request.resource.data) && uidNotModified('dentistId') && uidNotModified('createdAt');
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /dentists/{dentistId} {
+      allow read: if (isAuthenticated() && resource.data.dentistId == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() && isValidDentist(request.resource.data) && uidUnchanged('dentistId');
+      allow update: if (isDocOwner() || isAdmin()) && isValidDentist(request.resource.data) && uidNotModified('dentistId') && uidNotModified('createdAt');
       allow delete: if isDocOwner() || isAdmin();
     }
     // ===============================================================
@@ -240,6 +391,41 @@ service cloud.firestore {
     }
 
     // ===============================================================
+    // Collection: clinical_evolutions
+    // Document ID: auto-generated
+    // Fields:
+    //   - patientId: string (required) - Patient ID
+    //   - dentistId: string (required) - Dentist ID
+    //   - content: string (required) - Note content
+    //   - procedure: string (optional) - Procedure name
+    //   - tooth: string (optional) - Tooth or region
+    //   - authorName: string (required) - Name of the dentist
+    //   - createdAt: timestamp (required) - Creation date
+    // ===============================================================
+    match /clinical_evolutions/{evolutionId} {
+      allow read: if (isAuthenticated() && resource.data.dentistId == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() && 
+                    isValidEvolution(request.resource.data) && 
+                    request.resource.data.dentistId == request.auth.uid;
+      allow update: if (isAuthenticated() && resource.data.dentistId == request.auth.uid) && 
+                    isValidEvolution(request.resource.data) && 
+                    request.resource.data.dentistId == resource.data.dentistId &&
+                    request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if (isAuthenticated() && resource.data.dentistId == request.auth.uid) || isAdmin();
+    }
+
+    function isValidEvolution(data) {
+      return hasRequiredFields(['patientId', 'dentistId', 'content', 'authorName', 'createdAt']) &&
+             data.patientId is string && data.patientId.size() > 0 && data.patientId.size() < 100 &&
+             data.dentistId is string && data.dentistId.size() > 0 && data.dentistId.size() < 100 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 50000 &&
+             data.authorName is string && data.authorName.size() > 0 && data.authorName.size() < 100 &&
+             (!( 'procedure' in data ) || data.procedure == null || (data.procedure is string && data.procedure.size() <= 200)) &&
+             (!( 'tooth' in data ) || data.tooth == null || (data.tooth is string && data.tooth.size() <= 100)) &&
+             data.createdAt is timestamp;
+    }
+
+    // ===============================================================
     // Collection: trash
     // Document ID: auto-generated
     // Fields:
@@ -250,11 +436,11 @@ service cloud.firestore {
     //   - deletedAt: string (required, format: date-time) - Deletion date
     // ===============================================================
     match /trash/{trashId} {
-      allow read: if isAuthenticated() && resource.data.dentistId == request.auth.uid;
+      allow read: if (isAuthenticated() && resource.data.dentistId == request.auth.uid) || isAdmin();
       allow create: if isAuthenticated() && 
                     isValidTrashItem(request.resource.data) && 
                     request.resource.data.dentistId == request.auth.uid;
-      allow delete: if isAuthenticated() && resource.data.dentistId == request.auth.uid;
+      allow delete: if (isAuthenticated() && resource.data.dentistId == request.auth.uid) || isAdmin();
     }
 
     function isValidTrashItem(data) {

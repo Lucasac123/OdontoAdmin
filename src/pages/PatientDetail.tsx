@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../firebase';
-import { Patient } from '../types';
-import { ArrowLeft, User, FileText, FileImage, ClipboardList, Pill, DollarSign } from 'lucide-react';
+import { doc, onSnapshot, collection, query, where } from 'firebase/firestore';
+import { db, auth, handleFirestoreError, OperationType } from '../firebase';
+import { Patient, Dentist } from '../types';
+import { ArrowLeft, User, FileText, FileImage, ClipboardList, Pill, DollarSign, Activity, UserCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 import { AnamnesisTab } from '../components/patient/AnamnesisTab';
@@ -13,11 +13,16 @@ import { FilesTab } from '../components/patient/FilesTab';
 import { TreatmentPlanTab } from '../components/patient/TreatmentPlanTab';
 import { PersonalInfoTab } from '../components/patient/PersonalInfoTab';
 import { PaymentsTab } from '../components/patient/PaymentsTab';
+import { ClinicalEvolutionTab } from '../components/patient/ClinicalEvolutionTab';
+import { ConsentFormsTab } from '../components/patient/ConsentFormsTab';
+import { LabJobsTab } from '../components/patient/LabJobsTab';
+import { FileSignature, Briefcase, Microscope } from 'lucide-react';
 
 export const PatientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [patient, setPatient] = useState<Patient | null>(null);
+  const [dentist, setDentist] = useState<Dentist | null>(null);
   const [activeTab, setActiveTab] = useState('personal');
   const [direction, setDirection] = useState(0);
 
@@ -26,7 +31,21 @@ export const PatientDetail: React.FC = () => {
 
     const unsubscribe = onSnapshot(doc(db, 'patients', id), (docSnap) => {
       if (docSnap.exists()) {
-        setPatient({ id: docSnap.id, ...docSnap.data() } as Patient);
+        const patientData = { id: docSnap.id, ...docSnap.data() } as Patient;
+        setPatient(patientData);
+
+        if (patientData.responsibleDentistId) {
+          const unsubDentist = onSnapshot(doc(db, 'dentists', patientData.responsibleDentistId), (dentistSnap) => {
+            if (dentistSnap.exists()) {
+              setDentist({ id: dentistSnap.id, ...dentistSnap.data() } as Dentist);
+            } else {
+              setDentist(null);
+            }
+          });
+          return () => unsubDentist();
+        } else {
+          setDentist(null);
+        }
       } else {
         navigate('/patients');
       }
@@ -42,10 +61,13 @@ export const PatientDetail: React.FC = () => {
   const tabs = [
     { id: 'personal', label: 'Dados Pessoais', icon: User, component: PersonalInfoTab },
     { id: 'anamnesis', label: 'Anamnese', icon: FileText, component: AnamnesisTab },
+    { id: 'evolution', label: 'Evolução Clínica', icon: Activity, component: ClinicalEvolutionTab },
     { id: 'odontogram', label: 'Odontograma', icon: ClipboardList, component: OdontogramTab },
     { id: 'prescription', label: 'Receituário', icon: Pill, component: PrescriptionTab },
+    { id: 'consent', label: 'Termos (TCLE)', icon: FileSignature, component: ConsentFormsTab },
     { id: 'files', label: 'Arquivos', icon: FileImage, component: FilesTab },
     { id: 'treatment', label: 'Plano de Tratamento', icon: ClipboardList, component: TreatmentPlanTab },
+    { id: 'lab', label: 'Laboratório', icon: Microscope, component: LabJobsTab },
     { id: 'payments', label: 'Pagamentos', icon: DollarSign, component: PaymentsTab },
   ];
 
@@ -73,39 +95,48 @@ export const PatientDetail: React.FC = () => {
         </button>
         <div>
           <h1 className="text-3xl font-bold text-text-primary">{patient.name}</h1>
-          <p className="text-sm text-text-secondary">
-            Cadastrado em {new Date(patient.createdAt).toLocaleDateString()}
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-1">
+            <p className="text-sm text-text-secondary">
+              Cadastrado em {new Date(patient.createdAt).toLocaleDateString()}
+            </p>
+            <div className="hidden sm:block w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+            <div className="flex items-center gap-1.5 text-sm text-text-secondary">
+              <UserCircle className="w-4 h-4" />
+              <span>{dentist ? dentist.name : 'Sem filiação a dentista específico'}</span>
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-        <div className="flex overflow-x-auto border-b border-zinc-200 dark:border-zinc-800 hide-scrollbar">
-          {tabs.map((tab) => (
-            <motion.button
-              key={tab.id}
-              whileHover={{ backgroundColor: 'rgba(0,0,0,0.02)' }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleTabChange(tab.id)}
-              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors relative ${
-                activeTab === tab.id 
-                  ? 'text-indigo-600 dark:text-indigo-400' 
-                  : 'text-text-secondary hover:text-text-primary hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
-              }`}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
-              {activeTab === tab.id && (
-                <motion.div 
-                  layoutId="activeTab"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 dark:bg-indigo-400"
-                />
-              )}
-            </motion.button>
-          ))}
+        <div className="flex overflow-x-auto border-b border-zinc-200 dark:border-zinc-800 no-scrollbar scroll-smooth">
+          <div className="flex min-w-full">
+            {tabs.map((tab) => (
+              <motion.button
+                key={tab.id}
+                whileHover={{ backgroundColor: 'rgba(0,0,0,0.02)' }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => handleTabChange(tab.id)}
+                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors relative flex-shrink-0 ${
+                  activeTab === tab.id 
+                    ? 'text-indigo-600 dark:text-indigo-400' 
+                    : 'text-text-secondary hover:text-text-primary hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
+                }`}
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+                {activeTab === tab.id && (
+                  <motion.div 
+                    layoutId="activeTab"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 dark:bg-indigo-400"
+                  />
+                )}
+              </motion.button>
+            ))}
+          </div>
         </div>
         
-        <div className="p-6 min-h-[400px] overflow-hidden">
+        <div className="p-4 md:p-6 min-h-[400px]">
           <AnimatePresence mode="popLayout" custom={direction}>
             <motion.div
               key={activeTab}
@@ -140,3 +171,5 @@ export const PatientDetail: React.FC = () => {
     </motion.div>
   );
 };
+
+export default PatientDetail;

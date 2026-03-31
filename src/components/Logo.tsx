@@ -4,7 +4,7 @@ export const Logo: React.FC<{ className?: string, iconOnly?: boolean }> = ({ cla
   const isVertical = className.includes('flex-col');
 
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
+    <div className={`flex items-center ${iconOnly ? '' : 'gap-3'} ${className}`}>
       <div className="relative group">
         <div className="absolute -inset-1.5 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
         <div className="relative w-11 h-11 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none overflow-hidden">

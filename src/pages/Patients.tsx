@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../firebase';
-import { Patient } from '../types';
-import { Plus, Search, Trash2, Edit, ChevronRight } from 'lucide-react';
+import { Patient, Dentist } from '../types';
+import { Plus, Search, Trash2, Edit, ChevronRight, UserCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { motion, AnimatePresence } from 'motion/react';
 
 export const Patients: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [dentists, setDentists] = useState<Dentist[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [newPatient, setNewPatient] = useState({
     name: '',
     source: '',
-    status: 'Ativo' as const
+    status: 'Ativo' as const,
+    responsibleDentistId: ''
   });
   const [error, setError] = useState<string | null>(null);
   const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
@@ -41,7 +43,22 @@ export const Patients: React.FC = () => {
       handleFirestoreError(error, OperationType.LIST, 'patients');
     });
 
-    return () => unsubscribe();
+    const qDentists = query(
+      collection(db, 'dentists'),
+      where('dentistId', '==', auth.currentUser.uid)
+    );
+    const unsubscribeDentists = onSnapshot(qDentists, (snapshot) => {
+      const dentistsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Dentist[];
+      setDentists(dentistsData);
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeDentists();
+    };
   }, []);
 
   const handleAddPatient = async (e: React.FormEvent) => {
@@ -63,9 +80,10 @@ export const Patients: React.FC = () => {
         name: trimmedName,
         source: newPatient.source.trim() || null,
         status: newPatient.status,
+        responsibleDentistId: newPatient.responsibleDentistId || null,
         createdAt: new Date().toISOString()
       });
-      setNewPatient({ name: '', source: '', status: 'Ativo' });
+      setNewPatient({ name: '', source: '', status: 'Ativo', responsibleDentistId: '' });
       setIsAdding(false);
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'patients');
@@ -93,111 +111,163 @@ export const Patients: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto">
-          <h1 className="text-3xl font-bold text-text-primary">Pacientes</h1>
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div>
+          <h1 className="text-3xl font-bold text-text-primary tracking-tight">Pacientes</h1>
+          <p className="text-text-secondary mt-1">Gerencie o cadastro e histórico de seus pacientes</p>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          <div className="relative w-full sm:w-80 group">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary group-focus-within:text-indigo-500 transition-colors" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar paciente por nome..."
-              className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl pl-9 pr-4 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+              placeholder="Buscar por nome..."
+              className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl pl-10 pr-4 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
             />
           </div>
+          <button
+            onClick={() => setIsAdding(true)}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-md shadow-indigo-500/20 font-medium shrink-0"
+          >
+            <Plus className="w-5 h-5" />
+            Novo Paciente
+          </button>
         </div>
-        <button
-          onClick={() => setIsAdding(true)}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors shrink-0"
-        >
-          <Plus className="w-5 h-5" />
-          Novo Paciente
-        </button>
       </div>
 
       <AnimatePresence>
         {isAdding && (
           <motion.div 
-            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-            animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}
-            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-2 overflow-hidden"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="bg-surface p-6 rounded-3xl shadow-xl shadow-zinc-200/50 dark:shadow-none border border-zinc-200 dark:border-zinc-800"
           >
-            <form onSubmit={handleAddPatient} className="bg-surface p-4 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row gap-3">
-              <input
-                type="text"
-                value={newPatient.name}
-                onChange={(e) => {
-                  setNewPatient({...newPatient, name: e.target.value});
-                  if (error) setError(null);
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-text-primary">Cadastrar Novo Paciente</h2>
+              <button 
+                onClick={() => {
+                  setIsAdding(false);
+                  setNewPatient({ name: '', source: '', status: 'Ativo', responsibleDentistId: '' });
+                  setError(null);
                 }}
-                placeholder="Nome do paciente"
-                className={`flex-1 bg-zinc-50 dark:bg-zinc-950 border ${error ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-800'} rounded-xl px-4 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                autoFocus
-              />
-              <input
-                type="text"
-                value={newPatient.source}
-                onChange={(e) => setNewPatient({...newPatient, source: e.target.value})}
-                placeholder="Procedência (Ex: Indicação)"
-                className="flex-1 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-              <select
-                value={newPatient.status}
-                onChange={(e) => setNewPatient({...newPatient, status: e.target.value as any})}
-                className="flex-1 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="text-text-secondary hover:text-text-primary transition-colors"
               >
-                <option value="Ativo">Ativo</option>
-                <option value="Inativo">Inativo</option>
-                <option value="Em Tratamento">Em Tratamento</option>
-              </select>
-              <div className="flex gap-2">
-                <button type="submit" className="flex-1 sm:flex-none bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors">
-                  Salvar
-                </button>
+                Cancelar
+              </button>
+            </div>
+
+            <form onSubmit={handleAddPatient} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">Nome Completo</label>
+                <input
+                  type="text"
+                  value={newPatient.name}
+                  onChange={(e) => {
+                    setNewPatient({...newPatient, name: e.target.value});
+                    if (error) setError(null);
+                  }}
+                  placeholder="Ex: João Silva"
+                  className={`w-full bg-zinc-50 dark:bg-zinc-900 border ${error ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-800'} rounded-2xl px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all`}
+                  autoFocus
+                />
+                {error && <p className="text-[10px] text-red-500 ml-1">{error}</p>}
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">Procedência</label>
+                <input
+                  type="text"
+                  value={newPatient.source}
+                  onChange={(e) => setNewPatient({...newPatient, source: e.target.value})}
+                  placeholder="Ex: Indicação, Instagram"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">Status Inicial</label>
+                <select
+                  value={newPatient.status}
+                  onChange={(e) => setNewPatient({...newPatient, status: e.target.value as any})}
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="Ativo">Ativo</option>
+                  <option value="Inativo">Inativo</option>
+                  <option value="Em Tratamento">Em Tratamento</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">Dentista Responsável</label>
+                <select
+                  value={newPatient.responsibleDentistId}
+                  onChange={(e) => setNewPatient({...newPatient, responsibleDentistId: e.target.value})}
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">Sem filiação específica</option>
+                  {dentists.map(d => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="md:col-span-2 lg:col-span-4 flex justify-end gap-3 mt-2">
                 <button 
                   type="button" 
                   onClick={() => {
                     setIsAdding(false);
-                    setNewPatient({ name: '', source: '', status: 'Ativo' });
+                    setNewPatient({ name: '', source: '', status: 'Ativo', responsibleDentistId: '' });
                     setError(null);
                   }} 
-                  className="flex-1 sm:flex-none bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 px-4 py-2 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                  className="px-6 py-2.5 rounded-2xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors font-medium"
                 >
-                  Cancelar
+                  Descartar
+                </button>
+                <button 
+                  type="submit" 
+                  className="bg-indigo-600 text-white px-8 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-500/20 font-medium"
+                >
+                  Cadastrar Paciente
                 </button>
               </div>
             </form>
-            {error && (
-              <p className="text-sm text-red-500 ml-4">{error}</p>
-            )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filteredPatients.length === 0 ? (
-          <div className="p-8 text-center text-text-secondary">
-            Nenhum paciente encontrado.
+          <div className="col-span-full bg-surface rounded-3xl p-12 text-center border border-zinc-200 dark:border-zinc-800">
+            <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Search className="w-8 h-8 text-zinc-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-text-primary">Nenhum paciente encontrado</h3>
+            <p className="text-text-secondary mt-1">Tente ajustar sua busca ou cadastrar um novo paciente.</p>
           </div>
         ) : (
-          <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-            <AnimatePresence initial={false}>
-              {filteredPatients.map(patient => (
-                <motion.div 
-                  key={patient.id}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  onClick={() => navigate(`/patients/${patient.id}`)}
-                  className="flex items-center justify-between p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors overflow-hidden"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <h3 className="font-medium text-text-primary">{patient.name}</h3>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+          <AnimatePresence mode="popLayout">
+            {filteredPatients.map((patient, index) => (
+              <motion.div 
+                key={patient.id}
+                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2, delay: index * 0.05 }}
+                onClick={() => navigate(`/patients/${patient.id}`)}
+                className="group bg-surface p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/5 transition-all cursor-pointer relative overflow-hidden"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xl">
+                      {patient.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-text-primary group-hover:text-indigo-600 transition-colors line-clamp-1">{patient.name}</h3>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider mt-1 ${
                         patient.status === 'Inativo' 
                           ? 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
                           : patient.status === 'Em Tratamento'
@@ -207,29 +277,45 @@ export const Patients: React.FC = () => {
                         {patient.status || 'Ativo'}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-text-secondary">
-                      <span>Cadastrado em {new Date(patient.createdAt).toLocaleDateString()}</span>
-                      {patient.source && (
-                        <>
-                          <span className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-                          <span className="text-indigo-600 dark:text-indigo-400 font-medium">{patient.source}</span>
-                        </>
-                      )}
+                  </div>
+                  <button 
+                    onClick={(e) => handleDelete(e, patient)}
+                    className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="space-y-3 pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-text-secondary">Procedência</span>
+                    <span className="font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-md">
+                      {patient.source || 'Não informada'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-text-secondary">Responsável</span>
+                    <div className="flex items-center gap-1.5 font-medium text-text-primary">
+                      <UserCircle className="w-3.5 h-3.5 text-zinc-400" />
+                      <span className="line-clamp-1">
+                        {patient.responsibleDentistId 
+                          ? dentists.find(d => d.id === patient.responsibleDentistId)?.name || 'Dentista'
+                          : 'Sem filiação'}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={(e) => handleDelete(e, patient)}
-                      className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                    <ChevronRight className="w-5 h-5 text-zinc-400" />
+                  <div className="flex items-center justify-between text-[10px] text-text-secondary pt-1">
+                    <span>Cadastrado em</span>
+                    <span>{new Date(patient.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                   </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+                </div>
+
+                <div className="absolute right-4 bottom-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
+                  <ChevronRight className="w-5 h-5 text-indigo-500" />
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         )}
       </div>
 
@@ -246,3 +332,5 @@ export const Patients: React.FC = () => {
     </div>
   );
 };
+
+export default Patients;

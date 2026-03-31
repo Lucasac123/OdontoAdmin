@@ -7,9 +7,10 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface GlobalSearchProps {
   variant?: 'sidebar' | 'header';
+  isCollapsed?: boolean;
 }
 
-export const GlobalSearch: React.FC<GlobalSearchProps> = ({ variant = 'sidebar' }) => {
+export const GlobalSearch: React.FC<GlobalSearchProps> = ({ variant = 'sidebar', isCollapsed = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState<any[]>([]);
@@ -99,18 +100,19 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ variant = 'sidebar' 
       {variant === 'sidebar' ? (
         <button
           onClick={() => setIsOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-800/50 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 rounded-xl transition-colors w-full"
+          className={`flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800/50 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 rounded-xl transition-all duration-300 ${isCollapsed ? 'w-10 h-10 justify-center p-0 mx-auto' : 'px-3 py-2 w-full'}`}
+          title={isCollapsed ? "Buscar (Ctrl+K)" : undefined}
         >
-          <Search className="w-4 h-4" />
-          <span className="text-sm flex-1 text-left">Buscar...</span>
-          <span className="text-[10px] font-medium px-1.5 py-0.5 bg-zinc-200 dark:bg-zinc-700 rounded text-zinc-500 dark:text-zinc-400 hidden md:block">⌘K</span>
+          <Search className="w-4 h-4 shrink-0" />
+          {!isCollapsed && <span className="text-sm flex-1 text-left">Buscar...</span>}
         </button>
       ) : (
         <button
           onClick={() => setIsOpen(true)}
-          className="p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+          className="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:bg-zinc-800 rounded-xl transition-all border border-zinc-200 dark:border-white/5"
         >
-          <Search className="w-6 h-6" />
+          <Search className="w-4 h-4 md:w-5 md:h-5" />
+          <span className="hidden sm:inline text-sm font-medium">Buscar...</span>
         </button>
       )}
 
@@ -185,7 +187,6 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ variant = 'sidebar' 
                 ) : (
                   <div className="p-8 text-center text-zinc-500 text-sm">
                     <p>Digite para começar a buscar...</p>
-                    <p className="mt-2 text-xs opacity-60 hidden md:block">Dica: Use ⌘K para abrir rapidamente</p>
                   </div>
                 )}
               </div>

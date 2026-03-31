@@ -120,6 +120,21 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["dentistId", "content", "createdAt"]
+    },
+    "Dentist": {
+      "title": "Dentist",
+      "description": "A dentist record managed by the clinic",
+      "type": "object",
+      "properties": {
+        "dentistId": { "type": "string", "description": "ID of the clinic/owner who manages this record" },
+        "name": { "type": "string" },
+        "cro": { "type": "string" },
+        "specialty": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["dentistId", "name", "createdAt"]
     }
   },
   "firestore": {
@@ -150,6 +165,10 @@
     "/quickNotes/{noteId}": {
       "schema": { "$ref": "#/entities/QuickNote" },
       "description": "Quick notes for the dentist."
+    },
+    "/dentists/{dentistId}": {
+      "schema": { "$ref": "#/entities/Dentist" },
+      "description": "Dentists managed by the clinic"
     }
   }
 }

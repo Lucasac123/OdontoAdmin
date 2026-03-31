@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../../firebase';
-import { Patient } from '../../types';
+import { doc, updateDoc, collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db, auth, handleFirestoreError, OperationType } from '../../firebase';
+import { Patient, ProcedureTemplate } from '../../types';
 import { Save, Loader2, Plus, Trash2, Printer, DollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { CRMTab } from './CRMTab';
 
 interface Procedure {
   id: string;
@@ -16,8 +17,10 @@ interface Procedure {
 
 export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
   const [procedures, setProcedures] = useState<Procedure[]>([]);
+  const [templates, setTemplates] = useState<ProcedureTemplate[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [newProcedure, setNewProcedure] = useState({ name: '', tooth: '', quantity: '1', unitPrice: '' });
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   
   const [treatmentStatus, setTreatmentStatus] = useState<'Planejado' | 'Em Andamento' | 'Concluído'>(patient.treatmentStatus || 'Planejado');
   const [startDate, setStartDate] = useState(patient.treatmentStartDate || '');
@@ -35,6 +38,24 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
       }
     }
   }, [patient.odontogram]);
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    const q = query(
+      collection(db, 'procedure_templates'),
+      where('dentistId', '==', auth.currentUser.uid)
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const loadedTemplates = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as ProcedureTemplate[];
+      setTemplates(loadedTemplates);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'procedure_templates');
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -74,6 +95,29 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
     }]);
 
     setNewProcedure({ name: '', tooth: '', quantity: '1', unitPrice: '' });
+    setSelectedTemplateId('');
+  };
+
+  const handleTemplateSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const templateId = e.target.value;
+    setSelectedTemplateId(templateId);
+    
+    if (templateId) {
+      const template = templates.find(t => t.id === templateId);
+      if (template) {
+        setNewProcedure(prev => ({
+          ...prev,
+          name: template.name,
+          unitPrice: template.finalPriceWithDifficulty.toString()
+        }));
+      }
+    } else {
+      setNewProcedure(prev => ({
+        ...prev,
+        name: '',
+        unitPrice: ''
+      }));
+    }
   };
 
   const handleDeleteProcedure = (id: string) => {
@@ -212,41 +256,54 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
 
           <div className="bg-surface rounded-3xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
           <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 bg-surface">
-            <form onSubmit={handleAddProcedure} className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-text-secondary mb-1">Preencher com Template (Opcional)</label>
+              <select
+                value={selectedTemplateId}
+                onChange={handleTemplateSelect}
+                className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
+              >
+                <option value="">-- Selecione um procedimento pré-definido --</option>
+                {templates.map(t => (
+                  <option key={t.id} value={t.id}>{t.name} - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.finalPriceWithDifficulty)}</option>
+                ))}
+              </select>
+            </div>
+            <form onSubmit={handleAddProcedure} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
               <div className="md:col-span-4">
-                <label className="block text-sm font-medium text-text-secondary mb-1">Procedimento</label>
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">Procedimento</label>
                 <input 
                   type="text" 
                   required 
                   value={newProcedure.name} 
                   onChange={e => setNewProcedure({...newProcedure, name: e.target.value})} 
                   placeholder="Ex: Restauração Resina MOD"
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" 
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all" 
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-text-secondary mb-1">Dente ou Região</label>
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">Dente/Região</label>
                 <input 
                   type="text" 
                   value={newProcedure.tooth} 
                   onChange={e => setNewProcedure({...newProcedure, tooth: e.target.value})} 
                   placeholder="Ex: 46, Maxila..."
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" 
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all" 
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-text-secondary mb-1">Qtd</label>
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">Qtd</label>
                 <input 
                   type="number" 
                   min="1"
                   required 
                   value={newProcedure.quantity} 
                   onChange={e => setNewProcedure({...newProcedure, quantity: e.target.value})} 
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" 
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all" 
                 />
               </div>
               <div className="md:col-span-3">
-                <label className="block text-sm font-medium text-text-secondary mb-1">V. Unitário (R$)</label>
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">V. Unitário (R$)</label>
                 <input 
                   type="number" 
                   step="0.01" 
@@ -254,11 +311,11 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                   value={newProcedure.unitPrice} 
                   onChange={e => setNewProcedure({...newProcedure, unitPrice: e.target.value})} 
                   placeholder="0.00"
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" 
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all" 
                 />
               </div>
-              <div className="md:col-span-1 flex items-end">
-                <button type="submit" className="w-full bg-indigo-600 text-white h-[42px] rounded-xl flex items-center justify-center hover:bg-indigo-700 transition-colors">
+              <div className="md:col-span-1">
+                <button type="submit" className="w-full bg-indigo-600 text-white h-[42px] rounded-xl flex items-center justify-center hover:bg-indigo-700 transition-all shadow-sm shadow-indigo-200 dark:shadow-none">
                   <Plus className="w-5 h-5" />
                 </button>
               </div>
@@ -326,6 +383,10 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="mt-12 pt-8 border-t border-zinc-200 dark:border-zinc-800">
+        <CRMTab patient={patient} />
       </div>
     </div>
   );

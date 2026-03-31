@@ -22,7 +22,7 @@ export const Agenda: React.FC = () => {
   const [newAppt, setNewAppt] = useState({
     patientId: '',
     time: '09:00',
-    duration: 30,
+    duration: 30 as number | '',
     notes: ''
   });
 
@@ -210,22 +210,22 @@ export const Agenda: React.FC = () => {
     <div className="space-y-6 h-full flex flex-col">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary">Agenda</h1>
-          <p className="text-sm text-text-secondary">Gerencie seus atendimentos e sincronize com o Google Agenda.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Agenda</h1>
+          <p className="text-xs sm:text-sm text-text-secondary">Gerencie seus atendimentos e sincronize com o Google Agenda.</p>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center gap-2 bg-surface text-text-primary border border-zinc-200 dark:border-zinc-800 px-4 py-2 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+            className="flex items-center justify-center gap-2 bg-surface text-text-primary border border-zinc-200 dark:border-zinc-800 px-4 py-2 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-sm"
           >
-            <Settings className="w-5 h-5" />
+            <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
             Lembretes
           </button>
           <button
             onClick={() => setIsAdding(true)}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors"
+            className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors text-sm"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
             Novo Agendamento
           </button>
         </div>
@@ -298,7 +298,7 @@ export const Agenda: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-text-secondary mb-1">Duração (min)</label>
-                    <input type="number" step="15" required value={newAppt.duration} onChange={e => setNewAppt({...newAppt, duration: parseInt(e.target.value)})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" />
+                    <input type="number" step="15" required value={newAppt.duration} onChange={e => setNewAppt({...newAppt, duration: e.target.value === '' ? '' : parseInt(e.target.value)})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" />
                   </div>
                 </div>
                 <div>
@@ -460,7 +460,7 @@ export const Agenda: React.FC = () => {
                     <input
                       type="number"
                       value={notifSettings.hoursBefore}
-                      onChange={e => setNotifSettings({ ...notifSettings, hoursBefore: parseInt(e.target.value) })}
+                      onChange={e => setNotifSettings({ ...notifSettings, hoursBefore: e.target.value === '' ? '' : parseInt(e.target.value) })}
                       className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
@@ -510,3 +510,5 @@ export const Agenda: React.FC = () => {
     </div>
   );
 };
+
+export default Agenda;

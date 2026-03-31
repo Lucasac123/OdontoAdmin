@@ -224,106 +224,119 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-surface p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700">
-        <div className="space-y-1">
-          <h2 className="text-xl font-bold text-text-primary">Arquivos e Imagens</h2>
-          <p className="text-sm text-text-secondary">Gerencie radiografias, fotos e documentos do paciente.</p>
-        </div>
-        
-        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-          <div className="flex items-center gap-2 bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2">
-            <span className="text-xs font-medium text-text-secondary uppercase">Tipo:</span>
-            <select 
-              value={uploadType} 
-              onChange={(e) => setUploadType(e.target.value as any)}
-              className="bg-transparent text-sm font-medium text-text-primary focus:outline-none"
-            >
-              <option value="intraoral">Foto Intraoral</option>
-              <option value="extraoral">Foto Extraoral</option>
-              <option value="xray">Radiografia</option>
-              <option value="tomography">Tomografia</option>
-              <option value="consent">Termo de Consentimento</option>
-              <option value="audio">Áudio</option>
-              <option value="other">Outro</option>
-            </select>
+      <div className="bg-surface p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold text-text-primary flex items-center gap-2">
+              <FileImage className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+              Arquivos e Imagens
+            </h2>
+            <p className="text-sm text-text-secondary">Gerencie radiografias, fotos e documentos do paciente.</p>
           </div>
-
-          <div className="flex items-center gap-2 bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2">
-            <Clock className="w-3.5 h-3.5 text-text-secondary" />
-            <span className="text-xs font-medium text-text-secondary uppercase">Expira em:</span>
-            <select 
-              value={expirationDays} 
-              onChange={(e) => setExpirationDays(e.target.value)}
-              className="bg-transparent text-sm font-medium text-text-primary focus:outline-none"
-            >
-              <option value="0">Nunca</option>
-              <option value="7">7 dias</option>
-              <option value="30">30 dias</option>
-              <option value="90">90 dias</option>
-              <option value="365">1 ano</option>
-            </select>
-          </div>
-
-          <div className="flex gap-2 w-full lg:w-auto">
-            <button 
-              onClick={() => setIsLinkModalOpen(true)}
-              className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-surface border border-zinc-200 dark:border-zinc-700 text-text-primary px-4 py-2.5 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all font-medium text-sm"
-            >
-              <LinkIcon className="w-4 h-4" /> Adicionar Link
-            </button>
-            <div className="relative flex-1 lg:flex-none">
-              <input 
-                type="file" 
-                onChange={handleFileUpload} 
-                disabled={isUploading}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed z-10"
-                accept="image/*,.pdf,audio/*"
-              />
-              <button 
-                className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-sm shadow-indigo-200 dark:shadow-none relative overflow-hidden text-sm font-medium"
-                disabled={isUploading}
+          
+          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <div className="flex-1 lg:flex-none min-w-[140px]">
+              <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1 ml-1">Tipo de Arquivo</label>
+              <select 
+                value={uploadType} 
+                onChange={(e) => setUploadType(e.target.value as any)}
+                className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm font-medium text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
               >
-                {isUploading ? (
-                  <div className="flex flex-col items-center w-full">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span className="text-sm font-medium">{uploadProgress}%</span>
-                    </div>
-                    <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
-                      <motion.div 
-                        className="h-full bg-white"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${uploadProgress}%` }}
-                        transition={{ duration: 0.3 }}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <><Upload className="w-4 h-4" /> Upload</>
-                )}
+                <option value="intraoral">Foto Intraoral</option>
+                <option value="extraoral">Foto Extraoral</option>
+                <option value="xray">Radiografia</option>
+                <option value="tomography">Tomografia</option>
+                <option value="consent">Termo de Consentimento</option>
+                <option value="audio">Áudio</option>
+                <option value="other">Outro</option>
+              </select>
+            </div>
+
+            <div className="flex-1 lg:flex-none min-w-[140px]">
+              <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1 ml-1">Expiração</label>
+              <select 
+                value={expirationDays} 
+                onChange={(e) => setExpirationDays(e.target.value)}
+                className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm font-medium text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
+              >
+                <option value="0">Nunca expira</option>
+                <option value="7">7 dias</option>
+                <option value="30">30 dias</option>
+                <option value="90">90 dias</option>
+                <option value="365">1 ano</option>
+              </select>
+            </div>
+
+            <div className="flex gap-2 w-full lg:w-auto lg:pt-5">
+              <button 
+                onClick={() => setIsLinkModalOpen(true)}
+                className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-zinc-100 dark:bg-zinc-800 text-text-primary px-4 py-2.5 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all font-medium text-sm"
+              >
+                <LinkIcon className="w-4 h-4" /> Link
               </button>
+              <div className="relative flex-1 lg:flex-none">
+                <input 
+                  type="file" 
+                  onChange={handleFileUpload} 
+                  disabled={isUploading}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed z-10"
+                  accept="image/*,.pdf,audio/*"
+                />
+                <button 
+                  className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-sm shadow-indigo-200 dark:shadow-none relative overflow-hidden text-sm font-medium"
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <div className="flex flex-col items-center w-full">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span className="text-xs font-medium">{uploadProgress}%</span>
+                      </div>
+                      <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
+                        <motion.div 
+                          className="h-full bg-white"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${uploadProgress}%` }}
+                          transition={{ duration: 0.3 }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <><Upload className="w-4 h-4" /> Upload</>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar">
-        {['all', 'intraoral', 'extraoral', 'xray', 'tomography', 'consent', 'audio', 'other'].map((type) => (
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+        {[
+          { id: 'all', label: 'Todos' },
+          { id: 'intraoral', label: 'Intraoral' },
+          { id: 'extraoral', label: 'Extraoral' },
+          { id: 'xray', label: 'Raio-X' },
+          { id: 'tomography', label: 'Tomografia' },
+          { id: 'consent', label: 'Termos' },
+          { id: 'audio', label: 'Áudios' },
+          { id: 'other', label: 'Outros' }
+        ].map((type) => (
             <button
-            key={type}
-            onClick={() => setFilterType(type)}
-            className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
-              filterType === type
-                ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-md'
-                : 'bg-surface text-text-secondary border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+            key={type.id}
+            onClick={() => setFilterType(type.id)}
+            className={`px-5 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap border ${
+              filterType === type.id
+                ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border-zinc-900 dark:border-white shadow-lg'
+                : 'bg-surface text-text-secondary border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
             }`}
           >
-            {type === 'all' ? 'Todos' : type.charAt(0).toUpperCase() + type.slice(1)}
+            {type.label}
           </button>
         ))}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
         {filteredFiles.length === 0 ? (
           <div className="col-span-full p-16 text-center text-text-secondary border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl bg-surface">
             <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mx-auto mb-4">

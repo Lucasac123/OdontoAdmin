@@ -1,12 +1,31 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
-import { Send, Bot, Search, Image as ImageIcon, Sparkles, Loader2, Upload } from 'lucide-react';
+import { 
+  Send, 
+  Bot, 
+  Search, 
+  Image as ImageIcon, 
+  Sparkles, 
+  Loader2, 
+  Upload, 
+  BrainCircuit, 
+  MessageSquare, 
+  ChevronRight, 
+  Plus, 
+  History, 
+  Trash2, 
+  Mic, 
+  Camera, 
+  User, 
+  X 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import Markdown from 'react-markdown';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export const AIAssistant: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'chat' | 'search' | 'analyze' | 'generate'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'search' | 'analyze'>('chat');
   
   // Chat State
   const [chatMessages, setChatMessages] = useState<{role: 'user' | 'model', text: string}[]>([]);
@@ -24,17 +43,6 @@ export const AIAssistant: React.FC = () => {
   const [analyzePrompt, setAnalyzePrompt] = useState('Analise esta imagem odontológica e descreva os achados.');
   const [analyzeResult, setAnalyzeResult] = useState('');
   const [isAnalyzeLoading, setIsAnalyzeLoading] = useState(false);
-
-  // Generate State
-  const [generatePrompt, setGeneratePrompt] = useState('');
-  const [generateAspectRatio, setGenerateAspectRatio] = useState('1:1');
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [isGenerateLoading, setIsGenerateLoading] = useState(false);
-
-  const setLogoPreset = () => {
-    setGeneratePrompt('Professional minimalist logo for a dental clinic named "OdontoAdmin", featuring a stylized tooth icon, modern typography, clean lines, medical blue and white color palette, vector style, high quality, professional branding.');
-    setGenerateAspectRatio('1:1');
-  };
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -133,286 +141,291 @@ export const AIAssistant: React.FC = () => {
     }
   };
 
-  const handleGenerateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!generatePrompt.trim()) return;
-
-    setIsGenerateLoading(true);
-    setGeneratedImage(null);
-
-    try {
-      // Note: gemini-3-pro-image-preview requires user API key selection in a real app,
-      // but we use the provided GEMINI_API_KEY here.
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: { parts: [{ text: generatePrompt }] },
-        config: {
-          imageConfig: {
-            aspectRatio: generateAspectRatio,
-            imageSize: "1K"
-          }
-        }
-      });
-
-      for (const part of response.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) {
-          setGeneratedImage(`data:image/png;base64,${part.inlineData.data}`);
-          break;
-        }
-      }
-    } catch (error) {
-      console.error(error);
-      alert('Erro ao gerar imagem. Verifique se o prompt é válido.');
-    } finally {
-      setIsGenerateLoading(false);
-    }
-  };
-
   return (
-    <div className="space-y-6 h-[calc(100vh-8rem)] flex flex-col">
-      <div className="flex items-center justify-between shrink-0">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary">IA Assistente</h1>
-          <p className="text-sm text-text-secondary">Potencializado pelo Google Gemini</p>
+    <div className="flex flex-col gap-6 h-full min-h-0 max-w-5xl mx-auto w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 shrink-0">
+            <Sparkles className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-black text-text-primary tracking-tight">IA Assistente</h1>
+            <p className="text-xs text-text-secondary font-bold uppercase tracking-widest">Google Gemini</p>
+          </div>
         </div>
-      </div>
-
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 flex-1 flex flex-col overflow-hidden">
-        <div className="flex overflow-x-auto border-b border-zinc-200 dark:border-zinc-800 shrink-0 hide-scrollbar">
+        
+        <div className="flex bg-zinc-100 dark:bg-zinc-800/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-x-auto no-scrollbar shrink-0">
           {[
-            { id: 'chat', label: 'Chatbot Clínico', icon: Bot },
-            { id: 'search', label: 'Pesquisa Web', icon: Search },
-            { id: 'analyze', label: 'Análise de Imagem', icon: ImageIcon },
-            { id: 'generate', label: 'Gerar Ilustração', icon: Sparkles },
+            { id: 'chat', label: 'Chat', icon: MessageSquare },
+            { id: 'search', label: 'Pesquisa', icon: Search },
+            { id: 'analyze', label: 'Análise', icon: ImageIcon },
           ].map((tab) => (
-            <motion.button
+            <button
               key={tab.id}
-              whileHover={{ backgroundColor: 'rgba(0,0,0,0.02)' }}
-              whileTap={{ scale: 0.98 }}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors relative ${
+              className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap ${
                 activeTab === tab.id 
-                  ? 'text-indigo-600 dark:text-indigo-400' 
-                  : 'text-text-secondary hover:text-text-primary hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
+                  ? 'bg-white dark:bg-zinc-700 text-indigo-600 dark:text-indigo-400 shadow-sm' 
+                  : 'text-text-secondary hover:text-text-primary'
               }`}
             >
               <tab.icon className="w-4 h-4" />
-              {tab.label}
-              {activeTab === tab.id && (
-                <motion.div 
-                  layoutId="aiActiveTab"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 dark:bg-indigo-400" 
-                />
-              )}
-            </motion.button>
+              <span>{tab.label}</span>
+            </button>
           ))}
         </div>
+      </div>
 
-        <div className="flex-1 overflow-y-auto p-6 bg-zinc-50/50 dark:bg-zinc-950/50">
-          {activeTab === 'chat' && (
-            <div className="h-full flex flex-col">
-              <div className="flex-1 overflow-y-auto space-y-4 pb-4">
-                {chatMessages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-text-secondary space-y-4">
-                    <Bot className="w-12 h-12 opacity-50" />
-                    <p>Olá! Sou seu assistente odontológico. Como posso ajudar hoje?</p>
+      <div className="bg-surface rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 flex-1 flex flex-col min-h-0 overflow-hidden relative">
+        {activeTab === 'chat' && (
+          <div className="h-full flex flex-col">
+            <div className="flex-1 overflow-y-auto p-6 space-y-8 scroll-smooth">
+              {chatMessages.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto py-12">
+                  <div className="w-20 h-20 rounded-[32px] bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-8">
+                    <Bot className="w-10 h-10" />
                   </div>
-                ) : (
-                  chatMessages.map((msg, idx) => (
-                    <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                  <h3 className="text-2xl font-black text-text-primary mb-4 tracking-tight">Como posso ajudar hoje?</h3>
+                  <p className="text-text-secondary mb-12 text-sm">Sou seu assistente especializado em odontologia. Posso ajudar com diagnósticos, planos de tratamento, legislação e dúvidas gerais.</p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                    {[
+                      "Como tratar cárie profunda?",
+                      "Protocolo de cirurgia siso",
+                      "Legislação CRO 2024",
+                      "Dicas de marketing clínico"
+                    ].map(suggestion => (
+                      <button 
+                        key={suggestion}
+                        onClick={() => {
+                          setChatInput(suggestion);
+                        }}
+                        className="p-4 text-xs font-bold text-left bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800 rounded-2xl hover:border-indigo-500 transition-colors text-text-secondary hover:text-indigo-600 group"
+                      >
+                        <span className="block mb-2 opacity-50 group-hover:opacity-100 transition-opacity"><MessageSquare className="w-4 h-4" /></span>
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="max-w-3xl mx-auto w-full space-y-8">
+                  {chatMessages.map((msg, idx) => (
+                    <motion.div 
+                      key={idx} 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                    >
+                      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
                         msg.role === 'user' 
-                          ? 'bg-indigo-600 text-white rounded-br-none' 
-                          : 'bg-surface border border-zinc-200 dark:border-zinc-700 text-text-primary rounded-bl-none'
+                          ? 'bg-zinc-100 dark:bg-zinc-800 text-text-secondary' 
+                          : 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
                       }`}>
-                        <p className="whitespace-pre-wrap">{msg.text}</p>
+                        {msg.role === 'user' ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
                       </div>
-                    </div>
-                  ))
-                )}
-                {isChatLoading && (
-                  <div className="flex justify-start">
-                    <div className="bg-surface border border-zinc-200 dark:border-zinc-700 rounded-2xl rounded-bl-none px-4 py-3 flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin text-indigo-600 dark:text-indigo-400" />
-                      <span className="text-text-secondary text-sm">Pensando...</span>
-                    </div>
-                  </div>
-                )}
-                <div ref={chatEndRef} />
-              </div>
-              <form onSubmit={handleChatSubmit} className="shrink-0 relative">
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Digite sua dúvida clínica..."
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl pl-4 pr-12 py-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
-                  disabled={isChatLoading}
-                />
-                <button 
-                  type="submit" 
-                  disabled={isChatLoading || !chatInput.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg disabled:opacity-50 transition-colors"
-                >
-                  <Send className="w-5 h-5" />
-                </button>
-              </form>
+                      <div className={`flex-1 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
+                        <div className={`inline-block max-w-full text-sm leading-relaxed ${
+                          msg.role === 'user' 
+                            ? 'bg-zinc-100 dark:bg-zinc-800 text-text-primary px-5 py-3 rounded-2xl rounded-tr-none font-medium' 
+                            : 'text-text-primary prose dark:prose-invert prose-sm max-w-none'
+                        }`}>
+                          {msg.role === 'user' ? (
+                            msg.text
+                          ) : (
+                            <div className="markdown-body">
+                              <Markdown>{msg.text}</Markdown>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                  {isChatLoading && (
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex gap-4"
+                    >
+                      <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                        <Bot className="w-5 h-5" />
+                      </div>
+                      <div className="flex items-center gap-2 h-10">
+                        <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="w-2 h-2 bg-indigo-500 rounded-full" />
+                        <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-2 h-2 bg-indigo-500 rounded-full" />
+                        <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-2 h-2 bg-indigo-500 rounded-full" />
+                      </div>
+                    </motion.div>
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+              )}
             </div>
-          )}
+            
+            <div className="p-4 sm:p-6 bg-surface border-t border-zinc-200 dark:border-zinc-800 shrink-0">
+              <div className="max-w-3xl mx-auto relative">
+                <form onSubmit={handleChatSubmit} className="relative flex items-end gap-2 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-2 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all shadow-sm">
+                  <textarea
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleChatSubmit(e);
+                      }
+                    }}
+                    placeholder="Envie uma mensagem para a IA..."
+                    className="w-full bg-transparent border-none resize-none max-h-32 min-h-[44px] py-3 px-4 text-sm text-text-primary focus:outline-none focus:ring-0 placeholder:text-zinc-400"
+                    rows={1}
+                    disabled={isChatLoading}
+                  />
+                  <button 
+                    type="submit" 
+                    disabled={isChatLoading || !chatInput.trim()}
+                    className="w-11 h-11 shrink-0 flex items-center justify-center bg-indigo-600 text-white rounded-2xl disabled:opacity-50 hover:bg-indigo-700 transition-all shadow-md active:scale-95"
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
+                </form>
+                <p className="text-center text-[10px] text-text-secondary mt-3 font-medium">
+                  A IA pode cometer erros. Considere verificar informações importantes.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
-          {activeTab === 'search' && (
-            <div className="h-full flex flex-col space-y-6">
-              <form onSubmit={handleSearchSubmit} className="shrink-0 relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+        {activeTab === 'search' && (
+          <div className="h-full flex flex-col p-6 sm:p-10 overflow-y-auto">
+            <div className="max-w-3xl mx-auto w-full space-y-8">
+              <div className="text-center space-y-4 mb-8">
+                <div className="w-16 h-16 rounded-3xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mx-auto">
+                  <Search className="w-8 h-8" />
+                </div>
+                <h2 className="text-2xl font-black text-text-primary tracking-tight">Pesquisa Inteligente</h2>
+                <p className="text-sm text-text-secondary">Busque informações atualizadas na web com o poder do Gemini.</p>
+              </div>
+
+              <form onSubmit={handleSearchSubmit} className="relative group">
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-zinc-400 group-focus-within:text-indigo-500 transition-colors" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Pesquise na web (ex: Legislação CRO atualizada, novos materiais...)"
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl pl-12 pr-4 py-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm text-lg"
+                  placeholder="O que você deseja pesquisar?"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-full pl-16 pr-6 py-5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm text-lg font-medium"
                   disabled={isSearchLoading}
                 />
               </form>
-              
-              <div className="flex-1 bg-surface rounded-2xl border border-zinc-200 dark:border-zinc-700 p-6 overflow-y-auto">
+
+              <div className="min-h-[300px]">
                 {isSearchLoading ? (
-                  <div className="h-full flex flex-col items-center justify-center text-text-secondary space-y-4">
-                    <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400" />
-                    <p>Pesquisando na web...</p>
+                  <div className="h-full flex flex-col items-center justify-center text-center space-y-6 py-20">
+                    <Loader2 className="w-10 h-10 animate-spin text-indigo-600 dark:text-indigo-400" />
+                    <p className="text-text-secondary font-bold uppercase tracking-widest text-xs">Buscando informações...</p>
                   </div>
                 ) : searchResult ? (
-                  <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap text-text-primary">
-                    {searchResult}
-                  </div>
-                ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-text-secondary space-y-4">
-                    <Search className="w-12 h-12 opacity-50" />
-                    <p>Resultados da pesquisa aparecerão aqui.</p>
-                  </div>
-                )}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-zinc-50 dark:bg-zinc-900/30 rounded-[32px] p-8 border border-zinc-200 dark:border-zinc-800"
+                  >
+                    <div className="markdown-body prose dark:prose-invert max-w-none text-sm">
+                      <Markdown>{searchResult}</Markdown>
+                    </div>
+                  </motion.div>
+                ) : null}
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {activeTab === 'analyze' && (
-            <div className="h-full flex flex-col md:flex-row gap-6">
-              <div className="w-full md:w-1/3 flex flex-col gap-4">
-                <div className="border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl p-4 flex flex-col items-center justify-center text-center bg-surface relative overflow-hidden min-h-[200px]">
-                  {analyzeImage ? (
-                    <img src={analyzeImage} alt="Upload" className="absolute inset-0 w-full h-full object-contain" />
-                  ) : (
-                    <>
-                      <Upload className="w-8 h-8 text-zinc-400 mb-2" />
-                      <p className="text-sm text-text-secondary">Faça upload de uma radiografia ou foto intraoral</p>
-                    </>
-                  )}
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleImageUpload}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                </div>
+        {activeTab === 'analyze' && (
+          <div className="h-full flex flex-col lg:flex-row p-6 sm:p-8 gap-8 overflow-y-auto">
+            <div className="w-full lg:w-1/3 flex flex-col gap-6">
+              <div className="group relative aspect-square border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-[32px] flex flex-col items-center justify-center text-center bg-zinc-50 dark:bg-zinc-900/30 hover:border-indigo-500 transition-all overflow-hidden">
+                {analyzeImage ? (
+                  <>
+                    <img src={analyzeImage} alt="Upload" className="absolute inset-0 w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                      <p className="text-white font-black uppercase tracking-widest text-xs flex items-center gap-2">
+                        <Camera className="w-4 h-4" /> Trocar Imagem
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="p-8 space-y-4">
+                    <div className="w-16 h-16 rounded-3xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto text-zinc-400 group-hover:text-indigo-500 transition-colors">
+                      <Upload className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-black text-text-primary uppercase tracking-widest mb-2">Upload de Imagem</p>
+                      <p className="text-xs text-text-secondary font-medium">Radiografias, fotos intraorais ou exames</p>
+                    </div>
+                  </div>
+                )}
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageUpload}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+              </div>
+              
+              <div className="space-y-3">
+                <label className="text-xs font-black text-text-secondary uppercase tracking-[0.2em] ml-2">Instruções de Análise</label>
                 <textarea
                   value={analyzePrompt}
                   onChange={(e) => setAnalyzePrompt(e.target.value)}
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none h-32"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800 rounded-[24px] p-5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none h-32 font-medium shadow-sm"
                   placeholder="O que você deseja analisar nesta imagem?"
                 />
-                <button
-                  onClick={handleAnalyzeSubmit}
-                  disabled={!analyzeImage || isAnalyzeLoading}
-                  className="w-full bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
-                >
-                  {isAnalyzeLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-                  Analisar Imagem
-                </button>
               </div>
-              <div className="w-full md:w-2/3 bg-surface rounded-2xl border border-zinc-200 dark:border-zinc-700 p-6 overflow-y-auto">
-                {isAnalyzeLoading ? (
-                  <div className="h-full flex flex-col items-center justify-center text-text-secondary space-y-4">
-                    <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400" />
-                    <p>Analisando imagem...</p>
-                  </div>
-                ) : analyzeResult ? (
-                  <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap text-text-primary">
-                    {analyzeResult}
-                  </div>
-                ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-text-secondary space-y-4">
-                    <ImageIcon className="w-12 h-12 opacity-50" />
-                    <p>O resultado da análise aparecerá aqui.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
 
-          {activeTab === 'generate' && (
-            <div className="h-full flex flex-col md:flex-row gap-6">
-              <div className="w-full md:w-1/3 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-text-secondary">Prompt da Imagem</label>
-                  <button 
-                    onClick={setLogoPreset}
-                    className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    Preset Logo
-                  </button>
-                </div>
-                <form onSubmit={handleGenerateSubmit} className="space-y-4">
-                  <div>
-                    <textarea
-                      value={generatePrompt}
-                      onChange={(e) => setGeneratePrompt(e.target.value)}
-                      className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none h-32"
-                      placeholder="Ex: Ilustração 3D de um implante dentário..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">Proporção (Aspect Ratio)</label>
-                    <select
-                      value={generateAspectRatio}
-                      onChange={(e) => setGenerateAspectRatio(e.target.value)}
-                      className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option value="1:1">1:1 (Quadrado)</option>
-                      <option value="3:4">3:4 (Retrato)</option>
-                      <option value="4:3">4:3 (Paisagem)</option>
-                      <option value="9:16">9:16 (Stories)</option>
-                      <option value="16:9">16:9 (Widescreen)</option>
-                    </select>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={!generatePrompt.trim() || isGenerateLoading}
-                    className="w-full bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
-                  >
-                    {isGenerateLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-                    Gerar Imagem
-                  </button>
-                </form>
-              </div>
-              <div className="w-full md:w-2/3 bg-surface rounded-2xl border border-zinc-200 dark:border-zinc-700 p-6 flex items-center justify-center overflow-hidden">
-                {isGenerateLoading ? (
-                  <div className="flex flex-col items-center justify-center text-text-secondary space-y-4">
-                    <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400" />
-                    <p>Gerando ilustração...</p>
-                  </div>
-                ) : generatedImage ? (
-                  <img src={generatedImage} alt="Generated" className="max-w-full max-h-full object-contain rounded-lg shadow-md" />
-                ) : (
-                  <div className="flex flex-col items-center justify-center text-text-secondary space-y-4">
-                    <ImageIcon className="w-12 h-12 opacity-50" />
-                    <p>A imagem gerada aparecerá aqui.</p>
-                  </div>
-                )}
-              </div>
+              <button
+                onClick={handleAnalyzeSubmit}
+                disabled={!analyzeImage || isAnalyzeLoading}
+                className="w-full bg-indigo-600 text-white py-4 rounded-[20px] font-black uppercase tracking-[0.2em] text-xs hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-3 transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
+              >
+                {isAnalyzeLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                Analisar Agora
+              </button>
             </div>
-          )}
-        </div>
+
+            <div className="flex-1 bg-zinc-50 dark:bg-zinc-900/30 rounded-[32px] border border-zinc-200 dark:border-zinc-800 p-6 sm:p-10 overflow-y-auto">
+              {isAnalyzeLoading ? (
+                <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
+                  <div className="relative">
+                    <Loader2 className="w-12 h-12 animate-spin text-indigo-600 dark:text-indigo-400" />
+                    <Sparkles className="w-5 h-5 text-indigo-400 absolute -top-2 -right-2 animate-pulse" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-black text-text-primary mb-2 tracking-tight">Analisando Imagem</h4>
+                    <p className="text-sm text-text-secondary">Processando pixels e identificando padrões clínicos...</p>
+                  </div>
+                </div>
+              ) : analyzeResult ? (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="markdown-body prose dark:prose-invert max-w-none text-sm"
+                >
+                  <Markdown>{analyzeResult}</Markdown>
+                </motion.div>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center space-y-6 opacity-50">
+                  <div className="w-24 h-24 rounded-[32px] bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400">
+                    <ImageIcon className="w-10 h-10" />
+                  </div>
+                  <p className="text-text-secondary font-medium max-w-xs text-sm">O resultado da análise detalhada aparecerá aqui após o processamento da imagem.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
+export default AIAssistant;

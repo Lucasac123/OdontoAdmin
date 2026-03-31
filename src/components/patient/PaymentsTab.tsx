@@ -87,12 +87,7 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
   const confirmDelete = async () => {
     if (!paymentToDelete) return;
     try {
-      const payment = payments.find(p => p.id === paymentToDelete);
-      if (payment) {
-        await moveToTrash('finances', paymentToDelete, payment);
-      } else {
-        await deleteDoc(doc(db, 'finances', paymentToDelete));
-      }
+      await moveToTrash('finances', paymentToDelete);
       setPaymentToDelete(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `finances/${paymentToDelete}`);
