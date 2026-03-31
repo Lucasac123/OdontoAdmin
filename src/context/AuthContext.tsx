@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, signInWithPopup, signOut, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, setPersistence, browserLocalPersistence, browserSessionPersistence, sendEmailVerification, updateProfile } from 'firebase/auth';
+import { User, signInWithPopup, signOut, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, setPersistence, browserLocalPersistence, browserSessionPersistence, sendEmailVerification, updateProfile, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import { Capacitor } from '@capacitor/core';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { auth, googleProvider, getDocFromCache } from '../firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
@@ -25,6 +27,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [firestoreError, setFirestoreError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      GoogleAuth.initialize({
+        clientId: 'COLE_SEU_WEB_CLIENT_ID_DO_FIREBASE_AQUI.apps.googleusercontent.com',
+        scopes: ['profile', 'email'],
+        grantOfflineAccess: true,
+      });
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       setLoading(false);
@@ -83,8 +93,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // ... rest of the code
     try {
       setIsSigningIn(true);
-      console.log("Starting sign in with popup...");
-      const result = await signInWithPopup(auth, googleProvider);
+      console.log("Starting sign in...");
+      
+      let result;
+      if (Capacitor.isNativePlatform()) {
+        console.log("Using Capacitor Native Google Auth");
+        const googleUser = await GoogleAuth.signIn();
+        const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
+        result = await signInWithCredential(auth, credential);
+      } else {
+        console.log("Using Web Popup Google Auth");
+        result = await signInWithPopup(auth, googleProvider);
+      }
+      
       console.log("Sign in successful for user:", result.user.email);
       
       // Create user document if it doesn't exist
