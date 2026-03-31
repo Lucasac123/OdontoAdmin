@@ -44,6 +44,13 @@ jobs:
           path: ~/.android/debug.keystore
           key: android-debug-keystore-v1
 
+      - name: Ensure Keystore Exists
+        run: |
+          mkdir -p ~/.android
+          if [ ! -f ~/.android/debug.keystore ]; then
+            keytool -genkey -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
       - name: Build APK
         working-directory: ./android
         run: |
