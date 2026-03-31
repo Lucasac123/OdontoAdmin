@@ -15,7 +15,7 @@ export default defineConfig(({mode}) => {
         workbox: {
           maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MiB
         },
-        includeAssets: ['logo.svg'],
+        includeAssets: ['logo.svg', 'icon.png'],
         manifest: {
           name: 'OdontoAdmin - Gestão Clínica',
           short_name: 'OdontoAdmin',
@@ -26,19 +26,19 @@ export default defineConfig(({mode}) => {
           orientation: 'portrait',
           icons: [
             {
-              src: 'logo.svg',
+              src: 'icon.png',
               sizes: '192x192',
-              type: 'image/svg+xml'
+              type: 'image/png'
             },
             {
-              src: 'logo.svg',
+              src: 'icon.png',
               sizes: '512x512',
-              type: 'image/svg+xml'
+              type: 'image/png'
             },
             {
-              src: 'logo.svg',
+              src: 'icon.png',
               sizes: '512x512',
-              type: 'image/svg+xml',
+              type: 'image/png',
               purpose: 'any maskable'
             }
           ]
