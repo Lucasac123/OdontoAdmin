@@ -151,7 +151,13 @@ export const Financial: React.FC = () => {
       snapshot.docs.forEach(doc => {
         const item = doc.data();
         if (item.quantity && item.price) {
-          if (item.category === 'Patrimônio') {
+          // Robust comparison: normalize unicode and check case-insensitively
+          // to handle any encoding differences in stored data
+          const cat = (item.category || '').normalize('NFC').trim();
+          const isPatrimonio = cat === 'Patrimônio' || 
+                               cat.toLowerCase().includes('patrim') ||
+                               cat === 'Patrimonio'; // without accent fallback
+          if (isPatrimonio) {
             patrimonio += item.quantity * item.price;
           } else {
             consumo += item.quantity * item.price;

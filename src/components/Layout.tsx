@@ -66,16 +66,6 @@ const SidebarContent = ({
       >
         <X className="w-6 h-6" />
       </button>
-
-      {/* Desktop Collapse Button */}
-      <button 
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className={`hidden md:flex items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 text-text-secondary hover:text-indigo-600 transition-all duration-300 w-10 h-10 shrink-0`}
-        title={isCollapsed ? "Expandir" : "Recolher"}
-        aria-label={isCollapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
-      >
-        {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-      </button>
     </div>
     
     <div className="px-4 mb-2">
@@ -285,7 +275,7 @@ export const Layout: React.FC = () => {
   return (
     <div className="flex h-[100dvh] bg-bg overflow-hidden font-sans">
       {/* Desktop Sidebar */}
-      <div className="hidden md:block h-full shrink-0">
+      <div className="hidden md:flex h-full shrink-0 relative">
         <SidebarContent 
           user={user}
           theme={theme}
@@ -300,6 +290,15 @@ export const Layout: React.FC = () => {
           setIsCollapsed={setIsCollapsed}
           toggleCalculator={() => setIsCalculatorOpen(!isCalculatorOpen)}
         />
+        {/* Floating Collapse Button - outside sidebar to avoid clipping */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="absolute -right-4 top-6 z-50 w-8 h-8 rounded-full bg-surface border border-zinc-200 dark:border-zinc-700 shadow-md flex items-center justify-center text-text-secondary hover:text-indigo-600 transition-all"
+          title={isCollapsed ? "Expandir" : "Recolher"}
+          aria-label={isCollapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
+        >
+          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
       </div>
 
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
