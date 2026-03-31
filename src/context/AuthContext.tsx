@@ -125,17 +125,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error("Error creating user document after Google sign in:", firestoreError);
       }
     } catch (error: any) {
-      if (error.code === 'auth/popup-closed-by-user') {
+      if (error.code === 'auth/popup-closed-by-user' || error.message?.includes('cancel')) {
         console.log('Login cancelado pelo usuário.');
         return;
       }
       console.error("Error signing in:", error);
+      
+      // Detailed error for Google Auth (Common in Android)
+      const errorMsg = error.message || '';
+      const errorCode = error.code || 'unknown';
       
       if (error.code === 'auth/unauthorized-domain') {
         const currentDomain = window.location.hostname;
         alert(`Erro de Autenticação: O domínio "${currentDomain}" não está autorizado no Console do Firebase.\n\nPor favor, adicione este domínio em: Console Firebase > Authentication > Settings > Authorized Domains.`);
       } else if (error.code === 'auth/popup-blocked') {
         alert('O popup de login foi bloqueado pelo seu navegador. Por favor, permita popups para este site.');
+      } else if (Capacitor.isNativePlatform()) {
+        alert(`Erro no Google Login (Android):\n${errorMsg}\n\nCódigo: ${errorCode}\n\nIsso geralmente acontece quando o SHA-1 não está cadastrado no Firebase ou o Web Client ID está incorreto.`);
       } else {
         alert(`Erro ao entrar: ${error.message}`);
       }
