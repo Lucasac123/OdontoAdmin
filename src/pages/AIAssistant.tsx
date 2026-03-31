@@ -35,6 +35,7 @@ export const AIAssistant: React.FC = () => {
     { id: 'gemini-flash-latest', name: 'Flash', fullName: 'Gemini Flash (Padrão)', description: 'Equilíbrio entre velocidade e inteligência' },
     { id: 'gemini-3.1-flash-lite-preview', name: 'Lite', fullName: 'Gemini Flash Lite', description: 'Mais rápido, menor latência' },
     { id: 'gemini-3.1-pro-preview', name: 'Pro', fullName: 'Gemini Pro', description: 'Mais inteligente, maior raciocínio' },
+    { id: 'gemini-2.5-flash-image', name: '2.5 Flash', fullName: 'Gemini 2.5 Flash', description: 'Multimodal e rápido' },
     { id: 'gemini-3-flash-preview', name: 'G3 Flash', fullName: 'Gemini 3 Flash', description: 'Modelo de última geração' },
   ];
   
