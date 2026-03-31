@@ -13,6 +13,8 @@ const Inventory = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'consumo' | 'patrimonio'>('consumo');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -69,7 +71,8 @@ const Inventory = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser) return;
+    if (!auth.currentUser || isSaving) return;
+    setIsSaving(true);
 
     try {
       const itemData = {
@@ -87,6 +90,8 @@ const Inventory = () => {
     } catch (error) {
       console.error('Error saving inventory item:', error);
       alert('Erro ao salvar item.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -96,16 +101,19 @@ const Inventory = () => {
   };
 
   const handleConfirmDelete = async () => {
-    if (!itemToDelete) return;
+    if (!itemToDelete || isDeleting) return;
     const item = items.find(i => i.id === itemToDelete);
     if (!item) return;
 
+    setIsDeleting(true);
     try {
       await moveToTrash('inventory', itemToDelete, item);
       setIsConfirmModalOpen(false);
       setItemToDelete(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `inventory/${itemToDelete}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -387,10 +395,11 @@ const Inventory = () => {
                     <input
                       type="text"
                       required
+                      disabled={isSaving}
                       placeholder="Ex: Resina Composta A2"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-text-primary transition-all outline-none"
+                      className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-text-primary transition-all outline-none disabled:opacity-50"
                     />
                   </div>
 
@@ -400,10 +409,11 @@ const Inventory = () => {
                       <input
                         type="number"
                         required
+                        disabled={isSaving}
                         min="0"
                         value={formData.quantity}
                         onChange={(e) => setFormData({ ...formData, quantity: e.target.value === '' ? '' : Number(e.target.value) })}
-                        className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-text-primary transition-all outline-none"
+                        className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-text-primary transition-all outline-none disabled:opacity-50"
                       />
                     </div>
                     <div>
@@ -411,10 +421,11 @@ const Inventory = () => {
                       <input
                         type="number"
                         required
+                        disabled={isSaving}
                         min="0"
                         value={formData.minQuantity}
                         onChange={(e) => setFormData({ ...formData, minQuantity: e.target.value === '' ? '' : Number(e.target.value) })}
-                        className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-text-primary transition-all outline-none"
+                        className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-text-primary transition-all outline-none disabled:opacity-50"
                       />
                     </div>
                   </div>
@@ -423,9 +434,10 @@ const Inventory = () => {
                     <div>
                       <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Unidade</label>
                       <select
+                        disabled={isSaving}
                         value={formData.unit}
                         onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                        className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-text-primary transition-all outline-none appearance-none cursor-pointer"
+                        className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-text-primary transition-all outline-none appearance-none cursor-pointer disabled:opacity-50"
                       >
                         <option value="unidade">Unidade</option>
                         <option value="caixa">Caixa</option>
@@ -441,10 +453,11 @@ const Inventory = () => {
                         <input
                           type="number"
                           step="0.01"
+                          disabled={isSaving}
                           min="0"
                           value={formData.price}
                           onChange={(e) => setFormData({ ...formData, price: e.target.value === '' ? '' : Number(e.target.value) })}
-                          className="w-full pl-10 pr-4 py-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-text-primary transition-all outline-none"
+                          className="w-full pl-10 pr-4 py-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-text-primary transition-all outline-none disabled:opacity-50"
                           placeholder="0,00"
                         />
                       </div>
@@ -454,9 +467,10 @@ const Inventory = () => {
                   <div>
                     <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">Categoria</label>
                     <select
+                      disabled={isSaving}
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-text-primary transition-all outline-none appearance-none cursor-pointer"
+                      className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-text-primary transition-all outline-none appearance-none cursor-pointer disabled:opacity-50"
                     >
                       <option value="Material de Consumo">Material de Consumo</option>
                       <option value="Instrumental">Instrumental</option>
@@ -471,16 +485,25 @@ const Inventory = () => {
                 <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-zinc-100 dark:border-zinc-800">
                   <button
                     type="button"
+                    disabled={isSaving}
                     onClick={() => setIsModalOpen(false)}
-                    className="w-full sm:w-auto px-8 py-3 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-2xl transition-all font-bold text-sm"
+                    className="w-full sm:w-auto px-8 py-3 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-2xl transition-all font-bold text-sm disabled:opacity-50"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="w-full sm:w-auto px-8 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all font-bold text-sm shadow-lg shadow-indigo-500/20 active:scale-95"
+                    disabled={isSaving}
+                    className="w-full sm:w-auto px-8 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all font-bold text-sm shadow-lg shadow-indigo-500/20 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    Salvar Item
+                    {isSaving ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      'Salvar Item'
+                    )}
                   </button>
                 </div>
               </form>
@@ -492,6 +515,7 @@ const Inventory = () => {
 
       <ConfirmModal
         isOpen={isConfirmModalOpen}
+        isLoading={isDeleting}
         onCancel={() => setIsConfirmModalOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Excluir Item"

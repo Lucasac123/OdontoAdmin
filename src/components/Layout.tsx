@@ -148,7 +148,7 @@ const SidebarContent = ({
         {/* Individual Round Buttons */}
         <button 
           onClick={toggleCalculator}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-text-secondary hover:text-indigo-600 dark:hover:text-white transition-all border border-zinc-200 dark:border-white/5 shrink-0"
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-900 text-text-secondary hover:text-indigo-600 dark:hover:text-white transition-all border border-zinc-200 dark:border-white/5 shrink-0"
           title="Calculadora"
         >
           <Calculator className="w-4 h-4" />
@@ -156,7 +156,7 @@ const SidebarContent = ({
         <NavLink 
           to="/trash"
           onClick={() => setIsMobileMenuOpen(false)}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-text-secondary hover:text-indigo-600 dark:hover:text-white transition-all border border-zinc-200 dark:border-white/5 shrink-0"
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-900 text-text-secondary hover:text-indigo-600 dark:hover:text-white transition-all border border-zinc-200 dark:border-white/5 shrink-0"
           title="Lixeira"
         >
           <Trash2 className="w-4 h-4" />

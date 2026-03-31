@@ -11,6 +11,7 @@ interface AddFinanceFormProps {
   patients: Record<string, string>;
   splits: any[];
   handleAdd: (e: React.FormEvent) => Promise<void>;
+  isLoading?: boolean;
 }
 
 export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
@@ -21,6 +22,7 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
   patients,
   splits,
   handleAdd,
+  isLoading = false,
 }) => {
   return (
     <div className="w-full sm:w-auto">
@@ -40,7 +42,7 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-zinc-950/40 backdrop-blur-sm"
-              onClick={() => setIsAdding(false)}
+              onClick={isLoading ? undefined : () => setIsAdding(false)}
             />
             
             <motion.div
@@ -55,12 +57,14 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
                   <h3 className="text-xl font-bold text-text-primary tracking-tight">Novo Lançamento</h3>
                   <p className="text-xs text-text-secondary mt-1">Registre uma nova movimentação financeira</p>
                 </div>
-                <button 
-                  onClick={() => setIsAdding(false)}
-                  className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors text-text-secondary"
-                >
-                  <Plus className="w-6 h-6 rotate-45" />
-                </button>
+                {!isLoading && (
+                  <button 
+                    onClick={() => setIsAdding(false)}
+                    className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors text-text-secondary"
+                  >
+                    <Plus className="w-6 h-6 rotate-45" />
+                  </button>
+                )}
               </div>
 
               <form onSubmit={handleAdd} className="p-8 space-y-6">
@@ -70,16 +74,18 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
                     <div className="flex bg-zinc-100 dark:bg-zinc-900 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800">
                       <button
                         type="button"
+                        disabled={isLoading}
                         onClick={() => setNewFinance({ ...newFinance, type: 'income' })}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newFinance.type === 'income' ? 'bg-surface text-emerald-600 shadow-md' : 'text-text-secondary hover:text-text-primary'}`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newFinance.type === 'income' ? 'bg-surface text-emerald-600 shadow-md' : 'text-text-secondary hover:text-text-primary'} disabled:opacity-50`}
                       >
                         <TrendingUp className="w-4 h-4" />
                         Receita
                       </button>
                       <button
                         type="button"
+                        disabled={isLoading}
                         onClick={() => setNewFinance({ ...newFinance, type: 'expense' })}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newFinance.type === 'expense' ? 'bg-surface text-red-600 shadow-md' : 'text-text-secondary hover:text-text-primary'}`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newFinance.type === 'expense' ? 'bg-surface text-red-600 shadow-md' : 'text-text-secondary hover:text-text-primary'} disabled:opacity-50`}
                       >
                         <TrendingDown className="w-4 h-4" />
                         Despesa
@@ -92,10 +98,11 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
                     <input 
                       type="text" 
                       required 
+                      disabled={isLoading}
                       placeholder="Ex: Pagamento de Fornecedor"
                       value={newFinance.description} 
                       onChange={e => setNewFinance({ ...newFinance, description: e.target.value })} 
-                      className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-text-secondary/30" 
+                      className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-text-secondary/30 disabled:opacity-50" 
                     />
                   </div>
                   
@@ -107,10 +114,11 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
                         type="number" 
                         step="0.01" 
                         required 
+                        disabled={isLoading}
                         placeholder="0,00"
                         value={newFinance.amount} 
                         onChange={e => setNewFinance({ ...newFinance, amount: e.target.value })} 
-                        className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl pl-12 pr-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-black text-lg" 
+                        className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl pl-12 pr-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-black text-lg disabled:opacity-50" 
                       />
                     </div>
                   </div>
@@ -120,9 +128,10 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
                     <input 
                       type="date" 
                       required 
+                      disabled={isLoading}
                       value={newFinance.date} 
                       onChange={e => setNewFinance({ ...newFinance, date: e.target.value })} 
-                      className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer" 
+                      className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer disabled:opacity-50" 
                     />
                   </div>
 
@@ -132,9 +141,10 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
                         <label className="block text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mb-2 ml-1">Forma de Pagamento</label>
                         <div className="relative">
                           <select
+                            disabled={isLoading}
                             value={newFinance.paymentMethod}
                             onChange={e => setNewFinance({ ...newFinance, paymentMethod: e.target.value as any })}
-                            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none cursor-pointer font-bold"
+                            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none cursor-pointer font-bold disabled:opacity-50"
                           >
                             <option value="pix">PIX</option>
                             <option value="money">Dinheiro</option>
@@ -151,9 +161,10 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
                         <label className="block text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mb-2 ml-1">Paciente (Opcional)</label>
                         <div className="relative">
                           <select
+                            disabled={isLoading}
                             value={newFinance.patientId}
                             onChange={e => setNewFinance({ ...newFinance, patientId: e.target.value })}
-                            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none cursor-pointer font-bold"
+                            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none cursor-pointer font-bold disabled:opacity-50"
                           >
                             <option value="">Nenhum</option>
                             {Object.entries(patients).map(([id, name]) => (
@@ -172,15 +183,18 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
                 <div className="flex gap-4 pt-6">
                   <button 
                     type="button" 
+                    disabled={isLoading}
                     onClick={() => setIsAdding(false)} 
-                    className="flex-1 px-8 py-4 rounded-2xl text-text-secondary font-black uppercase tracking-widest text-[10px] hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700"
+                    className="flex-1 px-8 py-4 rounded-2xl text-text-secondary font-black uppercase tracking-widest text-[10px] hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 disabled:opacity-50"
                   >
                     Cancelar
                   </button>
                   <button 
                     type="submit" 
-                    className="flex-[2] px-8 py-4 rounded-2xl bg-indigo-600 text-white font-black uppercase tracking-widest text-[10px] hover:bg-indigo-700 shadow-xl shadow-indigo-500/20 active:scale-95 transition-all"
+                    disabled={isLoading}
+                    className="flex-[2] px-8 py-4 rounded-2xl bg-indigo-600 text-white font-black uppercase tracking-widest text-[10px] hover:bg-indigo-700 shadow-xl shadow-indigo-500/20 active:scale-95 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
                   >
+                    {isLoading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                     Salvar Lançamento
                   </button>
                 </div>

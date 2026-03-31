@@ -8,11 +8,16 @@ import {
   deleteDoc, 
   doc, 
   getDoc,
+  setDoc,
+  getDocFromCache,
   getDocFromServer,
-  Firestore
+  Firestore,
+  persistentLocalCache
 } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import configFromJson from '../firebase-applet-config.json';
+
+export { getDocFromCache };
 
 const getEnvVar = (val: string | undefined, fallback: string) => {
   if (!val || val === 'undefined' || val === 'null' || val === '') return fallback;
@@ -30,17 +35,17 @@ const firebaseConfig = {
   storageBucket: getEnvVar(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET, configFromJson.storageBucket),
   messagingSenderId: getEnvVar(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID, configFromJson.messagingSenderId),
   appId: getEnvVar(import.meta.env.VITE_FIREBASE_APP_ID, configFromJson.appId),
-  firestoreDatabaseId: isCustomProject 
-    ? getEnvVar(import.meta.env.VITE_FIREBASE_DATABASE_ID, '(default)') 
-    : getEnvVar(import.meta.env.VITE_FIREBASE_DATABASE_ID, configFromJson.firestoreDatabaseId)
+  firestoreDatabaseId: configFromJson.firestoreDatabaseId
 };
 
+console.log("firebaseConfig:", firebaseConfig);
 const app = initializeApp(firebaseConfig);
-console.log("Firebase config:", JSON.stringify(firebaseConfig, null, 2));
 
 // Initialize Firestore with settings to maximize connectivity in restricted environments
-console.log("Initializing Firestore with database ID:", firebaseConfig.firestoreDatabaseId);
-export const db: Firestore = getFirestore(app, firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)' 
+console.log("Initializing Firestore with databaseId:", firebaseConfig.firestoreDatabaseId);
+export const db: Firestore = initializeFirestore(app, {
+  localCache: persistentLocalCache()
+}, firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)' 
   ? firebaseConfig.firestoreDatabaseId 
   : undefined);
 
@@ -91,11 +96,26 @@ export async function moveToTrash(collectionName: string, docId: string, data?: 
 
   if (!itemData) return;
 
-  await addDoc(collection(db, 'trash'), {
+  // Use a deterministic ID to prevent duplicates if called multiple times
+  const trashId = `${collectionName}_${docId}`;
+
+  // Find a good display name based on common fields
+  const displayName = 
+    itemData.name || 
+    itemData.title || 
+    itemData.patientName || 
+    itemData.description || 
+    itemData.procedure ||
+    itemData.prosthesisType ||
+    (itemData.content ? (itemData.content.length > 50 ? itemData.content.substring(0, 47) + '...' : itemData.content) : null) ||
+    'Item sem nome';
+
+  await setDoc(doc(db, 'trash', trashId), {
     dentistId: auth.currentUser.uid,
     originalCollection: collectionName,
     originalId: docId,
     data: itemData,
+    displayName,
     deletedAt: new Date().toISOString()
   });
   await deleteDoc(doc(db, collectionName, docId));

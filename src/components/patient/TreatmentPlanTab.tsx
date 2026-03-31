@@ -225,8 +225,9 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                 <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wider">Status do Tratamento</label>
                 <select 
                   value={treatmentStatus}
+                  disabled={isSaving}
                   onChange={(e) => setTreatmentStatus(e.target.value as any)}
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
                 >
                   <option value="Planejado">Planejado</option>
                   <option value="Em Andamento">Em Andamento</option>
@@ -238,8 +239,9 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                 <input 
                   type="date"
                   value={startDate}
+                  disabled={isSaving}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
                 />
               </div>
               <div>
@@ -247,8 +249,9 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                 <input 
                   type="date"
                   value={endDate}
+                  disabled={isSaving}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
                 />
               </div>
             </div>
@@ -260,8 +263,9 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
               <label className="block text-sm font-medium text-text-secondary mb-1">Preencher com Template (Opcional)</label>
               <select
                 value={selectedTemplateId}
+                disabled={isSaving}
                 onChange={handleTemplateSelect}
-                className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
               >
                 <option value="">-- Selecione um procedimento pré-definido --</option>
                 {templates.map(t => (
@@ -275,20 +279,22 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                 <input 
                   type="text" 
                   required 
+                  disabled={isSaving}
                   value={newProcedure.name} 
                   onChange={e => setNewProcedure({...newProcedure, name: e.target.value})} 
                   placeholder="Ex: Restauração Resina MOD"
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all" 
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50" 
                 />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">Dente/Região</label>
                 <input 
                   type="text" 
+                  disabled={isSaving}
                   value={newProcedure.tooth} 
                   onChange={e => setNewProcedure({...newProcedure, tooth: e.target.value})} 
                   placeholder="Ex: 46, Maxila..."
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all" 
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50" 
                 />
               </div>
               <div className="md:col-span-2">
@@ -297,9 +303,10 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                   type="number" 
                   min="1"
                   required 
+                  disabled={isSaving}
                   value={newProcedure.quantity} 
                   onChange={e => setNewProcedure({...newProcedure, quantity: e.target.value})} 
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all" 
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50" 
                 />
               </div>
               <div className="md:col-span-3">
@@ -308,14 +315,15 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                   type="number" 
                   step="0.01" 
                   required 
+                  disabled={isSaving}
                   value={newProcedure.unitPrice} 
                   onChange={e => setNewProcedure({...newProcedure, unitPrice: e.target.value})} 
                   placeholder="0.00"
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all" 
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50" 
                 />
               </div>
               <div className="md:col-span-1">
-                <button type="submit" className="w-full bg-indigo-600 text-white h-[42px] rounded-xl flex items-center justify-center hover:bg-indigo-700 transition-all shadow-sm shadow-indigo-200 dark:shadow-none">
+                <button type="submit" disabled={isSaving} className="w-full bg-indigo-600 text-white h-[42px] rounded-xl flex items-center justify-center hover:bg-indigo-700 transition-all shadow-sm shadow-indigo-200 dark:shadow-none disabled:opacity-50">
                   <Plus className="w-5 h-5" />
                 </button>
               </div>
@@ -351,7 +359,8 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                       </span>
                       <button 
                         onClick={() => handleDeleteProcedure(proc.id)}
-                        className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                        disabled={isSaving}
+                        className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>

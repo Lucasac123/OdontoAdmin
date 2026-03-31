@@ -20,6 +20,8 @@ export const Patients: React.FC = () => {
   });
   const [error, setError] = useState<string | null>(null);
   const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -63,14 +65,20 @@ export const Patients: React.FC = () => {
 
   const handleAddPatient = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSaving) return;
+    setIsSaving(true);
     setError(null);
 
-    if (!auth.currentUser) return;
+    if (!auth.currentUser) {
+      setIsSaving(false);
+      return;
+    }
 
     const trimmedName = newPatient.name.trim();
 
     if (!trimmedName) {
       setError('O nome do paciente é obrigatório.');
+      setIsSaving(false);
       return;
     }
 
@@ -87,6 +95,8 @@ export const Patients: React.FC = () => {
       setIsAdding(false);
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'patients');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -96,12 +106,15 @@ export const Patients: React.FC = () => {
   };
 
   const confirmDelete = async () => {
-    if (!patientToDelete) return;
+    if (!patientToDelete || isDeleting) return;
+    setIsDeleting(true);
     try {
       await moveToTrash('patients', patientToDelete.id, patientToDelete);
       setPatientToDelete(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `patients/${patientToDelete.id}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -164,13 +177,14 @@ export const Patients: React.FC = () => {
                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">Nome Completo</label>
                 <input
                   type="text"
+                  disabled={isSaving}
                   value={newPatient.name}
                   onChange={(e) => {
                     setNewPatient({...newPatient, name: e.target.value});
                     if (error) setError(null);
                   }}
                   placeholder="Ex: João Silva"
-                  className={`w-full bg-zinc-50 dark:bg-zinc-900 border ${error ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-800'} rounded-2xl px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all`}
+                  className={`w-full bg-zinc-50 dark:bg-zinc-900 border ${error ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-800'} rounded-2xl px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50`}
                   autoFocus
                 />
                 {error && <p className="text-[10px] text-red-500 ml-1">{error}</p>}
@@ -180,19 +194,21 @@ export const Patients: React.FC = () => {
                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">Procedência</label>
                 <input
                   type="text"
+                  disabled={isSaving}
                   value={newPatient.source}
                   onChange={(e) => setNewPatient({...newPatient, source: e.target.value})}
                   placeholder="Ex: Indicação, Instagram"
-                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">Status Inicial</label>
                 <select
+                  disabled={isSaving}
                   value={newPatient.status}
                   onChange={(e) => setNewPatient({...newPatient, status: e.target.value as any})}
-                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer disabled:opacity-50"
                 >
                   <option value="Ativo">Ativo</option>
                   <option value="Inativo">Inativo</option>
@@ -203,9 +219,10 @@ export const Patients: React.FC = () => {
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">Dentista Responsável</label>
                 <select
+                  disabled={isSaving}
                   value={newPatient.responsibleDentistId}
                   onChange={(e) => setNewPatient({...newPatient, responsibleDentistId: e.target.value})}
-                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer disabled:opacity-50"
                 >
                   <option value="">Sem filiação específica</option>
                   {dentists.map(d => (
@@ -217,20 +234,29 @@ export const Patients: React.FC = () => {
               <div className="md:col-span-2 lg:col-span-4 flex justify-end gap-3 mt-2">
                 <button 
                   type="button" 
+                  disabled={isSaving}
                   onClick={() => {
                     setIsAdding(false);
                     setNewPatient({ name: '', source: '', status: 'Ativo', responsibleDentistId: '' });
                     setError(null);
                   }} 
-                  className="px-6 py-2.5 rounded-2xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors font-medium"
+                  className="px-6 py-2.5 rounded-2xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors font-medium disabled:opacity-50"
                 >
                   Descartar
                 </button>
                 <button 
                   type="submit" 
-                  className="bg-indigo-600 text-white px-8 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-500/20 font-medium"
+                  disabled={isSaving}
+                  className="bg-indigo-600 text-white px-8 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-500/20 font-medium disabled:opacity-50 flex items-center gap-2"
                 >
-                  Cadastrar Paciente
+                  {isSaving ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Cadastrando...
+                    </>
+                  ) : (
+                    'Cadastrar Paciente'
+                  )}
                 </button>
               </div>
             </form>
@@ -280,7 +306,7 @@ export const Patients: React.FC = () => {
                   </div>
                   <button 
                     onClick={(e) => handleDelete(e, patient)}
-                    className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                    className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all md:opacity-0 md:group-hover:opacity-100"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -328,6 +354,7 @@ export const Patients: React.FC = () => {
         onConfirm={confirmDelete}
         onCancel={() => setPatientToDelete(null)}
         variant="danger"
+        isLoading={isDeleting}
       />
     </div>
   );

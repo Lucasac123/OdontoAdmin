@@ -36,6 +36,7 @@ export const AIAssistant: React.FC = () => {
   // Search State
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResult, setSearchResult] = useState('');
+  const [searchLinks, setSearchLinks] = useState<{title: string, url: string}[]>([]);
   const [isSearchLoading, setIsSearchLoading] = useState(false);
 
   // Analyze State
@@ -93,6 +94,25 @@ export const AIAssistant: React.FC = () => {
         }
       });
       setSearchResult(response.text || 'Nenhum resultado encontrado.');
+      
+      // Extract links from grounding metadata
+      const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
+      if (chunks) {
+        const links = chunks
+          .filter((chunk: any) => chunk.web)
+          .map((chunk: any) => ({
+            title: chunk.web.title,
+            url: chunk.web.uri
+          }));
+        
+        // Remove duplicates
+        const uniqueLinks = Array.from(new Set(links.map(l => l.url)))
+          .map(url => links.find(l => l.url === url)!);
+          
+        setSearchLinks(uniqueLinks);
+      } else {
+        setSearchLinks([]);
+      }
     } catch (error) {
       console.error(error);
       const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro ao realizar a pesquisa.';
@@ -333,6 +353,32 @@ export const AIAssistant: React.FC = () => {
                     <div className="markdown-body prose dark:prose-invert max-w-none text-sm">
                       <Markdown>{searchResult}</Markdown>
                     </div>
+
+                    {searchLinks.length > 0 && (
+                      <div className="mt-8 pt-8 border-t border-zinc-200 dark:border-zinc-800">
+                        <h4 className="text-xs font-black text-text-secondary uppercase tracking-[0.2em] mb-4">Referências e Fontes</h4>
+                        <div className="grid grid-cols-1 gap-2">
+                          {searchLinks.map((link, idx) => (
+                            <a 
+                              key={idx}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 transition-all group"
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                                <Search className="w-4 h-4" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-text-primary truncate group-hover:text-indigo-600 transition-colors">{link.title}</p>
+                                <p className="text-[10px] text-text-secondary truncate">{link.url}</p>
+                              </div>
+                              <ChevronRight className="w-4 h-4 text-zinc-300 group-hover:text-indigo-500 transition-colors" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </motion.div>
                 ) : null}
               </div>
@@ -346,7 +392,7 @@ export const AIAssistant: React.FC = () => {
               <div className="group relative aspect-square border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-[32px] flex flex-col items-center justify-center text-center bg-zinc-50 dark:bg-zinc-900/30 hover:border-indigo-500 transition-all overflow-hidden">
                 {analyzeImage ? (
                   <>
-                    <img src={analyzeImage} alt="Upload" className="absolute inset-0 w-full h-full object-cover" />
+                    <img src={analyzeImage} alt="Upload" className="absolute inset-0 w-full h-full object-cover" referrerPolicy="no-referrer" />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                       <p className="text-white font-black uppercase tracking-widest text-xs flex items-center gap-2">
                         <Camera className="w-4 h-4" /> Trocar Imagem

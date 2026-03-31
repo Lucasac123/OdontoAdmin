@@ -33,19 +33,6 @@ export const PatientDetail: React.FC = () => {
       if (docSnap.exists()) {
         const patientData = { id: docSnap.id, ...docSnap.data() } as Patient;
         setPatient(patientData);
-
-        if (patientData.responsibleDentistId) {
-          const unsubDentist = onSnapshot(doc(db, 'dentists', patientData.responsibleDentistId), (dentistSnap) => {
-            if (dentistSnap.exists()) {
-              setDentist({ id: dentistSnap.id, ...dentistSnap.data() } as Dentist);
-            } else {
-              setDentist(null);
-            }
-          });
-          return () => unsubDentist();
-        } else {
-          setDentist(null);
-        }
       } else {
         navigate('/patients');
       }
@@ -55,6 +42,25 @@ export const PatientDetail: React.FC = () => {
 
     return () => unsubscribe();
   }, [id, navigate]);
+
+  useEffect(() => {
+    if (!patient?.responsibleDentistId) {
+      setDentist(null);
+      return;
+    }
+
+    const unsubscribe = onSnapshot(doc(db, 'dentists', patient.responsibleDentistId), (dentistSnap) => {
+      if (dentistSnap.exists()) {
+        setDentist({ id: dentistSnap.id, ...dentistSnap.data() } as Dentist);
+      } else {
+        setDentist(null);
+      }
+    }, (error) => {
+      console.error("Error fetching responsible dentist:", error);
+    });
+
+    return () => unsubscribe();
+  }, [patient?.responsibleDentistId]);
 
   if (!patient) return <div className="p-8 text-center text-zinc-500">Carregando...</div>;
 

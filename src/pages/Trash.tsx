@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType } from '../firebase';
 import { TrashItem } from '../types';
-import { Trash2, RotateCcw, Loader2, User, FileText, Clock, RefreshCw } from 'lucide-react';
+import { Trash2, RotateCcw, Loader2, User, FileText, Calendar, RefreshCw, DollarSign, Package, Microscope, UserCircle, Activity, StickyNote, LayoutDashboard, Clock } from 'lucide-react';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -54,23 +54,54 @@ export const Trash = () => {
   };
 
   const confirmPermanentDelete = async () => {
-    if (!itemToDelete) return;
-    const idToDelete = itemToDelete;
+    if (!itemToDelete || processingItems.has(itemToDelete)) return;
     
-    if (processingItems.has(idToDelete)) return;
+    const idToDelete = itemToDelete;
     setProcessingItems(prev => new Set(prev).add(idToDelete));
-    setItemToDelete(null); // Clear immediately to close modal
     
     try {
       await deleteDoc(doc(db, 'trash', idToDelete));
+      setItemToDelete(null); // Only close on success
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `trash/${idToDelete}`);
+      setItemToDelete(null); // Also close on error to not get stuck
     } finally {
       setProcessingItems(prev => {
         const next = new Set(prev);
         next.delete(idToDelete);
         return next;
       });
+    }
+  };
+
+  const getCollectionIcon = (collection: string) => {
+    switch (collection) {
+      case 'patients': return <User className="w-5 h-5 sm:w-6 sm:h-6" />;
+      case 'appointments': return <Calendar className="w-5 h-5 sm:w-6 sm:h-6" />;
+      case 'financial': return <DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />;
+      case 'inventory': return <Package className="w-5 h-5 sm:w-6 sm:h-6" />;
+      case 'laboratory':
+      case 'lab_jobs': return <Microscope className="w-5 h-5 sm:w-6 sm:h-6" />;
+      case 'dentists': return <UserCircle className="w-5 h-5 sm:w-6 sm:h-6" />;
+      case 'clinical_evolutions': return <Activity className="w-5 h-5 sm:w-6 sm:h-6" />;
+      case 'quick_notes': return <StickyNote className="w-5 h-5 sm:w-6 sm:h-6" />;
+      default: return <FileText className="w-5 h-5 sm:w-6 sm:h-6" />;
+    }
+  };
+
+  const getCollectionLabel = (collection: string) => {
+    switch (collection) {
+      case 'patients': return 'Paciente';
+      case 'appointments': return 'Agendamento';
+      case 'financial': return 'Financeiro';
+      case 'inventory': return 'Estoque';
+      case 'laboratory':
+      case 'lab_jobs': return 'Laboratório';
+      case 'dentists': return 'Dentista';
+      case 'clinical_evolutions': return 'Evolução';
+      case 'quick_notes': return 'Nota';
+      case 'document_templates': return 'Template';
+      default: return 'Documento';
     }
   };
 
@@ -119,13 +150,15 @@ export const Trash = () => {
                 >
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 flex items-center justify-center text-zinc-400 group-hover:text-indigo-500 transition-colors shrink-0">
-                      {item.originalCollection === 'patients' ? <User className="w-5 h-5 sm:w-6 sm:h-6" /> : <FileText className="w-5 h-5 sm:w-6 sm:h-6" />}
+                      {getCollectionIcon(item.originalCollection)}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-bold text-text-primary truncate text-sm sm:text-base">{item.data?.name || item.data?.title || 'Item sem nome'}</h3>
+                      <h3 className="font-bold text-text-primary truncate text-sm sm:text-base">
+                        {item.displayName || item.data?.name || item.data?.title || item.data?.patientName || item.data?.description || 'Item sem nome'}
+                      </h3>
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1">
                         <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
-                          {item.originalCollection === 'patients' ? 'Paciente' : 'Documento'}
+                          {getCollectionLabel(item.originalCollection)}
                         </span>
                         <span className="text-[10px] sm:text-xs text-text-secondary flex items-center gap-1">
                           <Clock className="w-3 h-3" />
@@ -169,6 +202,7 @@ export const Trash = () => {
         onConfirm={confirmPermanentDelete}
         onCancel={() => setItemToDelete(null)}
         variant="danger"
+        isLoading={!!itemToDelete && processingItems.has(itemToDelete)}
       />
     </div>
   );

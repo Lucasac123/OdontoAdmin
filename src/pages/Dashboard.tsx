@@ -29,7 +29,9 @@ export const Dashboard: React.FC = () => {
   const [quickNotes, setQuickNotes] = useState<QuickNote[]>([]);
   const [deals, setDeals] = useState<CRMDeal[]>([]);
   const [newNote, setNewNote] = useState('');
+  const [isAddingNote, setIsAddingNote] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<QuickNote | null>(null);
+  const [isDeletingNote, setIsDeletingNote] = useState(false);
   const [isQuickAccessModalOpen, setIsQuickAccessModalOpen] = useState(false);
   const [selectedQuickAccess, setSelectedQuickAccess] = useState<string[]>(() => {
     const saved = localStorage.getItem('quickAccessLinks');
@@ -109,7 +111,8 @@ export const Dashboard: React.FC = () => {
 
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser || !newNote.trim()) return;
+    if (!auth.currentUser || !newNote.trim() || isAddingNote) return;
+    setIsAddingNote(true);
     try {
       await addDoc(collection(db, 'quickNotes'), {
         dentistId: auth.currentUser.uid,
@@ -119,6 +122,8 @@ export const Dashboard: React.FC = () => {
       setNewNote('');
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'quickNotes');
+    } finally {
+      setIsAddingNote(false);
     }
   };
 
@@ -127,12 +132,15 @@ export const Dashboard: React.FC = () => {
   };
 
   const confirmDeleteNote = async () => {
-    if (!noteToDelete) return;
+    if (!noteToDelete || isDeletingNote) return;
+    setIsDeletingNote(true);
     try {
       await moveToTrash('quickNotes', noteToDelete.id, noteToDelete);
       setNoteToDelete(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `quickNotes/${noteToDelete.id}`);
+    } finally {
+      setIsDeletingNote(false);
     }
   };
 
@@ -538,13 +546,27 @@ export const Dashboard: React.FC = () => {
           </div>
           <form onSubmit={handleAddNote} className="mb-6">
             <textarea
+              disabled={isAddingNote}
               value={newNote}
               onChange={e => setNewNote(e.target.value)}
               placeholder="Escreva um lembrete..."
-              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-3 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none h-24 shadow-inner"
+              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-3 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none h-24 shadow-inner disabled:opacity-50"
             />
-            <button type="submit" className="mt-3 w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all font-medium shadow-lg shadow-indigo-500/20">
-              <Plus className="w-4 h-4" /> Adicionar Nota
+            <button 
+              type="submit" 
+              disabled={isAddingNote}
+              className="mt-3 w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all font-medium shadow-lg shadow-indigo-500/20 disabled:opacity-50"
+            >
+              {isAddingNote ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Adicionando...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4" /> Adicionar Nota
+                </>
+              )}
             </button>
           </form>
           <div className="space-y-3 max-h-64 overflow-y-auto pr-1 hide-scrollbar">
@@ -579,35 +601,41 @@ export const Dashboard: React.FC = () => {
               <p className="text-xs text-text-secondary mt-1">Visão geral do status da sua base</p>
             </div>
           </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie 
-                  data={patientStatusData} 
-                  dataKey="value" 
-                  nameKey="name" 
-                  cx="50%" 
-                  cy="50%" 
-                  innerRadius={60}
-                  outerRadius={80} 
-                  paddingAngle={5}
-                  stroke="none"
-                >
-                  {patientStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white', 
-                    borderRadius: '16px', 
-                    border: 'none', 
-                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' 
-                  }} 
-                />
-                <Legend verticalAlign="bottom" height={36}/>
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="h-64 w-full min-h-[256px] min-w-[256px]">
+            {patientStatusData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                <PieChart>
+                  <Pie 
+                    data={patientStatusData} 
+                    dataKey="value" 
+                    nameKey="name" 
+                    cx="50%" 
+                    cy="50%" 
+                    innerRadius={60}
+                    outerRadius={80} 
+                    paddingAngle={5}
+                    stroke="none"
+                  >
+                    {patientStatusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'white', 
+                      borderRadius: '16px', 
+                      border: 'none', 
+                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' 
+                    }} 
+                  />
+                  <Legend verticalAlign="bottom" height={36}/>
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-sm text-text-secondary">
+                Nenhum dado disponível
+              </div>
+            )}
           </div>
         </div>
 
@@ -672,6 +700,7 @@ export const Dashboard: React.FC = () => {
         onConfirm={confirmDeleteNote}
         onCancel={() => setNoteToDelete(null)}
         variant="danger"
+        isLoading={isDeletingNote}
       />
 
       <QuickAccessSettingsModal

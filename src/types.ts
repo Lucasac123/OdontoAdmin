@@ -42,7 +42,8 @@ export interface Patient {
 
 export interface Appointment {
   id: string;
-  dentistId: string;
+  dentistId: string; // Tenant/Owner ID
+  responsibleDentistId: string; // The dentist performing the appointment
   patientId: string;
   patientName?: string;
   date: string;
@@ -109,6 +110,7 @@ export interface TrashItem {
   originalCollection: string;
   originalId: string;
   data: any;
+  displayName?: string;
   deletedAt: string;
 }
 

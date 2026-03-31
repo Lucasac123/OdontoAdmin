@@ -18,6 +18,7 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
   const [payments, setPayments] = useState<Finance[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState({
     amount: '',
     date: new Date().toISOString().split('T')[0],
@@ -49,7 +50,7 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
 
   const handleAddPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser) return;
+    if (!auth.currentUser || isSaving) return;
 
     const amount = parseFloat(formData.amount);
     if (isNaN(amount) || amount <= 0) return;
@@ -85,12 +86,15 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
   };
 
   const confirmDelete = async () => {
-    if (!paymentToDelete) return;
+    if (!paymentToDelete || isDeleting) return;
+    setIsDeleting(true);
     try {
       await moveToTrash('finances', paymentToDelete);
       setPaymentToDelete(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `finances/${paymentToDelete}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -127,9 +131,10 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
                   type="number"
                   step="0.01"
                   required
+                  disabled={isSaving}
                   value={formData.amount}
                   onChange={e => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
                   placeholder="0,00"
                 />
               </div>
@@ -138,17 +143,19 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
                 <input
                   type="date"
                   required
+                  disabled={isSaving}
                   value={formData.date}
                   onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
                 />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">Forma de Pagamento</label>
                 <select
                   value={formData.paymentMethod}
+                  disabled={isSaving}
                   onChange={e => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as any }))}
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
                 >
                   {Object.entries(paymentMethodConfig).map(([key, config]) => (
                     <option key={key} value={key}>{config.label}</option>
@@ -162,12 +169,13 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
                   className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                 >
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                  Adicionar
+                  {isSaving ? 'Salvando...' : 'Adicionar'}
                 </button>
                 <button
                   type="button"
+                  disabled={isSaving}
                   onClick={() => setIsAdding(false)}
-                  className="px-4 py-2.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                  className="px-4 py-2.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
                 >
                   Cancelar
                 </button>
@@ -176,9 +184,10 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
                 <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">Descrição</label>
                 <input
                   type="text"
+                  disabled={isSaving}
                   value={formData.description}
                   onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
                   placeholder="Ex: Pagamento da primeira parcela do implante"
                 />
               </div>
@@ -242,7 +251,8 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <button
                           onClick={() => handleDelete(payment.id)}
-                          className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all"
+                          disabled={isDeleting}
+                          className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all disabled:opacity-50"
                           title="Excluir"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -267,6 +277,7 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
 
       <ConfirmModal
         isOpen={!!paymentToDelete}
+        isLoading={isDeleting}
         title="Excluir Pagamento"
         message="Tem certeza que deseja excluir este registro de pagamento? Ele será movido para a lixeira."
         confirmLabel="Excluir"

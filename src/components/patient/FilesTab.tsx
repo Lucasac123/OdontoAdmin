@@ -9,6 +9,8 @@ import { ConfirmModal } from '../ConfirmModal';
 export const FilesTab = ({ patient }: { patient: Patient }) => {
   const [files, setFiles] = useState<FileRecord[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<FileRecord | null>(null);
   const [zoom, setZoom] = useState(1);
   const [filterType, setFilterType] = useState<string>('all');
@@ -141,8 +143,9 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
 
   const handleAddLink = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!linkName || !linkUrl || !auth.currentUser) return;
+    if (!linkName || !linkUrl || !auth.currentUser || isSaving) return;
     
+    setIsSaving(true);
     try {
       const now = new Date();
       let expiresAt: string | null = null;
@@ -167,6 +170,8 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
       setLinkUrl('');
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'files');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -175,12 +180,15 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
   };
 
   const confirmDelete = async () => {
-    if (!fileToDelete) return;
+    if (!fileToDelete || isDeleting) return;
+    setIsDeleting(true);
     try {
       await moveToTrash('files', fileToDelete.id, fileToDelete);
       setFileToDelete(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `files/${fileToDelete.id}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -197,7 +205,7 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
             </style>
           </head>
           <body>
-            <img src="${file.url}" />
+            <img src="${file.url}" referrerPolicy="no-referrer" />
             <script>window.print(); window.close();</script>
           </body>
         </html>
@@ -357,7 +365,7 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
                     <LinkIcon className="w-12 h-12" />
                   </div>
                 ) : file.url.startsWith('data:image') ? (
-                  <img src={file.url} alt={file.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  <img src={file.url} alt={file.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" referrerPolicy="no-referrer" />
                 ) : file.url.startsWith('data:audio') ? (
                   <div className="w-full h-full flex items-center justify-center bg-amber-50 dark:bg-amber-500/10 text-amber-600">
                     <Music className="w-12 h-12" />
@@ -496,6 +504,7 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
                       src={selectedFile.url} 
                       alt={selectedFile.name} 
                       className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-2xl" 
+                      referrerPolicy="no-referrer"
                     />
                   </div>
                 ) : selectedFile.url.startsWith('data:audio') ? (
@@ -530,6 +539,7 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
         onConfirm={confirmDelete}
         onCancel={() => setFileToDelete(null)}
         variant="danger"
+        isLoading={isDeleting}
       />
 
       <AnimatePresence>
@@ -558,10 +568,11 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
                   <input
                     type="text"
                     required
+                    disabled={isSaving}
                     value={linkName}
                     onChange={(e) => setLinkName(e.target.value)}
                     placeholder="Ex: Tomografia Panorâmica"
-                    className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                   />
                 </div>
                 <div>
@@ -569,24 +580,28 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
                   <input
                     type="url"
                     required
+                    disabled={isSaving}
                     value={linkUrl}
                     onChange={(e) => setLinkUrl(e.target.value)}
                     placeholder="https://drive.google.com/..."
-                    className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                   />
                 </div>
                 <div className="pt-4 flex justify-end gap-3">
                   <button
                     type="button"
+                    disabled={isSaving}
                     onClick={() => setIsLinkModalOpen(false)}
-                    className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary"
+                    className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary disabled:opacity-50"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-colors"
+                    disabled={isSaving}
+                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                   >
+                    {isSaving && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                     Salvar Link
                   </button>
                 </div>

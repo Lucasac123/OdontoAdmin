@@ -26,6 +26,7 @@ export const PrescriptionTemplatesModal: React.FC<PrescriptionTemplatesModalProp
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [saveTitle, setSaveTitle] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -51,8 +52,9 @@ export const PrescriptionTemplatesModal: React.FC<PrescriptionTemplatesModalProp
   }, [isOpen, currentType]);
 
   const handleSaveCurrent = async () => {
-    if (!auth.currentUser || !saveTitle.trim() || !currentText.trim()) return;
+    if (!auth.currentUser || !saveTitle.trim() || !currentText.trim() || isSaving) return;
 
+    setIsSaving(true);
     try {
       await addDoc(collection(db, 'documentTemplates'), {
         dentistId: auth.currentUser.uid,
@@ -61,10 +63,11 @@ export const PrescriptionTemplatesModal: React.FC<PrescriptionTemplatesModalProp
         content: currentText,
         createdAt: new Date().toISOString()
       });
-      setIsSaving(false);
       setSaveTitle('');
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'documentTemplates');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -74,13 +77,16 @@ export const PrescriptionTemplatesModal: React.FC<PrescriptionTemplatesModalProp
   };
 
   const handleConfirmDelete = async () => {
-    if (!templateToDelete) return;
+    if (!templateToDelete || isDeleting) return;
+    setIsDeleting(true);
     try {
       await moveToTrash('documentTemplates', templateToDelete);
       setIsConfirmModalOpen(false);
       setTemplateToDelete(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `documentTemplates/${templateToDelete}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -253,6 +259,7 @@ export const PrescriptionTemplatesModal: React.FC<PrescriptionTemplatesModalProp
         isOpen={isConfirmModalOpen}
         onCancel={() => setIsConfirmModalOpen(false)}
         onConfirm={handleConfirmDelete}
+        isLoading={isDeleting}
         title="Excluir Modelo"
         message="Tem certeza que deseja excluir este modelo de documento? Ele será movido para a lixeira."
       />

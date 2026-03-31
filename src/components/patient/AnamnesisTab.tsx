@@ -217,15 +217,15 @@ export const AnamnesisTab = ({ patient }: { patient: Patient }) => {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">Motivo da Consulta (Queixa Principal)</label>
-            <textarea name="mainComplaint" value={formData.mainComplaint} onChange={handleChange} className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-24" />
+            <textarea name="mainComplaint" disabled={isSaving} value={formData.mainComplaint} onChange={handleChange} className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-24 disabled:opacity-50" />
           </div>
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">Histórico Médico</label>
-            <textarea name="medicalHistory" value={formData.medicalHistory} onChange={handleChange} className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-24" />
+            <textarea name="medicalHistory" disabled={isSaving} value={formData.medicalHistory} onChange={handleChange} className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-24 disabled:opacity-50" />
           </div>
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">Alergias a Medicamentos</label>
-            <textarea name="allergies" value={formData.allergies} onChange={handleChange} className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-20" />
+            <textarea name="allergies" disabled={isSaving} value={formData.allergies} onChange={handleChange} className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-20 disabled:opacity-50" />
           </div>
         </div>
 
@@ -251,9 +251,10 @@ export const AnamnesisTab = ({ patient }: { patient: Patient }) => {
                   <input
                     type="checkbox"
                     name={condition.name}
+                    disabled={isSaving}
                     checked={formData[condition.name as keyof typeof formData] as boolean}
                     onChange={handleChange}
-                    className="w-5 h-5 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900"
+                    className="w-5 h-5 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 disabled:opacity-50"
                   />
                   <span className="text-sm text-text-secondary">{condition.label}</span>
                 </label>
@@ -263,12 +264,12 @@ export const AnamnesisTab = ({ patient }: { patient: Patient }) => {
 
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">Medicamentos em Uso</label>
-            <textarea name="medications" value={formData.medications} onChange={handleChange} className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-20" />
+            <textarea name="medications" disabled={isSaving} value={formData.medications} onChange={handleChange} className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-20 disabled:opacity-50" />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">Observações Adicionais</label>
-            <textarea name="notes" value={formData.notes} onChange={handleChange} className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-20" />
+            <textarea name="notes" disabled={isSaving} value={formData.notes} onChange={handleChange} className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-20 disabled:opacity-50" />
           </div>
         </div>
       </div>

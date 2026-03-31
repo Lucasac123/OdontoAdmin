@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { db, auth, moveToTrash, handleFirestoreError, OperationType } from '../firebase';
 import { LabJob, Patient } from '../types';
-import { Plus, Edit2, Trash2, CheckCircle, Clock, Truck, FileText, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckCircle, Clock, Truck, FileText, Search, Loader2 } from 'lucide-react';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { motion } from 'motion/react';
 
@@ -14,6 +14,8 @@ const Laboratory = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [formData, setFormData] = useState({
     patientId: '',
@@ -105,8 +107,9 @@ const Laboratory = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser) return;
+    if (!auth.currentUser || isSaving) return;
 
+    setIsSaving(true);
     try {
       const jobData = {
         ...formData,
@@ -125,6 +128,8 @@ const Laboratory = () => {
     } catch (error) {
       console.error('Error saving lab job:', error);
       alert('Erro ao salvar trabalho de laboratório.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -134,16 +139,19 @@ const Laboratory = () => {
   };
 
   const handleConfirmDelete = async () => {
-    if (!jobToDelete) return;
+    if (!jobToDelete || isDeleting) return;
     const job = jobs.find(j => j.id === jobToDelete);
     if (!job) return;
 
+    setIsDeleting(true);
     try {
       await moveToTrash('lab_jobs', jobToDelete, job);
       setIsConfirmModalOpen(false);
       setJobToDelete(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `lab_jobs/${jobToDelete}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -339,9 +347,10 @@ const Laboratory = () => {
                   <label className="block text-xs font-bold text-text-secondary uppercase mb-1">Paciente</label>
                   <select
                     required
+                    disabled={isSaving}
                     value={formData.patientId}
                     onChange={handlePatientChange}
-                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
+                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                   >
                     <option value="">Selecione um paciente</option>
                     {patients.map(p => (
@@ -354,10 +363,11 @@ const Laboratory = () => {
                   <input
                     type="text"
                     required
+                    disabled={isSaving}
                     value={formData.labName}
                     onChange={(e) => setFormData({ ...formData, labName: e.target.value })}
                     placeholder="Nome do Laboratório"
-                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
+                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -367,10 +377,11 @@ const Laboratory = () => {
                 <input
                   type="text"
                   required
+                  disabled={isSaving}
                   value={formData.prosthesisType}
                   onChange={(e) => setFormData({ ...formData, prosthesisType: e.target.value })}
                   placeholder="Ex: Coroa Porcelana Dente 14"
-                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                 />
               </div>
 
@@ -380,9 +391,10 @@ const Laboratory = () => {
                   <input
                     type="date"
                     required
+                    disabled={isSaving}
                     value={formData.sendDate}
                     onChange={(e) => setFormData({ ...formData, sendDate: e.target.value })}
-                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
+                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                   />
                 </div>
                 <div>
@@ -390,9 +402,10 @@ const Laboratory = () => {
                   <input
                     type="date"
                     required
+                    disabled={isSaving}
                     value={formData.expectedDate}
                     onChange={(e) => setFormData({ ...formData, expectedDate: e.target.value })}
-                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
+                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -401,9 +414,10 @@ const Laboratory = () => {
                 <div>
                   <label className="block text-xs font-bold text-text-secondary uppercase mb-1">Status</label>
                   <select
+                    disabled={isSaving}
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as LabJob['status'] })}
-                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
+                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                   >
                     <option value="Enviado">Enviado</option>
                     <option value="Em Confecção">Em Confecção</option>
@@ -417,9 +431,10 @@ const Laboratory = () => {
                     type="number"
                     min="0"
                     step="0.01"
+                    disabled={isSaving}
                     value={formData.cost}
                     onChange={(e) => setFormData({ ...formData, cost: e.target.value === '' ? '' : Number(e.target.value) })}
-                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
+                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -427,10 +442,11 @@ const Laboratory = () => {
               <div>
                 <label className="block text-xs font-bold text-text-secondary uppercase mb-1">Observações</label>
                 <textarea
+                  disabled={isSaving}
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   rows={3}
-                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none disabled:opacity-50"
                   placeholder="Cor, detalhes específicos, etc."
                 />
               </div>
@@ -438,15 +454,18 @@ const Laboratory = () => {
               <div className="flex justify-end gap-3 mt-8">
                 <button
                   type="button"
+                  disabled={isSaving}
                   onClick={() => setIsModalOpen(false)}
-                  className="px-6 py-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors font-medium"
+                  className="px-6 py-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors font-medium disabled:opacity-50"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-8 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-bold shadow-lg shadow-indigo-500/20"
+                  disabled={isSaving}
+                  className="px-8 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-bold shadow-lg shadow-indigo-500/20 disabled:opacity-70 flex items-center gap-2"
                 >
+                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
                   Salvar
                 </button>
               </div>
@@ -459,6 +478,7 @@ const Laboratory = () => {
         isOpen={isConfirmModalOpen}
         onCancel={() => setIsConfirmModalOpen(false)}
         onConfirm={handleConfirmDelete}
+        isLoading={isDeleting}
         title="Excluir Trabalho"
         message="Tem certeza que deseja excluir este trabalho de laboratório? Esta ação não pode ser desfeita."
       />

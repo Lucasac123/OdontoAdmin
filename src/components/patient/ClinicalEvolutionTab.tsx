@@ -21,6 +21,7 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
   const [notes, setNotes] = useState<EvolutionNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
   
@@ -56,7 +57,7 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
 
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newNote.content.trim() || !auth.currentUser) return;
+    if (!newNote.content.trim() || !auth.currentUser || isSaving) return;
 
     setIsSaving(true);
     try {
@@ -83,13 +84,16 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
   };
 
   const handleConfirmDelete = async () => {
-    if (!noteToDelete) return;
+    if (!noteToDelete || isDeleting) return;
+    setIsDeleting(true);
     try {
       await moveToTrash('clinical_evolutions', noteToDelete);
       setIsConfirmModalOpen(false);
       setNoteToDelete(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `clinical_evolutions/${noteToDelete}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -173,20 +177,22 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
               <label className="block text-sm font-medium text-text-secondary mb-1">Procedimento Realizado (Opcional)</label>
               <input
                 type="text"
+                disabled={isSaving}
                 value={newNote.procedure}
                 onChange={(e) => setNewNote({ ...newNote, procedure: e.target.value })}
                 placeholder="Ex: Restauração Resina, Profilaxia..."
-                className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1">Dente/Região (Opcional)</label>
               <input
                 type="text"
+                disabled={isSaving}
                 value={newNote.tooth}
                 onChange={(e) => setNewNote({ ...newNote, tooth: e.target.value })}
                 placeholder="Ex: 46, Maxila..."
-                className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
               />
             </div>
           </div>
@@ -194,10 +200,11 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
             <label className="block text-sm font-medium text-text-secondary mb-1">Descrição da Evolução *</label>
             <textarea
               required
+              disabled={isSaving}
               value={newNote.content}
               onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
               placeholder="Descreva o que foi feito na consulta de hoje, materiais utilizados, reações do paciente, etc..."
-              className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none resize-none h-32"
+              className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none resize-none h-32 disabled:opacity-50"
             />
           </div>
           <div className="flex justify-end">
@@ -206,8 +213,17 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
               disabled={isSaving || !newNote.content.trim()}
               className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-sm shadow-indigo-200 dark:shadow-none"
             >
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              Adicionar Evolução
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4" />
+                  Adicionar Evolução
+                </>
+              )}
             </button>
           </div>
         </form>
@@ -254,7 +270,8 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
                       {auth.currentUser?.uid === note.dentistId && (
                         <button
                           onClick={() => handleDelete(note.id)}
-                          className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                          disabled={isDeleting}
+                          className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
                           title="Excluir evolução"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -289,6 +306,7 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
       </div>
       <ConfirmModal
         isOpen={isConfirmModalOpen}
+        isLoading={isDeleting}
         onCancel={() => setIsConfirmModalOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Excluir Evolução"

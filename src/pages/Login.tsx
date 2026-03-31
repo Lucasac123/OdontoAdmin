@@ -191,7 +191,7 @@ export const Login: React.FC = () => {
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
               <>
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" referrerPolicy="no-referrer" />
                 Google
               </>
             )}

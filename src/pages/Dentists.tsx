@@ -10,9 +10,11 @@ export const Dentists: React.FC = () => {
   const [dentists, setDentists] = useState<Dentist[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dentistToDelete, setDentistToDelete] = useState<Dentist | null>(null);
-  
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const [formData, setFormData] = useState({
     name: '',
     cro: '',
@@ -39,7 +41,8 @@ export const Dentists: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser) return;
+    if (!auth.currentUser || isSaving) return;
+    setIsSaving(true);
 
     try {
       if (editingId) {
@@ -58,6 +61,8 @@ export const Dentists: React.FC = () => {
       setFormData({ name: '', cro: '', specialty: '', phone: '', email: '' });
     } catch (error) {
       handleFirestoreError(error, editingId ? OperationType.UPDATE : OperationType.CREATE, 'dentists');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -74,13 +79,16 @@ export const Dentists: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!dentistToDelete || !auth.currentUser) return;
+    if (!dentistToDelete || !auth.currentUser || isDeleting) return;
+    setIsDeleting(true);
 
     try {
       await moveToTrash('dentists', dentistToDelete.id, dentistToDelete);
       setDentistToDelete(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, 'dentists');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -127,61 +135,75 @@ export const Dentists: React.FC = () => {
                 <input
                   type="text"
                   required
+                  disabled={isSaving}
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all disabled:opacity-50"
                 />
               </div>
               <div>
                 <label className="block text-xs font-bold text-text-secondary uppercase tracking-widest mb-1.5">CRO</label>
                 <input
                   type="text"
+                  disabled={isSaving}
                   value={formData.cro}
                   onChange={e => setFormData({ ...formData, cro: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all disabled:opacity-50"
                 />
               </div>
               <div>
                 <label className="block text-xs font-bold text-text-secondary uppercase tracking-widest mb-1.5">Especialidade</label>
                 <input
                   type="text"
+                  disabled={isSaving}
                   value={formData.specialty}
                   onChange={e => setFormData({ ...formData, specialty: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all disabled:opacity-50"
                 />
               </div>
               <div>
                 <label className="block text-xs font-bold text-text-secondary uppercase tracking-widest mb-1.5">Telefone</label>
                 <input
                   type="text"
+                  disabled={isSaving}
                   value={formData.phone}
                   onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all disabled:opacity-50"
                 />
               </div>
               <div>
                 <label className="block text-xs font-bold text-text-secondary uppercase tracking-widest mb-1.5">E-mail</label>
                 <input
                   type="email"
+                  disabled={isSaving}
                   value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all disabled:opacity-50"
                 />
               </div>
               <div className="flex items-end gap-3 lg:col-span-3 pt-2">
                 <button
                   type="submit"
-                  className="flex-1 sm:flex-none bg-indigo-600 text-white px-8 py-2.5 rounded-xl hover:bg-indigo-700 transition-all font-bold shadow-lg shadow-indigo-200 active:scale-95"
+                  disabled={isSaving}
+                  className="flex-1 sm:flex-none bg-indigo-600 text-white px-8 py-2.5 rounded-xl hover:bg-indigo-700 transition-all font-bold shadow-lg shadow-indigo-200 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {editingId ? 'Salvar Alterações' : 'Cadastrar'}
+                  {isSaving ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      {editingId ? 'Salvando...' : 'Cadastrando...'}
+                    </>
+                  ) : (
+                    editingId ? 'Salvar Alterações' : 'Cadastrar'
+                  )}
                 </button>
                 <button
                   type="button"
+                  disabled={isSaving}
                   onClick={() => {
                     setIsAdding(false);
                     setEditingId(null);
                   }}
-                  className="flex-1 sm:flex-none px-8 py-2.5 rounded-xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all font-bold"
+                  className="flex-1 sm:flex-none px-8 py-2.5 rounded-xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all font-bold disabled:opacity-50"
                 >
                   Cancelar
                 </button>
@@ -327,6 +349,7 @@ export const Dentists: React.FC = () => {
 
       <ConfirmModal
         isOpen={!!dentistToDelete}
+        isLoading={isDeleting}
         onCancel={() => setDentistToDelete(null)}
         onConfirm={handleDelete}
         title="Excluir Dentista"

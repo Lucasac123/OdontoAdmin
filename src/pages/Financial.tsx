@@ -29,6 +29,8 @@ export const Financial: React.FC = () => {
     paymentMethod: 'pix' as Finance['paymentMethod']
   });
   const [financeToDelete, setFinanceToDelete] = useState<Finance | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSavingFinance, setIsSavingFinance] = useState(false);
 
   // Dynamic percentage splits
   const [splits, setSplits] = useState<SplitCategory[]>([
@@ -201,8 +203,9 @@ export const Financial: React.FC = () => {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser || !newFinance.description || !newFinance.amount) return;
+    if (!auth.currentUser || !newFinance.description || !newFinance.amount || isSavingFinance) return;
 
+    setIsSavingFinance(true);
     try {
       await addDoc(collection(db, 'finances'), {
         dentistId: auth.currentUser.uid,
@@ -226,6 +229,8 @@ export const Financial: React.FC = () => {
       });
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'finances');
+    } finally {
+      setIsSavingFinance(false);
     }
   };
 
@@ -234,12 +239,15 @@ export const Financial: React.FC = () => {
   };
 
   const confirmDelete = async () => {
-    if (!financeToDelete) return;
+    if (!financeToDelete || isDeleting) return;
+    setIsDeleting(true);
     try {
       await moveToTrash('finances', financeToDelete.id, financeToDelete);
       setFinanceToDelete(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `finances/${financeToDelete.id}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -439,6 +447,7 @@ export const Financial: React.FC = () => {
               patients={Object.fromEntries(Object.entries(patients).map(([id, p]) => [id, p.name]))}
               splits={splits}
               handleAdd={handleAdd}
+              isLoading={isSavingFinance}
             />
           </div>
         </div>
@@ -553,41 +562,47 @@ export const Financial: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="h-[400px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#71717a', fontSize: 10, fontWeight: 700 }}
-                  dy={15}
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#71717a', fontSize: 10, fontWeight: 700 }}
-                  tickFormatter={(value) => `R$ ${value >= 1000 ? (value/1000).toFixed(0) + 'k' : value}`}
-                />
-                <Tooltip 
-                  cursor={{ fill: 'rgba(0,0,0,0.02)' }}
-                  contentStyle={{ 
-                    backgroundColor: '#18181b', 
-                    border: 'none', 
-                    borderRadius: '20px',
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-                    color: '#fff',
-                    fontSize: '12px',
-                    padding: '16px'
-                  }}
-                  itemStyle={{ padding: '4px 0' }}
-                  formatter={(value: number) => [new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value), '']}
-                />
-                <Bar dataKey="income" name="Receitas" fill="#10b981" radius={[8, 8, 0, 0]} barSize={32} activeBar={{ fill: '#059669' }} />
-                <Bar dataKey="expense" name="Despesas" fill="#ef4444" radius={[8, 8, 0, 0]} barSize={32} activeBar={{ fill: '#dc2626' }} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="h-[400px] w-full min-h-[400px] min-w-[400px]">
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#71717a', fontSize: 10, fontWeight: 700 }}
+                    dy={15}
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#71717a', fontSize: 10, fontWeight: 700 }}
+                    tickFormatter={(value) => `R$ ${value >= 1000 ? (value/1000).toFixed(0) + 'k' : value}`}
+                  />
+                  <Tooltip 
+                    cursor={{ fill: 'rgba(0,0,0,0.02)' }}
+                    contentStyle={{ 
+                      backgroundColor: '#18181b', 
+                      border: 'none', 
+                      borderRadius: '20px',
+                      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+                      color: '#fff',
+                      fontSize: '12px',
+                      padding: '16px'
+                    }}
+                    itemStyle={{ padding: '4px 0' }}
+                    formatter={(value: number) => [new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value), '']}
+                  />
+                  <Bar dataKey="income" name="Receitas" fill="#10b981" radius={[8, 8, 0, 0]} barSize={32} activeBar={{ fill: '#059669' }} />
+                  <Bar dataKey="expense" name="Despesas" fill="#ef4444" radius={[8, 8, 0, 0]} barSize={32} activeBar={{ fill: '#dc2626' }} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-sm text-text-secondary">
+                Nenhum dado disponível para o gráfico
+              </div>
+            )}
           </div>
         </div>
 
@@ -968,6 +983,7 @@ export const Financial: React.FC = () => {
         onConfirm={confirmDelete}
         onCancel={() => setFinanceToDelete(null)}
         variant="danger"
+        isLoading={isDeleting}
       />
     </div>
   );

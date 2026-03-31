@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../firebase';
-import { Appointment, Patient } from '../types';
+import { Appointment, Patient, Dentist } from '../types';
 import { Calendar as CalendarIcon, Clock, Plus, Trash2, CheckCircle, XCircle, ExternalLink, Settings, Bell, Send, AlertCircle, Loader2 } from 'lucide-react';
 import { format, startOfWeek, addDays, isSameDay, parseISO, isAfter, subHours } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -12,6 +12,7 @@ import { ConfirmModal } from '../components/ConfirmModal';
 export const Agenda: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [dentists, setDentists] = useState<Dentist[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isAdding, setIsAdding] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -21,6 +22,7 @@ export const Agenda: React.FC = () => {
   
   const [newAppt, setNewAppt] = useState({
     patientId: '',
+    responsibleDentistId: '',
     time: '09:00',
     duration: 30 as number | '',
     notes: ''
@@ -33,6 +35,12 @@ export const Agenda: React.FC = () => {
     const qPatients = query(collection(db, 'patients'), where('dentistId', '==', auth.currentUser.uid));
     const unsubPatients = onSnapshot(qPatients, (snapshot) => {
       setPatients(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Patient)));
+    });
+
+    // Fetch dentists
+    const qDentists = query(collection(db, 'dentists'), where('dentistId', '==', auth.currentUser.uid));
+    const unsubDentists = onSnapshot(qDentists, (snapshot) => {
+      setDentists(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Dentist)));
     });
 
     // Fetch appointments
@@ -61,6 +69,7 @@ export const Agenda: React.FC = () => {
 
     return () => {
       unsubPatients();
+      unsubDentists();
       unsubAppts();
       unsubSettings();
     };
@@ -134,7 +143,7 @@ export const Agenda: React.FC = () => {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser || !newAppt.patientId) return;
+    if (!auth.currentUser || !newAppt.patientId || !newAppt.responsibleDentistId) return;
 
     const patient = patients.find(p => p.id === newAppt.patientId);
     
@@ -143,9 +152,23 @@ export const Agenda: React.FC = () => {
     const apptDate = new Date(selectedDate);
     apptDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
+    // Conflict check
+    const hasConflict = appointments.some(app =>
+      app.status !== 'cancelled' &&
+      app.responsibleDentistId === newAppt.responsibleDentistId &&
+      isSameDay(parseISO(app.date), apptDate) &&
+      format(parseISO(app.date), 'HH:mm') === newAppt.time
+    );
+
+    if (hasConflict) {
+      alert('Já existe um agendamento para este dentista neste horário.');
+      return;
+    }
+
     try {
       await addDoc(collection(db, 'appointments'), {
         dentistId: auth.currentUser.uid,
+        responsibleDentistId: newAppt.responsibleDentistId,
         patientId: newAppt.patientId,
         patientName: patient?.name || 'Desconhecido',
         date: apptDate.toISOString(),
@@ -155,7 +178,7 @@ export const Agenda: React.FC = () => {
         createdAt: new Date().toISOString()
       });
       setIsAdding(false);
-      setNewAppt({ patientId: '', time: '09:00', duration: 30, notes: '' });
+      setNewAppt({ patientId: '', responsibleDentistId: '', time: '09:00', duration: 30, notes: '' });
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'appointments');
     }
@@ -289,6 +312,13 @@ export const Agenda: React.FC = () => {
                   <select required value={newAppt.patientId} onChange={e => setNewAppt({...newAppt, patientId: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500">
                     <option value="">Selecione um paciente...</option>
                     {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-1">Dentista Responsável</label>
+                  <select required value={newAppt.responsibleDentistId} onChange={e => setNewAppt({...newAppt, responsibleDentistId: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Selecione um dentista...</option>
+                    {dentists.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
