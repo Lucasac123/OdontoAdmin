@@ -12,6 +12,9 @@ export default defineConfig(({mode}) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
+        workbox: {
+          maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MiB
+        },
         includeAssets: ['logo.svg'],
         manifest: {
           name: 'OdontoAdmin - Gestão Clínica',
