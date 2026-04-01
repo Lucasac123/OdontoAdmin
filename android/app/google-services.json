@@ -14,11 +14,27 @@
       },
       "oauth_client": [
         {
+          "client_id": "531539311792-db152qe8vtc8pdr6ispluen2m9n349gi.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.odontoadmin.app",
+            "certificate_hash": "7c59c8e771487187dbd3862a683276392b1daa06"
+          }
+        },
+        {
           "client_id": "531539311792-n6eqko95d9jccqnk9a0m57rpbgaeflts.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.odontoadmin.app",
             "certificate_hash": "34727f0da0603d83c4b4d346d8d878b46d319e51"
+          }
+        },
+        {
+          "client_id": "531539311792-rc9au2fa4e3cd54bedfi5iqb5asl3242.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.odontoadmin.app",
+            "certificate_hash": "cdb0760d5a41dc528187eadc94e30d4bc7c77083"
           }
         },
         {
