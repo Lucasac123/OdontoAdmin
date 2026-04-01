@@ -34,10 +34,10 @@ export const AIAssistant: React.FC = () => {
   const [cooldown, setCooldown] = useState(0);
 
   const MODELS = [
-    { id: 'gemini-2.0-flash', name: 'Flash 2.0', fullName: 'Gemini 2.0 Flash', description: 'Velocidade ultra-rápida e inteligência aprimorada' },
-    { id: 'gemini-2.0-flash-lite-preview-02-05', name: 'Lite 2.0', fullName: 'Gemini 2.0 Flash Lite', description: 'Otimizado para solicitações rápidas e básicas' },
-    { id: 'gemini-1.5-pro', name: 'Pro 1.5', fullName: 'Gemini 1.5 Pro', description: 'Raciocínio complexo e análise profunda' },
-    { id: 'gemini-1.5-flash', name: 'Flash 1.5', fullName: 'Gemini 1.5 Flash', description: 'Equilíbrio entre velocidade e inteligência' },
+    { id: 'gemini-3.1-pro-preview', name: 'Pro 3.1', fullName: 'Gemini 3.1 Pro (Preview)', description: 'O mais inteligente: raciocínio avançado e análise complexa' },
+    { id: 'gemini-3-flash-preview', name: 'Flash 3.0', fullName: 'Gemini 3.0 Flash (Preview)', description: 'Equilíbrio ideal: rápido, inteligente e versátil' },
+    { id: 'gemini-3.1-flash-lite-preview', name: 'Lite 3.1', fullName: 'Gemini 3.1 Flash-Lite', description: 'Ultra-velocidade: otimizado para respostas instantâneas' },
+    { id: 'gemini-2.0-flash', name: 'Flash 2.0', fullName: 'Gemini 2.0 Flash', description: 'Versão estável da geração anterior' },
   ];
   
   const currentModel = MODELS.find(m => m.id === selectedModel) || MODELS[0];
@@ -322,7 +322,7 @@ export const AIAssistant: React.FC = () => {
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute right-0 mt-2 w-72 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2 overflow-hidden"
+                    className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2 overflow-hidden"
                   >
                     <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 mb-1">
                       <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Configurações do Modelo</p>

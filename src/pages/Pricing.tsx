@@ -130,7 +130,7 @@ export const Pricing: React.FC = () => {
         Retorne APENAS o JSON válido, sem formatação markdown ou texto adicional.`;
 
         const response = await ai.models.generateContent({
-          model: 'gemini-2.0-flash',
+          model: 'gemini-3-flash-preview',
           contents: [
             {
               role: 'user',
