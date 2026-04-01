@@ -72,18 +72,18 @@ jobs:
 
       - name: Build APK
         working-directory: ./android
-        env:
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug \
+            -PRELEASE_STORE_FILE=release.keystore \
+            -PRELEASE_STORE_PASSWORD="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            -PRELEASE_KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}" \
+            -PRELEASE_KEY_PASSWORD="${{ secrets.ANDROID_KEY_PASSWORD }}"
 
       - name: EXTRAINDO SHA-1 PARA O FIREBASE
         run: |
           echo "COPIE E COLE O SEGUINTE CÓDIGO NO SEU FIREBASE CONSOLE:"
-          keytool -list -v -keystore android/app/release.keystore -alias ${{ secrets.ANDROID_KEY_ALIAS }} -storepass ${{ secrets.ANDROID_KEY_PASSWORD }} -keypass ${{ secrets.ANDROID_KEY_PASSWORD }} | grep "SHA1:"
+          keytool -list -v -keystore android/app/release.keystore -alias "${{ secrets.ANDROID_KEY_ALIAS }}" -storepass "${{ secrets.ANDROID_KEY_PASSWORD }}" -keypass "${{ secrets.ANDROID_KEY_PASSWORD }}" | grep "SHA1:"
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
