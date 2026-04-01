@@ -194,8 +194,15 @@ export const AIAssistant: React.FC = () => {
         setSearchLinks([]);
       }
     } catch (error) {
-      const errorMessage = formatAIError(error);
-      setSearchResult(errorMessage);
+      console.error('Search AI Error:', error);
+      const message = error instanceof Error ? error.message : String(error);
+      
+      if (message.includes('429') || message.toLowerCase().includes('quota')) {
+        setSearchResult("O limite de buscas do Google Cloud foi atingido. Atualmente, a ferramenta de Pesquisa na Web possui uma cota separada (e mais restrita) que o chat normal. Tente novamente em instantes ou utilize o Chat para perguntas que não exijam dados em tempo real.");
+      } else {
+        const errorMessage = formatAIError(error);
+        setSearchResult(errorMessage);
+      }
       setIsSearchError(true);
     } finally {
       setIsSearchLoading(false);
@@ -355,7 +362,7 @@ export const AIAssistant: React.FC = () => {
         </div>
       </div>
         
-      <div className="flex bg-zinc-100 dark:bg-zinc-800/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-x-auto no-scrollbar shrink-0">
+      <div className="grid grid-cols-3 w-full bg-zinc-100 dark:bg-zinc-800/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shrink-0">
           {[
             { id: 'chat', label: 'Chat', icon: MessageSquare },
             { id: 'search', label: 'Pesquisa', icon: Search },
@@ -364,13 +371,13 @@ export const AIAssistant: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap ${
+              className={`flex items-center justify-center gap-2 px-3 py-2.5 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap w-full ${
                 activeTab === tab.id 
                   ? 'bg-white dark:bg-zinc-700 text-indigo-600 dark:text-indigo-400 shadow-sm' 
                   : 'text-text-secondary hover:text-text-primary'
               }`}
             >
-              <tab.icon className="w-4 h-4" />
+              <tab.icon className="w-3.5 h-3.5 sm:w-4 h-4" />
               <span>{tab.label}</span>
             </button>
           ))}
