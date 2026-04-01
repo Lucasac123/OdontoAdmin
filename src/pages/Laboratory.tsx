@@ -16,6 +16,7 @@ const Laboratory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     patientId: '',
@@ -148,8 +149,11 @@ const Laboratory = () => {
       await moveToTrash('lab_jobs', jobToDelete, job);
       setIsConfirmModalOpen(false);
       setJobToDelete(null);
+      setDeleteError(null);
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `lab_jobs/${jobToDelete}`);
+      const errMessage = error instanceof Error ? error.message : 'Erro ao excluir. Verifique suas permissões.';
+      setDeleteError(errMessage);
+      console.error(error);
     } finally {
       setIsDeleting(false);
     }
@@ -190,7 +194,7 @@ const Laboratory = () => {
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="w-full sm:w-auto bg-indigo-600 text-white px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-[0.98] font-bold"
+          className="w-full sm:w-auto bg-indigo-600 text-white px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 dark:shadow-none active:scale-[0.98] font-bold"
         >
           <Plus size={20} />
           Novo Trabalho
@@ -480,7 +484,10 @@ const Laboratory = () => {
         onConfirm={handleConfirmDelete}
         isLoading={isDeleting}
         title="Excluir Trabalho"
-        message="Tem certeza que deseja excluir este trabalho de laboratório? Esta ação não pode ser desfeita."
+        message="Tem certeza que deseja mover este trabalho para a lixeira?"
+        confirmLabel="Excluir"
+        variant="danger"
+        errorMessage={deleteError}
       />
     </div>
   );

@@ -54,25 +54,25 @@ export const ConsentFormsTab = ({ patient }: { patient: Patient }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-text-primary flex items-center gap-2">
-          <FileSignature className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h2 className="text-lg sm:text-xl font-bold text-text-primary flex items-center gap-2">
+          <FileSignature className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" />
           Termos de Consentimento (TCLE)
         </h2>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button
             onClick={() => setShowTemplatesModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors text-xs sm:text-sm"
           >
-            <Search className="w-4 h-4" />
-            Modelos Salvos
+            <Search className="w-3.5 h-3.5" />
+            Modelos
           </button>
           <button 
             onClick={handlePrint}
-            className="flex items-center gap-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-4 py-2 rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-3 sm:px-4 py-2 rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors text-xs sm:text-sm shadow-lg shadow-zinc-200/20 dark:shadow-none"
           >
-            <Printer className="w-4 h-4" />
-            Imprimir Termo
+            <Printer className="w-3.5 h-3.5" />
+            Imprimir
           </button>
         </div>
       </div>

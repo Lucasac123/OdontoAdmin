@@ -59,7 +59,7 @@ export const Financial: React.FC = () => {
       reader.onloadend = async () => {
         const base64Data = (reader.result as string).split(',')[1];
         
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
         const response = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
           contents: {
@@ -578,7 +578,7 @@ export const Financial: React.FC = () => {
           <div className="h-[400px] w-full min-h-[400px] min-w-[400px]">
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="rgba(0,0,0,0.05)" />
                   <XAxis 
                     dataKey="name" 
@@ -596,11 +596,11 @@ export const Financial: React.FC = () => {
                   <Tooltip 
                     cursor={{ fill: 'rgba(0,0,0,0.02)' }}
                     contentStyle={{ 
-                      backgroundColor: '#18181b', 
-                      border: 'none', 
+                      backgroundColor: 'var(--bg-surface)', 
+                      border: '1px solid var(--border-zinc-200)', 
                       borderRadius: '20px',
                       boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-                      color: '#fff',
+                      color: 'var(--text-primary)',
                       fontSize: '12px',
                       padding: '16px'
                     }}

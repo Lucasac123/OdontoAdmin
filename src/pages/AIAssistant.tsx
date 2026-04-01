@@ -24,7 +24,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
 export const AIAssistant: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'chat' | 'search' | 'analyze'>('chat');
@@ -68,7 +68,7 @@ export const AIAssistant: React.FC = () => {
   const [isApiKeyMissing, setIsApiKeyMissing] = useState(false);
 
   useEffect(() => {
-    if (!process.env.GEMINI_API_KEY) {
+    if (!import.meta.env.VITE_GEMINI_API_KEY) {
       setIsApiKeyMissing(true);
     }
   }, []);
@@ -400,8 +400,8 @@ export const AIAssistant: React.FC = () => {
                 <X className="w-8 h-8" />
               </div>
               <h3 className="text-xl font-black text-text-primary tracking-tight">API Key não configurada</h3>
-              <p className="text-sm text-text-secondary">
-                Para utilizar o assistente de IA, você precisa configurar a variável de ambiente <code className="bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded font-mono text-indigo-600 dark:text-indigo-400">GEMINI_API_KEY</code> no seu ambiente de hospedagem (Vercel).
+              <p className="text-text-secondary max-w-sm text-sm">
+                Para utilizar o assistente de IA, você precisa configurar a variável de ambiente <code className="bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded text-indigo-600 dark:text-indigo-400 font-mono text-xs">VITE_GEMINI_API_KEY</code> no seu ambiente de hospedagem (Vercel) ou arquivo .env local.
               </p>
               <div className="pt-4">
                 <a 

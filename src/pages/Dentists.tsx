@@ -14,6 +14,7 @@ export const Dentists: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dentistToDelete, setDentistToDelete] = useState<Dentist | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -85,8 +86,11 @@ export const Dentists: React.FC = () => {
     try {
       await moveToTrash('dentists', dentistToDelete.id, dentistToDelete);
       setDentistToDelete(null);
+      setDeleteError(null);
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, 'dentists');
+      const errMessage = error instanceof Error ? error.message : 'Erro ao excluir profissional. Verifique suas permissões.';
+      setDeleteError(errMessage);
+      console.error(error);
     } finally {
       setIsDeleting(false);
     }
@@ -111,7 +115,7 @@ export const Dentists: React.FC = () => {
             setEditingId(null);
             setIsAdding(!isAdding);
           }}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-[0.98] font-bold"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 dark:shadow-none active:scale-[0.98] font-bold"
         >
           <Plus className="w-5 h-5" />
           Novo Dentista
@@ -185,7 +189,7 @@ export const Dentists: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="flex-1 sm:flex-none bg-indigo-600 text-white px-8 py-2.5 rounded-xl hover:bg-indigo-700 transition-all font-bold shadow-lg shadow-indigo-200 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 sm:flex-none bg-indigo-600 text-white px-8 py-2.5 rounded-xl hover:bg-indigo-700 transition-all font-bold shadow-lg shadow-indigo-600/20 dark:shadow-none active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSaving ? (
                     <>
@@ -356,6 +360,7 @@ export const Dentists: React.FC = () => {
         message={`Tem certeza que deseja excluir o dentista ${dentistToDelete?.name}? Esta ação pode ser desfeita na Lixeira.`}
         confirmLabel="Excluir"
         variant="danger"
+        errorMessage={deleteError}
       />
     </div>
   );

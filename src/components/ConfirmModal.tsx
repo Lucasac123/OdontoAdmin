@@ -12,6 +12,7 @@ interface ConfirmModalProps {
   onCancel: () => void;
   variant?: 'danger' | 'warning' | 'info';
   isLoading?: boolean;
+  errorMessage?: string | null;
 }
 
 export const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -23,7 +24,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onConfirm,
   onCancel,
   variant = 'danger',
-  isLoading = false
+  isLoading = false,
+  errorMessage = null
 }) => {
   return (
     <AnimatePresence>
@@ -66,6 +68,16 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                   </button>
                 )}
               </div>
+              {errorMessage && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="mt-4 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl flex items-center gap-2 text-red-600 dark:text-red-400 text-xs font-semibold"
+                >
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <p>{errorMessage}</p>
+                </motion.div>
+              )}
             </div>
             
             <div className="p-4 bg-zinc-50 dark:bg-zinc-900/50 flex flex-col sm:flex-row gap-3 justify-end">
