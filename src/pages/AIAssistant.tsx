@@ -24,7 +24,8 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const genAI = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 export const AIAssistant: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'chat' | 'search' | 'analyze'>('chat');
@@ -33,10 +34,9 @@ export const AIAssistant: React.FC = () => {
   const [cooldown, setCooldown] = useState(0);
 
   const MODELS = [
-    { id: 'gemini-flash-latest', name: 'Flash', fullName: 'Gemini Flash (Padrão)', description: 'Equilíbrio entre velocidade e inteligência' },
-    { id: 'gemini-3.1-flash-lite-preview', name: 'Lite', fullName: 'Gemini Flash Lite', description: 'Mais rápido, menor latência' },
-    { id: 'gemini-3.1-pro-preview', name: 'Pro', fullName: 'Gemini Pro', description: 'Mais inteligente, maior raciocínio' },
-    { id: 'gemini-3-flash-preview', name: 'G3 Flash', fullName: 'Gemini 3 Flash', description: 'Modelo de última geração' },
+    { id: 'gemini-1.5-flash', name: 'Flash', fullName: 'Gemini 1.5 Flash', description: 'Equilíbrio entre velocidade e inteligência' },
+    { id: 'gemini-2.0-flash-exp', name: 'Flash 2.0', fullName: 'Gemini 2.0 Flash (Exp)', description: 'Última geração, ultra rápido' },
+    { id: 'gemini-1.5-pro', name: 'Pro', fullName: 'Gemini 1.5 Pro', description: 'Mais inteligente, maior raciocínio' },
   ];
   
   const currentModel = MODELS.find(m => m.id === selectedModel) || MODELS[0];
@@ -126,13 +126,12 @@ export const AIAssistant: React.FC = () => {
     setIsChatLoading(true);
 
     try {
-      const isGemini3 = selectedModel.includes('gemini-3');
-      const response = await ai.models.generateContent({
+      if (!genAI) throw new Error('Chave de API do Gemini não configurada.');
+      
+      const response = await (genAI as any).models.generateContent({
         model: selectedModel,
-        contents: userMessage,
-        config: {
-          systemInstruction: 'Você é um assistente especializado em odontologia. Ajude dentistas com diagnósticos, planos de tratamento, legislação e dúvidas gerais.',
-          ...(isGemini3 ? { thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } } : {})
+        contents: {
+          parts: [{ text: `INSTRUÇÃO DE SISTEMA: Você é um assistente especializado em odontologia. Ajude dentistas com diagnósticos, planos de tratamento, legislação e dúvidas gerais.\n\nUSUÁRIO: ${userMessage}` }]
         }
       });
       
@@ -166,19 +165,24 @@ export const AIAssistant: React.FC = () => {
     setIsSearchError(false);
 
     try {
-      const response = await ai.models.generateContent({
+      if (!genAI) throw new Error('Chave de API do Gemini não configurada.');
+      
+      const response = await (genAI as any).models.generateContent({
         model: selectedModel,
-        contents: searchQuery,
+        contents: {
+          parts: [{ text: searchQuery }]
+        },
         config: {
-          tools: [{ googleSearch: {} }]
+          tools: [{ googleSearch: {} } as any]
         }
       });
+      
       setSearchResult(response.text || 'Nenhum resultado encontrado.');
       
-      // Extract links from grounding metadata
-      const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-      if (chunks) {
-        const links = chunks
+      // Grounding metadata
+      const grounding = (response as any).candidates?.[0]?.groundingMetadata;
+      if (grounding?.groundingChunks) {
+        const links = grounding.groundingChunks
           .filter((chunk: any) => chunk.web)
           .map((chunk: any) => ({
             title: chunk.web.title,
@@ -226,10 +230,12 @@ export const AIAssistant: React.FC = () => {
     setIsAnalyzeError(false);
 
     try {
+      if (!genAI) throw new Error('Chave de API do Gemini não configurada.');
+      
       const base64Data = analyzeImage.split(',')[1];
       const mimeType = analyzeImage.match(/data:(.*?);/)?.[1] || 'image/jpeg';
 
-      const response = await ai.models.generateContent({
+      const response = await (genAI as any).models.generateContent({
         model: selectedModel,
         contents: {
           parts: [
@@ -238,6 +244,7 @@ export const AIAssistant: React.FC = () => {
           ]
         }
       });
+      
       setAnalyzeResult(response.text || 'Não foi possível analisar a imagem.');
     } catch (error) {
       const errorMessage = formatAIError(error);
@@ -257,7 +264,7 @@ export const AIAssistant: React.FC = () => {
       <div className="flex flex-col gap-4 shrink-0">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 shrink-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow--/ dark:shadow-none shrink-0">
               <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
@@ -671,7 +678,7 @@ export const AIAssistant: React.FC = () => {
               <button
                 onClick={handleAnalyzeSubmit}
                 disabled={!analyzeImage || isAnalyzeLoading || cooldown > 0}
-                className="w-full bg-indigo-600 text-white py-4 rounded-[20px] font-black uppercase tracking-[0.2em] text-xs hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-3 transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
+                className="w-full bg-indigo-600 text-white py-4 rounded-[20px] font-black uppercase tracking-[0.2em] text-xs hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-3 transition-all shadow-lg shadow--/ dark:shadow-none active:scale-95"
               >
                 {isAnalyzeLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
                 Analisar Agora

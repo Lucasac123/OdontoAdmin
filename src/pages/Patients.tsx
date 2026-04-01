@@ -131,18 +131,18 @@ export const Patients: React.FC = () => {
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
           <div className="relative w-full sm:w-80 group">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary group-focus-within:text-indigo-500 transition-colors" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary group-focus-within:text-accent transition-colors" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por nome..."
-              className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl pl-10 pr-4 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
+              className="w-full bg-surface border border-border-subtle rounded-2xl pl-10 pr-4 py-3 text-sm text-text-primary focus:outline-none focus:ring-4 focus:ring-accent/10 focus:border-accent transition-all shadow-sm"
             />
           </div>
           <button
             onClick={() => setIsAdding(true)}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-md shadow-indigo-500/20 font-medium shrink-0"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-accent text-white px-6 py-3 rounded-2xl hover:bg-accent-hover active:scale-[0.98] transition-all shadow-lg shadow-accent/20 font-black uppercase text-[10px] tracking-widest shrink-0"
           >
             <Plus className="w-5 h-5" />
             Novo Paciente
@@ -156,19 +156,19 @@ export const Patients: React.FC = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-surface p-6 rounded-3xl shadow-xl shadow-zinc-200/50 dark:shadow-none border border-zinc-200 dark:border-zinc-800"
+            className="premium-card p-8 !translate-y-0"
           >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-text-primary">Cadastrar Novo Paciente</h2>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl font-black text-text-primary tracking-tight">Cadastrar Novo Paciente</h2>
               <button 
                 onClick={() => {
                   setIsAdding(false);
                   setNewPatient({ name: '', source: '', status: 'Ativo', responsibleDentistId: '' });
                   setError(null);
                 }}
-                className="text-text-secondary hover:text-text-primary transition-colors"
+                className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 text-text-secondary hover:text-red-500 transition-all"
               >
-                Cancelar
+                <Trash2 className="w-5 h-5" />
               </button>
             </div>
 
@@ -247,7 +247,7 @@ export const Patients: React.FC = () => {
                 <button 
                   type="submit" 
                   disabled={isSaving}
-                  className="bg-indigo-600 text-white px-8 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-500/20 font-medium disabled:opacity-50 flex items-center gap-2"
+                  className="bg-indigo-600 text-white px-8 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow--/ dark:shadow-none font-medium disabled:opacity-50 flex items-center gap-2"
                 >
                   {isSaving ? (
                     <>
@@ -284,16 +284,16 @@ export const Patients: React.FC = () => {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2, delay: index * 0.05 }}
                 onClick={() => navigate(`/patients/${patient.id}`)}
-                className="group bg-surface p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/5 transition-all cursor-pointer relative overflow-hidden"
+                className="group premium-card p-6 border-accent/5 hover:border-accent/40"
               >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xl">
+                <div className="flex justify-between items-start mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-accent/10 rounded-2xl flex items-center justify-center text-accent font-black text-2xl shadow-inner border border-accent/5">
                       {patient.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <h3 className="font-bold text-text-primary group-hover:text-indigo-600 transition-colors line-clamp-1">{patient.name}</h3>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider mt-1 ${
+                      <h3 className="font-black text-text-primary group-hover:text-accent transition-colors line-clamp-1 text-lg tracking-tight">{patient.name}</h3>
+                      <span className={`inline-flex items-center px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest mt-1.5 ${
                         patient.status === 'Inativo' 
                           ? 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
                           : patient.status === 'Em Tratamento'

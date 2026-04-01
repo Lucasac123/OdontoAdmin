@@ -467,12 +467,12 @@ export const Financial: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <motion.div 
+          <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          whileHover={{ y: -4, scale: 1.02 }}
-          className="bg-surface p-8 rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 relative overflow-hidden group"
+          whileHover={{ y: -6 }}
+          className="premium-card p-8 relative overflow-hidden group border-emerald-500/10"
         >
           <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
             <TrendingUp size={120} className="text-emerald-500" />
@@ -499,8 +499,8 @@ export const Financial: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          whileHover={{ y: -4, scale: 1.02 }}
-          className="bg-surface p-8 rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 relative overflow-hidden group"
+          whileHover={{ y: -6 }}
+          className="premium-card p-8 relative overflow-hidden group border-red-500/10"
         >
           <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
             <TrendingDown size={120} className="text-red-500" />
@@ -527,8 +527,8 @@ export const Financial: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          whileHover={{ y: -4, scale: 1.02 }}
-          className="bg-surface p-8 rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 relative overflow-hidden group"
+          whileHover={{ y: -6 }}
+          className="premium-card p-8 relative overflow-hidden group border-indigo-500/10"
         >
           <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
             <DollarSign size={120} className="text-indigo-500" />
@@ -553,7 +553,7 @@ export const Financial: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-surface p-8 rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800">
+        <div className="lg:col-span-2 premium-card p-8 !translate-y-0 hover:!shadow-premium">
           <div className="flex items-center justify-between mb-10">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
@@ -578,7 +578,7 @@ export const Financial: React.FC = () => {
           <div className="h-[400px] w-full min-h-[400px] min-w-[400px]">
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="rgba(0,0,0,0.05)" />
                   <XAxis 
                     dataKey="name" 
@@ -619,7 +619,7 @@ export const Financial: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-surface p-8 rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 flex flex-col h-full">
+        <div className="premium-card p-8 !translate-y-0 hover:!shadow-premium flex flex-col h-full border-indigo-500/10">
           <div className="flex items-center gap-4 mb-8">
             <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
               <Building className="w-6 h-6" />
@@ -682,7 +682,7 @@ export const Financial: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-surface rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col">
+        <div className="lg:col-span-2 premium-card !translate-y-0 hover:!shadow-premium overflow-hidden flex flex-col">
           <div className="p-8 border-b border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-zinc-50/30 dark:bg-zinc-900/10">
             <div>
               <h3 className="text-xl font-black text-text-primary tracking-tight">Histórico</h3>
@@ -740,7 +740,7 @@ export const Financial: React.FC = () => {
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${finance.type === 'income' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'}`}>
                             {finance.type === 'income' ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
                           </div>
-                          <span className="font-bold text-text-primary text-sm">{finance.description}</span>
+                          <span className="font-bold text-text-primary text-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">{finance.description}</span>
                         </div>
                       </td>
                       <td className="py-4 px-6 text-xs text-text-secondary font-medium">
@@ -788,26 +788,29 @@ export const Financial: React.FC = () => {
               <div className="p-12 text-center text-text-secondary text-sm">Nenhum lançamento encontrado.</div>
             ) : (
               filteredFinances.map(finance => (
-                <div key={finance.id} className="p-5 space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${finance.type === 'income' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600' : 'bg-red-50 dark:bg-red-500/10 text-red-600'}`}>
-                        {finance.type === 'income' ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+                <div key={finance.id} className="p-6 bg-zinc-50/50 dark:bg-zinc-800/10 hover:bg-zinc-100 dark:hover:bg-zinc-800/30 transition-all border-b border-border-subtle last:border-0">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${finance.type === 'income' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>
+                        {finance.type === 'income' ? <TrendingUp className="w-6 h-6" /> : <TrendingDown className="w-6 h-6" />}
                       </div>
-                      <div>
-                        <p className="font-bold text-text-primary">{finance.description}</p>
-                        <p className="text-[10px] text-text-secondary uppercase font-bold tracking-wider">{new Date(finance.date).toLocaleDateString('pt-BR')}</p>
+                      <div className="min-w-0">
+                        <p className="font-black text-text-primary leading-tight truncate">{finance.description}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-[10px] text-text-secondary uppercase font-black tracking-widest">{new Date(finance.date).toLocaleDateString('pt-BR')}</p>
+                          {finance.paymentMethod && (
+                            <>
+                              <span className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+                              <span className="text-[10px] font-black uppercase text-accent tracking-wider">{finance.paymentMethod}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className={`font-bold text-lg ${finance.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                    <div className="text-right shrink-0">
+                      <p className={`text-lg font-black tracking-tight ${finance.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                         {finance.type === 'income' ? '+' : '-'} {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(finance.amount)}
                       </p>
-                      {finance.paymentMethod && (
-                        <span className="text-[9px] font-bold uppercase bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-lg text-text-secondary">
-                          {finance.paymentMethod}
-                        </span>
-                      )}
                     </div>
                   </div>
                   
@@ -888,7 +891,7 @@ export const Financial: React.FC = () => {
                       <span className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary text-xs font-black">%</span>
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={handleAddSplit} className="w-11 h-11 flex items-center justify-center bg-emerald-500 text-white rounded-2xl hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20">
+                      <button onClick={handleAddSplit} className="w-11 h-11 flex items-center justify-center bg-emerald-500 text-white rounded-2xl hover:bg-emerald-600 transition-colors shadow-lg shadow--/ dark:shadow-none">
                         <Check className="w-5 h-5" />
                       </button>
                       <button onClick={() => setIsAddingSplit(false)} className="w-11 h-11 flex items-center justify-center bg-zinc-200 dark:bg-zinc-800 text-text-secondary rounded-2xl hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors">

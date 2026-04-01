@@ -115,7 +115,7 @@ export const Dentists: React.FC = () => {
             setEditingId(null);
             setIsAdding(!isAdding);
           }}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 dark:shadow-none active:scale-[0.98] font-bold"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow--/ dark:shadow-none dark:shadow-none active:scale-[0.98] font-bold"
         >
           <Plus className="w-5 h-5" />
           Novo Dentista
@@ -189,7 +189,7 @@ export const Dentists: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="flex-1 sm:flex-none bg-indigo-600 text-white px-8 py-2.5 rounded-xl hover:bg-indigo-700 transition-all font-bold shadow-lg shadow-indigo-600/20 dark:shadow-none active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 sm:flex-none bg-indigo-600 text-white px-8 py-2.5 rounded-xl hover:bg-indigo-700 transition-all font-bold shadow-lg shadow--/ dark:shadow-none dark:shadow-none active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSaving ? (
                     <>

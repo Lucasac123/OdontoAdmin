@@ -198,86 +198,86 @@ export const Dashboard: React.FC = () => {
           <h1 className="text-4xl font-bold text-text-primary tracking-tight">Dashboard</h1>
           <p className="text-text-secondary mt-1 font-medium">Bem-vindo de volta! Aqui está o resumo da sua clínica.</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm">
-          <Calendar className="w-4 h-4 text-indigo-500" />
-          <span className="text-sm font-semibold text-text-primary uppercase tracking-wide">
+        <div className="flex items-center gap-2 px-4 py-2 bg-surface border border-border-subtle rounded-2xl shadow-premium">
+          <Calendar className="w-4 h-4 text-accent" />
+          <span className="text-xs font-bold text-text-primary uppercase tracking-wide">
             {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <motion.div 
-          whileHover={{ y: -4 }}
-          className="bg-surface p-6 rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 relative overflow-hidden group"
+          whileHover={{ y: -6 }}
+          className="premium-card p-6 relative overflow-hidden group"
         >
-          <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:bg-indigo-500/10" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-bl-full -mr-12 -mt-12 transition-all group-hover:bg-accent/10 duration-500" />
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-              <Calendar className="w-6 h-6" />
+            <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center text-accent">
+              <Calendar className="w-7 h-7" />
             </div>
-            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-1 rounded-lg uppercase tracking-wider">Hoje</span>
+            <span className="text-[10px] font-black text-accent bg-accent/10 px-2.5 py-1 rounded-lg uppercase tracking-widest">Hoje</span>
           </div>
-          <p className="text-sm font-medium text-text-secondary">Consultas</p>
-          <p className="text-3xl font-bold text-text-primary mt-1">{appointments.length}</p>
+          <p className="text-sm font-semibold text-text-secondary">Consultas</p>
+          <p className="text-2xl sm:text-3xl xl:text-4xl font-black text-text-primary mt-1 tracking-tight truncate">{appointments.length}</p>
         </motion.div>
 
         <motion.div 
-          whileHover={{ y: -4 }}
-          className="bg-surface p-6 rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 relative overflow-hidden group"
+          whileHover={{ y: -6 }}
+          className="premium-card p-6 relative overflow-hidden group"
         >
-          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:bg-emerald-500/10" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-bl-full -mr-12 -mt-12 transition-all group-hover:bg-emerald-500/10 duration-500" />
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <TrendingUp className="w-6 h-6" />
+            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+              <TrendingUp className="w-7 h-7" />
             </div>
-            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-lg uppercase tracking-wider">Mês</span>
+            <span className="text-[10px] font-black text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-lg uppercase tracking-widest">Mês</span>
           </div>
-          <p className="text-sm font-medium text-text-secondary">Receita</p>
-          <p className="text-3xl font-bold text-text-primary mt-1">
+          <p className="text-sm font-semibold text-text-secondary">Receita</p>
+          <p className="text-2xl sm:text-3xl xl:text-4xl font-black text-text-primary mt-1 tracking-tight truncate">
             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(totalIncome)}
           </p>
         </motion.div>
 
         <motion.div 
-          whileHover={{ y: -4 }}
-          className="bg-surface p-6 rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 relative overflow-hidden group"
+          whileHover={{ y: -6 }}
+          className="premium-card p-6 relative overflow-hidden group"
         >
-          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:bg-blue-500/10" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-bl-full -mr-12 -mt-12 transition-all group-hover:bg-blue-500/10 duration-500" />
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
-              <DollarSign className="w-6 h-6" />
+            <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+              <DollarSign className="w-7 h-7" />
             </div>
-            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-1 rounded-lg uppercase tracking-wider">Saldo</span>
+            <span className="text-[10px] font-black text-blue-500 bg-blue-500/10 px-2.5 py-1 rounded-lg uppercase tracking-widest">Saldo</span>
           </div>
-          <p className="text-sm font-medium text-text-secondary">Resultado</p>
-          <p className="text-3xl font-bold text-text-primary mt-1">
+          <p className="text-sm font-semibold text-text-secondary">Resultado</p>
+          <p className="text-2xl sm:text-3xl xl:text-4xl font-black text-text-primary mt-1 tracking-tight truncate">
             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(balance)}
           </p>
         </motion.div>
 
         <motion.div 
-          whileHover={{ y: -4 }}
-          className="bg-surface p-6 rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 relative overflow-hidden group"
+          whileHover={{ y: -6 }}
+          className="premium-card p-6 relative overflow-hidden group"
         >
-          <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:bg-purple-500/10" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-bl-full -mr-12 -mt-12 transition-all group-hover:bg-purple-500/10 duration-500" />
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400">
-              <Users className="w-6 h-6" />
+            <div className="w-14 h-14 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-500">
+              <Users className="w-7 h-7" />
             </div>
-            <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 px-2 py-1 rounded-lg uppercase tracking-wider">Total</span>
+            <span className="text-[10px] font-black text-purple-500 bg-purple-500/10 px-2.5 py-1 rounded-lg uppercase tracking-widest">Total</span>
           </div>
-          <p className="text-sm font-medium text-text-secondary">Pacientes</p>
-          <p className="text-3xl font-bold text-text-primary mt-1">{patients.length}</p>
+          <p className="text-sm font-semibold text-text-secondary">Pacientes</p>
+          <p className="text-2xl sm:text-3xl xl:text-4xl font-black text-text-primary mt-1 tracking-tight truncate">{patients.length}</p>
         </motion.div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-surface rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-          <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-800/20">
+        <div className="lg:col-span-2 premium-card overflow-hidden !translate-y-0 hover:!shadow-premium">
+          <div className="p-6 border-b border-border-subtle flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-800/20">
             <div>
-              <h2 className="text-lg font-bold text-text-primary">Próximas Consultas</h2>
-              <p className="text-xs text-text-secondary">Sua agenda para o dia de hoje</p>
+              <h2 className="text-xl font-black text-text-primary tracking-tight">Próximas Consultas</h2>
+              <p className="text-xs text-text-secondary font-medium tracking-wide">Sua agenda para o dia de hoje</p>
             </div>
             <button 
               onClick={() => navigate('/agenda')} 
@@ -336,9 +336,9 @@ export const Dashboard: React.FC = () => {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-surface rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-text-primary">Acesso Rápido</h2>
+          <div className="premium-card p-6 !translate-y-0 hover:!shadow-premium">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-black text-text-primary tracking-tight">Acesso Rápido</h2>
               <button 
                 onClick={() => setIsQuickAccessModalOpen(true)}
                 className="p-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
@@ -365,10 +365,10 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-surface rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-text-primary">Aniversariantes</h2>
-              <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg uppercase tracking-wider">7 Dias</span>
+          <div className="premium-card p-6 !translate-y-0 hover:!shadow-premium">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-black text-text-primary tracking-tight">Aniversariantes</h2>
+              <span className="text-[10px] font-black text-accent bg-accent/10 px-2.5 py-1 rounded-lg uppercase tracking-widest">7 Dias</span>
             </div>
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
               {upcomingBirthdays.length === 0 ? (
@@ -556,7 +556,7 @@ export const Dashboard: React.FC = () => {
             <button 
               type="submit" 
               disabled={isAddingNote}
-              className="mt-3 w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all font-medium shadow-lg shadow-indigo-500/20 disabled:opacity-50"
+              className="mt-3 w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all font-medium shadow-lg shadow--/ dark:shadow-none disabled:opacity-50"
             >
               {isAddingNote ? (
                 <>
@@ -578,7 +578,7 @@ export const Dashboard: React.FC = () => {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl flex items-start justify-between gap-3 border border-zinc-100 dark:border-zinc-700 group"
+                  className="p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl flex items-start justify-between gap-3 border border-zinc-100 dark:border-zinc-800 hover:border-accent/30 transition-all group"
                 >
                   <p className="text-sm text-text-secondary leading-relaxed">{note.content}</p>
                   <button 

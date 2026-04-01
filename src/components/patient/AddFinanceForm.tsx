@@ -28,7 +28,7 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
     <div className="w-full sm:w-auto">
       <button
         onClick={() => setIsAdding(true)}
-        className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-2xl hover:bg-indigo-700 transition-all font-bold shadow-lg shadow-indigo-500/20 active:scale-95 w-full sm:w-auto whitespace-nowrap"
+        className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-2xl hover:bg-indigo-700 transition-all font-bold shadow-lg shadow--/ dark:shadow-none active:scale-95 w-full sm:w-auto whitespace-nowrap"
       >
         <Plus className="w-5 h-5" />
         Novo Lançamento
@@ -192,7 +192,7 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
                   <button 
                     type="submit" 
                     disabled={isLoading}
-                    className="flex-[2] px-8 py-4 rounded-2xl bg-indigo-600 text-white font-black uppercase tracking-widest text-[10px] hover:bg-indigo-700 shadow-xl shadow-indigo-500/20 active:scale-95 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
+                    className="flex-[2] px-8 py-4 rounded-2xl bg-indigo-600 text-white font-black uppercase tracking-widest text-[10px] hover:bg-indigo-700 shadow-xl shadow--/ dark:shadow-none active:scale-95 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
                   >
                     {isLoading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                     Salvar Lançamento

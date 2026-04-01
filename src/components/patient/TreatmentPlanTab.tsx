@@ -25,6 +25,8 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
   const [treatmentStatus, setTreatmentStatus] = useState<'Planejado' | 'Em Andamento' | 'Concluído'>(patient.treatmentStatus || 'Planejado');
   const [startDate, setStartDate] = useState(patient.treatmentStartDate || '');
   const [endDate, setEndDate] = useState(patient.treatmentEndDate || '');
+  const [hasChanges, setHasChanges] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     if (patient.odontogram) {
@@ -70,6 +72,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
         treatmentEndDate: endDate,
         updatedAt: new Date().toISOString()
       });
+      setHasChanges(false);
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `patients/${patient.id}`);
     } finally {
@@ -85,14 +88,18 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
     const unitP = parseFloat(newProcedure.unitPrice);
     const total = qty * unitP;
 
-    setProcedures(prev => [...prev, {
-      id: Date.now().toString(),
-      name: newProcedure.name,
-      tooth: newProcedure.tooth,
-      quantity: qty,
-      unitPrice: unitP,
-      cost: total
-    }]);
+    setProcedures(prev => {
+      const updated = [...prev, {
+        id: Date.now().toString(),
+        name: newProcedure.name,
+        tooth: newProcedure.tooth,
+        quantity: qty,
+        unitPrice: unitP,
+        cost: total
+      }];
+      setHasChanges(true);
+      return updated;
+    });
 
     setNewProcedure({ name: '', tooth: '', quantity: '1', unitPrice: '' });
     setSelectedTemplateId('');
@@ -120,8 +127,13 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
     }
   };
 
-  const handleDeleteProcedure = (id: string) => {
-    setProcedures(prev => prev.filter(p => p.id !== id));
+  const deleteProcedure = (id: string) => {
+    setProcedures(prev => {
+      const updated = prev.filter(p => p.id !== id);
+      setHasChanges(true);
+      return updated;
+    });
+    setDeleteConfirmId(null);
   };
 
   const totalCost = procedures.reduce((acc, curr) => acc + curr.cost, 0);
@@ -191,33 +203,64 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-xl font-bold text-text-primary flex items-center gap-2">
-          <DollarSign className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-          Plano de Tratamento
-        </h2>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={handlePrint}
-            disabled={procedures.length === 0}
-            className="flex items-center gap-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-4 py-2 rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-100 disabled:opacity-50 transition-colors"
+      <AnimatePresence>
+        {hasChanges && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
           >
-            <Printer className="w-4 h-4" />
-            Imprimir
-          </button>
-          <button 
-            onClick={handleSave}
-            disabled={isSaving}
-            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-          >
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Salvar
-          </button>
-        </div>
-      </div>
+            <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 p-4 rounded-2xl flex items-center justify-between mb-4 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                  <Save className="w-5 h-5 animate-pulse" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-amber-900 dark:text-amber-300">Alterações Não Salvas</p>
+                  <p className="text-xs text-amber-700 dark:text-amber-400/80">Lembre-se de salvar antes de sair desta aba.</p>
+                </div>
+              </div>
+              <button 
+                onClick={handleSave}
+                disabled={isSaving}
+                className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow--/ dark:shadow-none flex items-center gap-2 transition-all active:scale-95"
+              >
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Salvar Agora
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex-1 space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h2 className="text-xl font-bold text-text-primary flex items-center gap-2">
+              <DollarSign className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              Plano de Tratamento
+            </h2>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={handlePrint}
+                disabled={procedures.length === 0}
+                className="flex items-center gap-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-4 py-2 rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-100 disabled:opacity-50 transition-colors"
+              >
+                <Printer className="w-4 h-4" />
+                Imprimir
+              </button>
+              <button 
+                onClick={handleSave}
+                disabled={isSaving}
+                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              >
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Salvar
+              </button>
+            </div>
+          </div>
+
           <div className="bg-surface rounded-3xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm">
             <h3 className="text-sm font-semibold text-text-primary mb-4">Informações do Plano</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -226,7 +269,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                 <select 
                   value={treatmentStatus}
                   disabled={isSaving}
-                  onChange={(e) => setTreatmentStatus(e.target.value as any)}
+                  onChange={(e) => { setTreatmentStatus(e.target.value as any); setHasChanges(true); }}
                   className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
                 >
                   <option value="Planejado">Planejado</option>
@@ -240,7 +283,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                   type="date"
                   value={startDate}
                   disabled={isSaving}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={(e) => { setStartDate(e.target.value); setHasChanges(true); }}
                   className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
                 />
               </div>
@@ -250,7 +293,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                   type="date"
                   value={endDate}
                   disabled={isSaving}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  onChange={(e) => { setEndDate(e.target.value); setHasChanges(true); }}
                   className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
                 />
               </div>
@@ -258,136 +301,136 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
           </div>
 
           <div className="bg-surface rounded-3xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
-          <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 bg-surface">
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-text-secondary mb-1">Preencher com Template (Opcional)</label>
-              <select
-                value={selectedTemplateId}
-                disabled={isSaving}
-                onChange={handleTemplateSelect}
-                className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
-              >
-                <option value="">-- Selecione um procedimento pré-definido --</option>
-                {templates.map(t => (
-                  <option key={t.id} value={t.id}>{t.name} - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.finalPriceWithDifficulty)}</option>
-                ))}
-              </select>
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 bg-surface">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-text-secondary mb-1">Preencher com Template (Opcional)</label>
+                <select
+                  value={selectedTemplateId}
+                  disabled={isSaving}
+                  onChange={handleTemplateSelect}
+                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
+                >
+                  <option value="">-- Selecione um procedimento pré-definido --</option>
+                  {templates.map(t => (
+                    <option key={t.id} value={t.id}>{t.name} - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.finalPriceWithDifficulty)}</option>
+                  ))}
+                </select>
+              </div>
+              <form onSubmit={handleAddProcedure} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                <div className="md:col-span-4">
+                  <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">Procedimento</label>
+                  <input 
+                    type="text" 
+                    required 
+                    disabled={isSaving}
+                    value={newProcedure.name} 
+                    onChange={e => setNewProcedure({...newProcedure, name: e.target.value})} 
+                    placeholder="Ex: Restauração Resina MOD"
+                    className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50" 
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">Dente/Região</label>
+                  <input 
+                    type="text" 
+                    disabled={isSaving}
+                    value={newProcedure.tooth} 
+                    onChange={e => setNewProcedure({...newProcedure, tooth: e.target.value})} 
+                    placeholder="Ex: 46, Maxila..."
+                    className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50" 
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">Qtd</label>
+                  <input 
+                    type="number" 
+                    min="1"
+                    required 
+                    disabled={isSaving}
+                    value={newProcedure.quantity} 
+                    onChange={e => setNewProcedure({...newProcedure, quantity: e.target.value})} 
+                    className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50" 
+                  />
+                </div>
+                <div className="md:col-span-3">
+                  <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">V. Unitário (R$)</label>
+                  <input 
+                    type="number" 
+                    step="0.01" 
+                    required 
+                    disabled={isSaving}
+                    value={newProcedure.unitPrice} 
+                    onChange={e => setNewProcedure({...newProcedure, unitPrice: e.target.value})} 
+                    placeholder="0.00"
+                    className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50" 
+                  />
+                </div>
+                <div className="md:col-span-1">
+                  <button type="submit" disabled={isSaving} className="w-full bg-indigo-600 text-white h-[42px] rounded-xl flex items-center justify-center hover:bg-indigo-700 transition-all shadow-sm shadow-indigo-200 dark:shadow-none disabled:opacity-50">
+                    <Plus className="w-5 h-5" />
+                  </button>
+                </div>
+              </form>
             </div>
-            <form onSubmit={handleAddProcedure} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-              <div className="md:col-span-4">
-                <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">Procedimento</label>
-                <input 
-                  type="text" 
-                  required 
-                  disabled={isSaving}
-                  value={newProcedure.name} 
-                  onChange={e => setNewProcedure({...newProcedure, name: e.target.value})} 
-                  placeholder="Ex: Restauração Resina MOD"
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50" 
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">Dente/Região</label>
-                <input 
-                  type="text" 
-                  disabled={isSaving}
-                  value={newProcedure.tooth} 
-                  onChange={e => setNewProcedure({...newProcedure, tooth: e.target.value})} 
-                  placeholder="Ex: 46, Maxila..."
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50" 
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">Qtd</label>
-                <input 
-                  type="number" 
-                  min="1"
-                  required 
-                  disabled={isSaving}
-                  value={newProcedure.quantity} 
-                  onChange={e => setNewProcedure({...newProcedure, quantity: e.target.value})} 
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50" 
-                />
-              </div>
-              <div className="md:col-span-3">
-                <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">V. Unitário (R$)</label>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  required 
-                  disabled={isSaving}
-                  value={newProcedure.unitPrice} 
-                  onChange={e => setNewProcedure({...newProcedure, unitPrice: e.target.value})} 
-                  placeholder="0.00"
-                  className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50" 
-                />
-              </div>
-              <div className="md:col-span-1">
-                <button type="submit" disabled={isSaving} className="w-full bg-indigo-600 text-white h-[42px] rounded-xl flex items-center justify-center hover:bg-indigo-700 transition-all shadow-sm shadow-indigo-200 dark:shadow-none disabled:opacity-50">
-                  <Plus className="w-5 h-5" />
-                </button>
-              </div>
-            </form>
-          </div>
 
-          <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-            {procedures.length === 0 ? (
-              <div className="p-8 text-center text-text-secondary">
-                Nenhum procedimento adicionado ao plano.
-              </div>
-            ) : (
-              <AnimatePresence initial={false}>
-                {procedures.map(proc => (
-                  <motion.div 
-                    key={proc.id} 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="p-4 flex items-center justify-between hover:bg-surface transition-colors overflow-hidden"
-                  >
-                    <div className="flex-1">
-                      <p className="font-medium text-text-primary">{proc.name}</p>
-                      <div className="flex gap-4 text-sm text-text-secondary">
-                        {proc.tooth && <span>Dente/Região: {proc.tooth}</span>}
-                        <span>Qtd: {proc.quantity || 1}</span>
-                        <span>Unit: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(proc.unitPrice || proc.cost)}</span>
+            <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+              {procedures.length === 0 ? (
+                <div className="p-8 text-center text-text-secondary">
+                  Nenhum procedimento adicionado ao plano.
+                </div>
+              ) : (
+                <AnimatePresence initial={false}>
+                  {procedures.map(proc => (
+                    <motion.div 
+                      key={proc.id} 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="p-4 flex items-center justify-between hover:bg-surface transition-colors overflow-hidden"
+                    >
+                      <div className="flex-1">
+                        <p className="font-medium text-text-primary">{proc.name}</p>
+                        <div className="flex gap-4 text-sm text-text-secondary">
+                          {proc.tooth && <span>Dente/Região: {proc.tooth}</span>}
+                          <span>Qtd: {proc.quantity || 1}</span>
+                          <span>Unit: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(proc.unitPrice || proc.cost)}</span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className="font-semibold text-text-primary">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(proc.cost)}
-                      </span>
-                      <button 
-                        onClick={() => handleDeleteProcedure(proc.id)}
-                        disabled={isSaving}
-                        className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            )}
+                      <div className="flex items-center gap-4">
+                        <span className="font-semibold text-text-primary">
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(proc.cost)}
+                        </span>
+                        <button 
+                          onClick={() => setDeleteConfirmId(proc.id)}
+                          disabled={isSaving}
+                          className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-3xl border border-emerald-100 dark:border-emerald-800/30 p-6 h-fit">
-          <h3 className="text-lg font-bold text-emerald-900 dark:text-emerald-100 mb-6">Resumo do Orçamento</h3>
-          
-          <div className="space-y-4">
-            <div className="flex justify-between text-sm">
-              <span className="text-emerald-800 dark:text-emerald-200">Total de Procedimentos:</span>
-              <span className="font-medium text-emerald-900 dark:text-emerald-100">{procedures.length}</span>
-            </div>
-            
-            <div className="pt-4 border-t border-emerald-200 dark:border-emerald-800/50">
-              <div className="flex justify-between items-center">
-                <span className="text-emerald-900 dark:text-emerald-100 font-bold">Valor Total:</span>
-                <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
-                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalCost)}
-                </span>
+        <div className="lg:w-80">
+          <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-3xl border border-emerald-100 dark:border-emerald-800/30 p-6 h-fit">
+            <h3 className="text-lg font-bold text-emerald-900 dark:text-emerald-100 mb-6">Resumo do Orçamento</h3>
+            <div className="space-y-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-emerald-800 dark:text-emerald-200">Total de Procedimentos:</span>
+                <span className="font-medium text-emerald-900 dark:text-emerald-100">{procedures.length}</span>
+              </div>
+              <div className="pt-4 border-t border-emerald-200 dark:border-emerald-800/50">
+                <div className="flex justify-between items-center">
+                  <span className="text-emerald-900 dark:text-emerald-100 font-bold">Valor Total:</span>
+                  <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalCost)}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -397,6 +440,40 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
       <div className="mt-12 pt-8 border-t border-zinc-200 dark:border-zinc-800">
         <CRMTab patient={patient} />
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirmId && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-surface rounded-2xl p-6 w-full max-w-sm border border-zinc-200 dark:border-zinc-800 shadow-2xl"
+            >
+              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center text-red-600 dark:text-red-400 mb-4 mx-auto">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-bold text-text-primary text-center mb-2">Excluir Procedimento?</h3>
+              <p className="text-sm text-text-secondary text-center mb-6">Esta alteração será permanente após você salvar o plano.</p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setDeleteConfirmId(null)}
+                  className="flex-1 px-4 py-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl font-medium transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={() => deleteProcedure(deleteConfirmId)}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium shadow-lg shadow--/ dark:shadow-none transition-all"
+                >
+                  Excluir
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -48,7 +48,7 @@ const SidebarContent = ({
   const [showSettings, setShowSettings] = React.useState(false);
 
   return (
-  <div className={`flex flex-col h-full bg-surface border-r border-zinc-200 dark:border-white/5 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
+  <div className={`flex flex-col h-full bg-surface border-r border-border-subtle transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${isCollapsed ? 'w-20' : 'w-64'}`}>
     <div className={`p-6 pb-4 flex items-center justify-between gap-2 ${isCollapsed ? 'flex-col px-2 items-center' : ''}`}>
       <div className={`${isCollapsed ? '' : 'flex-1'}`}>
         {!isCollapsed ? (
@@ -73,11 +73,11 @@ const SidebarContent = ({
         to="/ai-assistant"
         onClick={() => setIsMobileMenuOpen(false)}
         className={({ isActive }) =>
-          `flex items-center gap-3 rounded-xl transition-all duration-200 ${
+          `flex items-center gap-3 rounded-2xl transition-all duration-300 ${
             isActive 
-              ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-white border-l-2 border-indigo-500 shadow-sm' 
-              : 'text-text-secondary hover:text-indigo-600 dark:hover:text-white hover:bg-indigo-50/50 dark:hover:bg-white/5'
-          } ${isCollapsed ? 'w-10 h-10 justify-center px-0 mx-auto' : 'px-4 py-3 w-full'}`
+              ? 'bg-indigo-600 text-white shadow-premium border-l-4 border-indigo-400' 
+              : 'text-text-secondary hover:text-indigo-600 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5'
+          } ${isCollapsed ? 'w-12 h-12 justify-center px-0 mx-auto' : 'px-4 py-3.5 w-full'}`
         }
         title="IA Assistente"
       >
@@ -93,11 +93,11 @@ const SidebarContent = ({
           to={item.to}
           onClick={() => setIsMobileMenuOpen(false)}
           className={({ isActive }) =>
-            `flex items-center gap-3 rounded-xl transition-all duration-300 ${
+            `flex items-center gap-3 rounded-2xl transition-all duration-300 ${
               isActive 
-                ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-white border-l-2 border-indigo-500 shadow-sm dark:shadow-none' 
-                : 'text-text-secondary hover:text-indigo-600 dark:hover:text-white hover:bg-indigo-50/50 dark:hover:bg-white/5'
-            } ${isCollapsed ? 'w-10 h-10 justify-center px-0 mx-auto' : 'px-4 py-3 w-full'}`
+                ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold border-l-4 border-indigo-500 shadow-premium dark:shadow-none' 
+                : 'text-text-secondary hover:text-indigo-600 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5'
+            } ${isCollapsed ? 'w-12 h-12 justify-center px-0 mx-auto' : 'px-4 py-3.5 w-full'}`
           }
           title={isCollapsed ? item.label : undefined}
         >
@@ -107,7 +107,7 @@ const SidebarContent = ({
       ))}
     </nav>
 
-    <div className="p-4 border-t border-zinc-200 dark:border-white/5">
+    <div className="p-4 border-t border-border-subtle">
       <div className={`flex items-center gap-2 ${isCollapsed ? 'flex-col' : 'flex-row px-2'}`}>
         {/* Theme Toggle (Segmented Control) */}
         <div className={`bg-zinc-100 dark:bg-black/20 p-1 rounded-xl relative flex ${isCollapsed ? 'flex-col w-10' : 'flex-1 flex-row'}`}>
@@ -290,20 +290,20 @@ export const Layout: React.FC = () => {
           setIsCollapsed={setIsCollapsed}
           toggleCalculator={() => setIsCalculatorOpen(!isCalculatorOpen)}
         />
-        {/* Floating Collapse Button - outside sidebar to avoid clipping */}
+        {/* Floating Collapse Button - Increased touch area */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-4 top-6 z-50 w-8 h-8 rounded-full bg-surface border border-zinc-200 dark:border-zinc-700 shadow-md flex items-center justify-center text-text-secondary hover:text-indigo-600 transition-all"
+          className="absolute -right-5 top-12 z-50 w-10 h-10 rounded-full bg-surface border border-border-subtle shadow-premium flex items-center justify-center text-text-secondary hover:text-indigo-600 transition-all active:scale-90"
           title={isCollapsed ? "Expandir" : "Recolher"}
           aria-label={isCollapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
         >
-          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
         </button>
       </div>
 
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
         {/* App Header */}
-        <header className="h-16 bg-surface border-b border-zinc-200 dark:border-white/5 z-40 flex items-center justify-between px-4 md:px-8 shrink-0">
+        <header className="h-20 bg-surface border-b border-border-subtle z-40 flex items-center justify-between px-4 md:px-10 shrink-0">
           <div className="md:hidden">
             <Logo />
           </div>

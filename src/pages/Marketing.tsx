@@ -155,25 +155,25 @@ const Marketing = () => {
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => handleFilterChange('all')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'all' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 dark:shadow-none' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'all' ? 'bg-indigo-600 text-white shadow-md shadow--/ dark:shadow-none dark:shadow-none' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
                 >
                   <Users size={14} /> Todos
                 </button>
                 <button
                   onClick={() => handleFilterChange('birthdays')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'birthdays' ? 'bg-pink-600 text-white shadow-md shadow-pink-600/20 dark:shadow-none' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'birthdays' ? 'bg-pink-600 text-white shadow-md shadow--/ dark:shadow-none dark:shadow-none' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
                 >
                   <Gift size={14} /> Aniversariantes
                 </button>
                 <button
                   onClick={() => handleFilterChange('preventive')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'preventive' ? 'bg-amber-600 text-white shadow-md shadow-amber-600/20 dark:shadow-none' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'preventive' ? 'bg-amber-600 text-white shadow-md shadow--/ dark:shadow-none dark:shadow-none' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
                 >
                   <Calendar size={14} /> Preventivo
                 </button>
                 <button
                   onClick={() => handleFilterChange('inactive')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'inactive' ? 'bg-red-600 text-white shadow-md shadow-red-600/20 dark:shadow-none' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'inactive' ? 'bg-red-600 text-white shadow-md shadow--/ dark:shadow-none dark:shadow-none' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
                 >
                   <Filter size={14} /> Inativos
                 </button>
@@ -298,7 +298,7 @@ const Marketing = () => {
                   <button
                     onClick={handleSendMessages}
                     disabled={selectedPatients.length === 0 || !messageTemplate.trim()}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-indigo-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-indigo-600/20 dark:shadow-none active:scale-[0.98]"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-indigo-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow--/ dark:shadow-none dark:shadow-none active:scale-[0.98]"
                   >
                     <Send className="w-4.5 h-4.5" />
                     {selectedPatients.length > 1 ? 'Enviar em Massa' : 'Enviar WhatsApp'}

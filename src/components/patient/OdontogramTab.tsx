@@ -108,7 +108,13 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
     setIsAnalyzing(true);
     setAiAnalysis(null);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) {
+        setAiAnalysis('Chave de API do Gemini não configurada. Verifique as configurações do sistema.');
+        setIsAnalyzing(false);
+        return;
+      }
+      const ai = new GoogleGenAI(apiKey);
       
       const imageParts = files.slice(0, 3).map(file => ({
         inlineData: {
@@ -118,7 +124,7 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
       }));
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-1.5-flash',
         contents: {
           parts: [
             ...imageParts,
