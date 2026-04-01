@@ -193,95 +193,95 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-5xl font-black text-text-primary tracking-tight">Dashboard</h1>
-          <p className="text-text-secondary mt-2 font-medium">BEM-VINDO DE VOLTA! AQUI ESTÁ O RESUMO DA SUA CLÍNICA.</p>
+          <h1 className="text-4xl font-bold text-text-primary tracking-tight">Dashboard</h1>
+          <p className="text-text-secondary mt-1 font-medium">Bem-vindo de volta! Aqui está o resumo da sua clínica.</p>
         </div>
-        <div className="flex items-center gap-2 px-6 py-3 bg-surface border border-zinc-200/50 dark:border-zinc-800 rounded-2xl shadow-sm">
-          <Calendar className="w-5 h-5 text-emerald-500" />
-          <span className="text-sm font-black text-text-primary uppercase tracking-widest">
+        <div className="flex items-center gap-2 px-4 py-2 bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm">
+          <Calendar className="w-4 h-4 text-indigo-500" />
+          <span className="text-sm font-semibold text-text-primary uppercase tracking-wide">
             {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <motion.div 
-          whileHover={{ y: -6, scale: 1.02 }}
-          className="bg-surface p-8 rounded-[32px] shadow-sm border border-zinc-200/50 dark:border-zinc-800 relative overflow-hidden group transition-all duration-300"
+          whileHover={{ y: -4 }}
+          className="bg-surface p-6 rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 relative overflow-hidden group"
         >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-bl-full -mr-12 -mt-12 transition-all group-hover:bg-emerald-500/10" />
-          <div className="flex items-center justify-between mb-6">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-black">
-              <Calendar className="w-7 h-7" />
+          <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:bg-indigo-500/10" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+              <Calendar className="w-6 h-6" />
             </div>
-            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-xl uppercase tracking-widest border border-emerald-100 dark:border-emerald-500/20">Hoje</span>
+            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-1 rounded-lg uppercase tracking-wider">Hoje</span>
           </div>
-          <p className="text-xs font-bold text-text-secondary uppercase tracking-widest">Consultas</p>
-          <p className="text-4xl font-black text-text-primary mt-2 tracking-tight">{appointments.length}</p>
+          <p className="text-sm font-medium text-text-secondary">Consultas</p>
+          <p className="text-3xl font-bold text-text-primary mt-1">{appointments.length}</p>
         </motion.div>
 
         <motion.div 
-          whileHover={{ y: -6, scale: 1.02 }}
-          className="bg-surface p-8 rounded-[32px] shadow-sm border border-zinc-200/50 dark:border-zinc-800 relative overflow-hidden group transition-all duration-300"
+          whileHover={{ y: -4 }}
+          className="bg-surface p-6 rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 relative overflow-hidden group"
         >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-bl-full -mr-12 -mt-12 transition-all group-hover:bg-emerald-500/10" />
-          <div className="flex items-center justify-between mb-6">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <TrendingUp className="w-7 h-7" />
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:bg-emerald-500/10" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+              <TrendingUp className="w-6 h-6" />
             </div>
-            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-xl uppercase tracking-widest border border-emerald-100 dark:border-emerald-500/20">Mês</span>
+            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-lg uppercase tracking-wider">Mês</span>
           </div>
-          <p className="text-xs font-bold text-text-secondary uppercase tracking-widest">Receita</p>
-          <p className="text-4xl font-black text-text-primary mt-2 tracking-tight">
+          <p className="text-sm font-medium text-text-secondary">Receita</p>
+          <p className="text-3xl font-bold text-text-primary mt-1">
             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(totalIncome)}
           </p>
         </motion.div>
 
         <motion.div 
-          whileHover={{ y: -6, scale: 1.02 }}
-          className="bg-surface p-8 rounded-[32px] shadow-sm border border-zinc-200/50 dark:border-zinc-800 relative overflow-hidden group transition-all duration-300"
+          whileHover={{ y: -4 }}
+          className="bg-surface p-6 rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 relative overflow-hidden group"
         >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-bl-full -mr-12 -mt-12 transition-all group-hover:bg-blue-500/10" />
-          <div className="flex items-center justify-between mb-6">
-            <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
-              <DollarSign className="w-7 h-7" />
+          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:bg-blue-500/10" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+              <DollarSign className="w-6 h-6" />
             </div>
-            <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-3 py-1.5 rounded-xl uppercase tracking-widest border border-blue-100 dark:border-blue-500/20">Saldo</span>
+            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-1 rounded-lg uppercase tracking-wider">Saldo</span>
           </div>
-          <p className="text-xs font-bold text-text-secondary uppercase tracking-widest">Resultado</p>
-          <p className="text-4xl font-black text-text-primary mt-2 tracking-tight">
+          <p className="text-sm font-medium text-text-secondary">Resultado</p>
+          <p className="text-3xl font-bold text-text-primary mt-1">
             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(balance)}
           </p>
         </motion.div>
 
         <motion.div 
-          whileHover={{ y: -6, scale: 1.02 }}
-          className="bg-surface p-8 rounded-[32px] shadow-sm border border-zinc-200/50 dark:border-zinc-800 relative overflow-hidden group transition-all duration-300"
+          whileHover={{ y: -4 }}
+          className="bg-surface p-6 rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 relative overflow-hidden group"
         >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-bl-full -mr-12 -mt-12 transition-all group-hover:bg-purple-500/10" />
-          <div className="flex items-center justify-between mb-6">
-            <div className="w-14 h-14 rounded-2xl bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400">
-              <Users className="w-7 h-7" />
+          <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:bg-purple-500/10" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400">
+              <Users className="w-6 h-6" />
             </div>
-            <span className="text-[10px] font-black text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 px-3 py-1.5 rounded-xl uppercase tracking-widest border border-purple-100 dark:border-purple-500/20">Total</span>
+            <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 px-2 py-1 rounded-lg uppercase tracking-wider">Total</span>
           </div>
-          <p className="text-xs font-bold text-text-secondary uppercase tracking-widest">Pacientes</p>
-          <p className="text-4xl font-black text-text-primary mt-2 tracking-tight">{patients.length}</p>
+          <p className="text-sm font-medium text-text-secondary">Pacientes</p>
+          <p className="text-3xl font-bold text-text-primary mt-1">{patients.length}</p>
         </motion.div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-surface rounded-[32px] shadow-sm border border-zinc-200/50 dark:border-zinc-800 overflow-hidden">
-          <div className="p-8 border-b border-zinc-200/50 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/30 dark:bg-zinc-800/20">
+        <div className="lg:col-span-2 bg-surface rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+          <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-800/20">
             <div>
-              <h2 className="text-xl font-black text-text-primary tracking-tight">Próximas Consultas</h2>
-              <p className="text-xs text-text-secondary font-medium mt-1">SUA AGENDA PARA O DIA DE HOJE</p>
+              <h2 className="text-lg font-bold text-text-primary">Próximas Consultas</h2>
+              <p className="text-xs text-text-secondary">Sua agenda para o dia de hoje</p>
             </div>
             <button 
               onClick={() => navigate('/agenda')} 
-              className="text-xs font-black text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 px-4 py-2 rounded-xl transition-all uppercase tracking-widest border border-emerald-100 dark:border-emerald-500/20"
+              className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 px-3 py-1.5 rounded-xl transition-colors uppercase tracking-wider"
             >
               Ver Agenda Completa
             </button>
@@ -305,11 +305,11 @@ export const Dashboard: React.FC = () => {
                     className="p-5 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-all group"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 flex flex-col items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform border border-emerald-100 dark:border-emerald-500/20">
-                        <span className="text-sm font-black">{new Date(app.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                      <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex flex-col items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:scale-105 transition-transform">
+                        <span className="text-sm font-bold">{new Date(app.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                       <div>
-                        <p className="font-black text-text-primary group-hover:text-emerald-600 transition-colors uppercase tracking-tight">{app.patientName || 'Paciente não identificado'}</p>
+                        <p className="font-bold text-text-primary group-hover:text-indigo-600 transition-colors">{app.patientName || 'Paciente não identificado'}</p>
                         <div className="flex items-center gap-3 mt-1">
                           <p className="text-xs text-text-secondary flex items-center gap-1">
                             <Clock className="w-3 h-3" /> {app.duration || 30} min
@@ -336,43 +336,39 @@ export const Dashboard: React.FC = () => {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-surface rounded-[32px] shadow-sm border border-zinc-200/50 dark:border-zinc-800 p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-black text-text-primary tracking-tight">Acesso Rápido</h2>
+          <div className="bg-surface rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-text-primary">Acesso Rápido</h2>
               <button 
                 onClick={() => setIsQuickAccessModalOpen(true)}
-                className="p-2.5 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all border border-zinc-200/50 shadow-sm"
+                className="p-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                 title="Personalizar Acesso Rápido"
                 aria-label="Personalizar Acesso Rápido"
               >
-                <Settings className="w-5 h-5" />
+                <Settings className="w-4 h-4" />
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {selectedQuickAccess.map(linkId => {
                 const link = AVAILABLE_LINKS.find(l => l.id === linkId);
                 if (!link) return null;
                 const Icon = link.icon;
                 return (
-                  <button 
-                    key={link.id} 
-                    onClick={() => navigate(link.path)} 
-                    className={`flex flex-col items-center justify-center gap-4 p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 hover:bg-${link.color}-50 dark:hover:bg-${link.color}-500/10 hover:border-${link.color}-300 dark:hover:border-${link.color}-500/50 transition-all border border-zinc-100 dark:border-zinc-700 shadow-sm group`}
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-md group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                      <Icon className={`w-6 h-6 text-${link.color}-600 dark:text-${link.color}-400`} />
+                  <button key={link.id} onClick={() => navigate(link.path)} className={`flex flex-col items-center justify-center gap-3 p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 hover:bg-${link.color}-50 dark:hover:bg-${link.color}-500/10 hover:border-${link.color}-200 dark:hover:border-${link.color}-500/30 transition-all border border-zinc-200 dark:border-zinc-700 group`}>
+                    <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                      <Icon className={`w-5 h-5 text-${link.color}-600 dark:text-${link.color}-400`} />
                     </div>
-                    <span className="text-[10px] font-black text-text-primary uppercase tracking-widest">{link.label}</span>
+                    <span className="text-xs font-bold text-text-primary">{link.label}</span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <div className="bg-surface rounded-[32px] shadow-sm border border-zinc-200/50 dark:border-zinc-800 p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-black text-text-primary tracking-tight">Aniversários</h2>
-              <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl uppercase tracking-widest border border-emerald-100 dark:border-emerald-500/20">7 Dias</span>
+          <div className="bg-surface rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-text-primary">Aniversariantes</h2>
+              <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg uppercase tracking-wider">7 Dias</span>
             </div>
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
               {upcomingBirthdays.length === 0 ? (
@@ -381,14 +377,14 @@ export const Dashboard: React.FC = () => {
                 upcomingBirthdays.map(patient => {
                   const [year, month, day] = patient.dob!.split('-').map(Number);
                   return (
-                    <div key={patient.id} className="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl flex items-center justify-between gap-2 border border-zinc-100 dark:border-zinc-700 hover:border-emerald-300 transition-colors cursor-pointer" onClick={() => navigate(`/patients/${patient.id}`)}>
+                    <div key={patient.id} className="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl flex items-center justify-between gap-2 border border-zinc-100 dark:border-zinc-700 hover:border-indigo-300 transition-colors cursor-pointer" onClick={() => navigate(`/patients/${patient.id}`)}>
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 text-xs font-black">
+                        <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-xs font-bold">
                           {patient.name.charAt(0)}
                         </div>
-                        <p className="text-xs font-black text-text-primary line-clamp-1 uppercase tracking-tight">{patient.name}</p>
+                        <p className="text-xs font-bold text-text-primary line-clamp-1">{patient.name}</p>
                       </div>
-                      <p className="text-xs font-black text-emerald-600 dark:text-emerald-400">{day}/{month}</p>
+                      <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{day}/{month}</p>
                     </div>
                   );
                 })
@@ -545,8 +541,8 @@ export const Dashboard: React.FC = () => {
               <h2 className="text-lg font-bold text-text-primary">Notas Rápidas</h2>
               <p className="text-xs text-text-secondary mt-1">Lembretes e anotações importantes</p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200/50">
-              <Plus className="w-5 h-5 text-emerald-600" />
+            <div className="w-10 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center">
+              <Plus className="w-5 h-5 text-indigo-600" />
             </div>
           </div>
           <form onSubmit={handleAddNote} className="mb-6">
@@ -560,7 +556,7 @@ export const Dashboard: React.FC = () => {
             <button 
               type="submit" 
               disabled={isAddingNote}
-              className="mt-3 w-full flex items-center justify-center gap-2 bg-emerald-600 text-white px-4 py-2.5 rounded-2xl hover:bg-emerald-700 active:scale-[0.98] transition-all font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+              className="mt-3 w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all font-medium shadow-lg shadow-indigo-500/20 disabled:opacity-50"
             >
               {isAddingNote ? (
                 <>
@@ -688,7 +684,7 @@ export const Dashboard: React.FC = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 rounded-xl uppercase tracking-widest border border-amber-100 dark:border-amber-500/20">
+                      <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-lg uppercase tracking-wider">
                         {monthsSince} Meses
                       </span>
                     </div>

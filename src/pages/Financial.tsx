@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, updateDoc, getDocs } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../firebase';
 import { Finance } from '../types';
-import { Plus, Trash2, DollarSign, TrendingUp, TrendingDown, PieChart, Edit2, Check, X, BarChart as BarChartIcon, User, Camera, Loader2, FileText, AlertTriangle, Building, Search, Calendar, ChevronDown, Filter, Zap, Wallet, TrendingUp as Up, TrendingDown as Down } from 'lucide-react';
+import { Plus, Trash2, DollarSign, TrendingUp, TrendingDown, PieChart, Edit2, Check, X, BarChart as BarChartIcon, User, Camera, Loader2, FileText, AlertTriangle, Building } from 'lucide-react';
 import { AddFinanceForm } from '../components/patient/AddFinanceForm';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Patient } from '../types';
 import { ConfirmModal } from '../components/ConfirmModal';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { GoogleGenAI, Type } from '@google/genai';
 
 interface SplitCategory {
@@ -49,6 +49,69 @@ export const Financial: React.FC = () => {
   const [isScanning, setIsScanning] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  const handleScanInvoice = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsScanning(true);
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Data = (reader.result as string).split(',')[1];
+        
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const response = await ai.models.generateContent({
+          model: 'gemini-3-flash-preview',
+          contents: {
+            parts: [
+              {
+                inlineData: {
+                  data: base64Data,
+                  mimeType: file.type
+                }
+              },
+              {
+                text: "Analise esta nota fiscal ou recibo. Extraia a descrição do item ou serviço, o valor total numérico, o tipo (income para receita/venda, expense para despesa/compra) e a data no formato YYYY-MM-DD. Retorne apenas o JSON."
+              }
+            ]
+          },
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                description: { type: Type.STRING, description: "Descrição curta do que foi pago ou recebido" },
+                amount: { type: Type.NUMBER, description: "Valor total da nota" },
+                type: { type: Type.STRING, description: "income ou expense" },
+                date: { type: Type.STRING, description: "Data no formato YYYY-MM-DD" }
+              },
+              required: ["description", "amount", "type", "date"]
+            }
+          }
+        });
+
+        if (response.text) {
+          const data = JSON.parse(response.text);
+          setNewFinance(prev => ({
+            ...prev,
+            description: data.description || '',
+            amount: data.amount ? data.amount.toString() : '',
+            type: (data.type === 'income' || data.type === 'expense') ? data.type : 'expense',
+            date: data.date || new Date().toISOString().split('T')[0]
+          }));
+          setIsAdding(true);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Erro ao analisar nota fiscal:", error);
+      alert("Não foi possível analisar a nota fiscal. Tente novamente.");
+    } finally {
+      setIsScanning(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const [inventoryValue, setInventoryValue] = useState(0);
   const [inventoryAssetsValue, setInventoryAssetsValue] = useState(0);
   const [assetsValue, setAssetsValue] = useState(0);
@@ -69,6 +132,7 @@ export const Financial: React.FC = () => {
       setFinances(data);
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'finances'));
 
+    // Fetch patients for mapping
     const patientsQuery = query(collection(db, 'patients'), where('dentistId', '==', auth.currentUser.uid));
     const unsubscribePatients = onSnapshot(patientsQuery, (snapshot) => {
       const map: Record<string, { name: string, cpf?: string }> = {};
@@ -79,6 +143,7 @@ export const Financial: React.FC = () => {
       setPatients(map);
     });
 
+    // Fetch inventory value
     const invQuery = query(collection(db, 'inventory'), where('dentistId', '==', auth.currentUser.uid));
     const unsubscribeInv = onSnapshot(invQuery, (snapshot) => {
       let consumo = 0;
@@ -86,19 +151,30 @@ export const Financial: React.FC = () => {
       snapshot.docs.forEach(doc => {
         const item = doc.data();
         if (item.quantity && item.price) {
+          // Robust comparison: normalize unicode and check case-insensitively
+          // to handle any encoding differences in stored data
           const cat = (item.category || '').normalize('NFC').trim();
-          const isPatrimonio = cat === 'Patrimônio' || cat.toLowerCase().includes('patrim') || cat === 'Patrimonio';
-          if (isPatrimonio) patrimonio += item.quantity * item.price;
-          else consumo += item.quantity * item.price;
+          const isPatrimonio = cat === 'Patrimônio' || 
+                               cat.toLowerCase().includes('patrim') ||
+                               cat === 'Patrimonio'; // without accent fallback
+          if (isPatrimonio) {
+            patrimonio += item.quantity * item.price;
+          } else {
+            consumo += item.quantity * item.price;
+          }
         }
       });
       setInventoryValue(consumo);
       setInventoryAssetsValue(patrimonio);
     });
 
+    // Fetch assets value
     const settingsQuery = query(collection(db, 'clinicSettings'), where('dentistId', '==', auth.currentUser.uid));
     const unsubscribeSettings = onSnapshot(settingsQuery, (snapshot) => {
-      if (!snapshot.empty) setAssetsValue(snapshot.docs[0].data().assetsValue || 0);
+      if (!snapshot.empty) {
+        const data = snapshot.docs[0].data();
+        setAssetsValue(data.assetsValue || 0);
+      }
     });
 
     return () => {
@@ -113,327 +189,816 @@ export const Financial: React.FC = () => {
     if (!auth.currentUser) return;
     const val = parseFloat(tempAssetsValue);
     if (isNaN(val)) return;
+
     try {
       const settingsQuery = query(collection(db, 'clinicSettings'), where('dentistId', '==', auth.currentUser.uid));
       const snapshot = await getDocs(settingsQuery);
-      if (snapshot.empty) await addDoc(collection(db, 'clinicSettings'), { dentistId: auth.currentUser.uid, assetsValue: val });
-      else await updateDoc(doc(db, 'clinicSettings', snapshot.docs[0].id), { assetsValue: val });
+      
+      if (snapshot.empty) {
+        await addDoc(collection(db, 'clinicSettings'), {
+          dentistId: auth.currentUser.uid,
+          assetsValue: val,
+          workHoursPerDay: 8,
+          workDaysPerWeek: 5,
+          updatedAt: new Date().toISOString()
+        });
+      } else {
+        await updateDoc(doc(db, 'clinicSettings', snapshot.docs[0].id), {
+          assetsValue: val,
+          updatedAt: new Date().toISOString()
+        });
+      }
       setIsEditingAssets(false);
-    } catch (e) { alert("Erro ao salvar patrimônio."); }
+    } catch (error) {
+      console.error("Error saving assets:", error);
+    }
   };
 
-  const handleAddFinance = async (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser || isSavingFinance) return;
+    if (!auth.currentUser || !newFinance.description || !newFinance.amount || isSavingFinance) return;
+
     setIsSavingFinance(true);
     try {
       await addDoc(collection(db, 'finances'), {
-        ...newFinance,
-        amount: parseFloat(newFinance.amount),
         dentistId: auth.currentUser.uid,
+        patientId: newFinance.type === 'income' ? (newFinance.patientId || null) : null,
+        description: newFinance.description,
+        amount: parseFloat(newFinance.amount),
+        type: newFinance.type,
+        paymentMethod: newFinance.type === 'income' ? newFinance.paymentMethod : null,
+        date: new Date(newFinance.date).toISOString(),
+        percentages: newFinance.type === 'income' ? JSON.stringify(splits) : null,
         createdAt: new Date().toISOString()
       });
       setIsAdding(false);
-      setNewFinance({ description: '', amount: '', type: 'income', date: new Date().toISOString().split('T')[0], patientId: '', paymentMethod: 'pix' });
-    } catch (error) { handleFirestoreError(error, OperationType.CREATE, 'finances'); }
-    finally { setIsSavingFinance(false); }
+      setNewFinance({ 
+        description: '', 
+        amount: '', 
+        type: 'income', 
+        date: new Date().toISOString().split('T')[0],
+        patientId: '',
+        paymentMethod: 'pix'
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'finances');
+    } finally {
+      setIsSavingFinance(false);
+    }
   };
 
-  const handleDeleteFinance = async () => {
-    if (!financeToDelete) return;
+  const handleDelete = async (finance: Finance) => {
+    setFinanceToDelete(finance);
+  };
+
+  const confirmDelete = async () => {
+    if (!financeToDelete || isDeleting) return;
     setIsDeleting(true);
     try {
       await moveToTrash('finances', financeToDelete.id, financeToDelete);
       setFinanceToDelete(null);
-    } catch (error) { handleFirestoreError(error, OperationType.DELETE, 'finances'); }
-    finally { setIsDeleting(false); }
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `finances/${financeToDelete.id}`);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
-  const filteredFinances = finances.filter(f => {
-    const matchesFilter = filter === 'all' || f.type === filter;
-    const matchesMonth = f.date.substring(0, 7) === selectedMonth;
-    return matchesFilter && matchesMonth;
+  const handlePrintTaxReceipt = (finance: Finance) => {
+    const patientName = finance.patientId && patients[finance.patientId] ? patients[finance.patientId].name : 'Paciente não identificado';
+    const patientCpf = finance.patientId && patients[finance.patientId] && patients[finance.patientId].cpf ? patients[finance.patientId].cpf : '___________________';
+    const amount = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(finance.amount);
+    const date = new Date(finance.date).toLocaleDateString('pt-BR');
+    const dentistName = auth.currentUser?.displayName || 'Cirurgião-Dentista';
+    
+    const receiptContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; border: 1px solid #ccc;">
+        <h1 style="text-align: center; color: #333; margin-bottom: 30px; text-transform: uppercase;">Recibo para Fins de Imposto de Renda</h1>
+        
+        <div style="margin-bottom: 40px;">
+          <p style="font-size: 18px; line-height: 1.8; text-align: justify;">
+            Recebi de <strong>${patientName}</strong>, inscrito(a) no CPF sob o nº <strong>${patientCpf}</strong>, 
+            a importância de <strong>${amount}</strong>, 
+            referente a prestação de serviços odontológicos (${finance.description}).
+          </p>
+        </div>
+
+        <div style="margin-bottom: 60px;">
+          <p style="font-size: 16px;">Para maior clareza, firmo o presente recibo.</p>
+        </div>
+
+        <div style="text-align: right;">
+          <p style="font-size: 16px; margin-bottom: 60px;">Data: ${date}</p>
+          <div style="border-top: 1px solid #000; width: 350px; margin-left: auto; padding-top: 10px; text-align: center;">
+            <p style="margin: 0; font-weight: bold;">${dentistName}</p>
+            <p style="margin: 5px 0 0 0; font-size: 14px;">CPF/CNPJ: ______________</p>
+            <p style="margin: 5px 0 0 0; font-size: 14px;">CRO: ______________</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const iframe = document.createElement('iframe');
+    console.log('Creating iframe for printing...');
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (doc) {
+      console.log('Iframe document found, writing content...');
+      doc.open();
+      doc.write(`
+        <html>
+          <head>
+            <title>Recibo IR - ${patientName}</title>
+            <style>
+              body { font-family: sans-serif; padding: 40px; }
+            </style>
+          </head>
+          <body>
+            ${receiptContent}
+          </body>
+        </html>
+      `);
+      doc.close();
+      
+      // Wait for content to load before printing
+      setTimeout(() => {
+        console.log('Attempting to print iframe...');
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+        
+        // Cleanup
+        setTimeout(() => {
+          console.log('Cleaning up iframe...');
+          document.body.removeChild(iframe);
+        }, 2000); // Increased cleanup timeout
+      }, 1000); // Increased print timeout
+    } else {
+      console.error('Could not access iframe document');
+    }
+  };
+
+  const financesInMonth = finances.filter(f => f.date.substring(0, 7) === selectedMonth);
+
+  const totalIncome = financesInMonth.filter(f => f.type === 'income').reduce((acc, curr) => acc + curr.amount, 0);
+  const totalExpense = financesInMonth.filter(f => f.type === 'expense').reduce((acc, curr) => acc + curr.amount, 0);
+  const balance = totalIncome - totalExpense;
+
+  const filteredFinances = financesInMonth.filter(f => {
+    if (filter === 'all') return true;
+    return f.type === filter;
   });
 
-  const totals = filteredFinances.reduce((acc, f) => {
-    if (f.type === 'income') acc.income += f.amount;
-    else acc.expense += f.amount;
-    return acc;
-  }, { income: 0, expense: 0 });
+  const totalPercentage = splits.reduce((acc, curr) => acc + curr.percentage, 0);
 
-  const chartData = Array.from({ length: 31 }, (_, i) => {
-    const day = (i + 1).toString().padStart(2, '0');
-    const dayFinances = filteredFinances.filter(f => f.date.substring(8, 10) === day);
-    return {
-      name: day,
-      income: dayFinances.filter(f => f.type === 'income').reduce((sum, f) => sum + f.amount, 0),
-      expense: dayFinances.filter(f => f.type === 'expense').reduce((sum, f) => sum + f.amount, 0)
-    };
-  }).filter(d => d.income > 0 || d.expense > 0);
+  // Process data for the chart
+  const chartData = React.useMemo(() => {
+    const months: { [key: string]: { name: string; income: number; expense: number } } = {};
+    const last6Months = Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(`${selectedMonth}-01T12:00:00Z`);
+      d.setMonth(d.getMonth() - i);
+      return d.toISOString().substring(0, 7); // YYYY-MM
+    }).reverse();
+
+    last6Months.forEach(m => {
+      const [year, month] = m.split('-');
+      const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('pt-BR', { month: 'short' });
+      months[m] = { name: monthName, income: 0, expense: 0 };
+    });
+
+    finances.forEach(f => {
+      const monthKey = f.date.substring(0, 7);
+      if (months[monthKey]) {
+        if (f.type === 'income') months[monthKey].income += f.amount;
+        else months[monthKey].expense += f.amount;
+      }
+    });
+
+    return Object.values(months);
+  }, [finances, selectedMonth]);
+
+  const handleAddSplit = () => {
+    if (newSplit.name && newSplit.percentage !== '' && newSplit.percentage >= 0) {
+      setSplits([...splits, { 
+        id: Date.now().toString(), 
+        name: newSplit.name, 
+        percentage: Number(newSplit.percentage) 
+      }]);
+      setIsAddingSplit(false);
+      setNewSplit({ name: '', percentage: 0 });
+    }
+  };
+
+  const handleDeleteSplit = (id: string) => {
+    setSplits(splits.filter(s => s.id !== id));
+  };
+
+  const startEditSplit = (split: SplitCategory) => {
+    setEditingSplitId(split.id);
+    setEditSplitData({ name: split.name, percentage: split.percentage });
+  };
+
+  const saveEditSplit = () => {
+    if (editingSplitId && editSplitData.name && editSplitData.percentage !== '' && editSplitData.percentage >= 0) {
+      setSplits(splits.map(s => s.id === editingSplitId ? { 
+        ...s, 
+        name: editSplitData.name, 
+        percentage: Number(editSplitData.percentage) 
+      } : s));
+      setEditingSplitId(null);
+    }
+  };
+
+  const totalAllTimeIncome = finances.filter(f => f.type === 'income').reduce((acc, curr) => acc + curr.amount, 0);
+  const companyValuation = totalAllTimeIncome + inventoryValue + assetsValue + inventoryAssetsValue;
 
   return (
-    <div className="space-y-8 flex flex-col h-full bg-zinc-50/30 dark:bg-zinc-950/20 p-2 md:p-4 rounded-[48px]">
-      {/* Header Premium */}
-      <div className="flex flex-col lg:flex-row justify-between items-end gap-8 mb-12 shrink-0 px-4">
+    <div className="space-y-8">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
         <div>
-          <h1 className="text-6xl font-black text-text-primary tracking-tighter uppercase leading-none">Financeiro</h1>
-          <p className="text-text-secondary mt-4 font-medium uppercase tracking-[0.3em] text-xs flex items-center gap-2">
-            <Zap size={14} className="text-indigo-500 fill-indigo-500/20" /> GESTÃO DE FLUXO DE CAIXA E PATRIMÔNIO
-          </p>
+          <h1 className="text-4xl font-bold text-text-primary tracking-tight mb-2">Financeiro</h1>
+          <p className="text-text-secondary text-sm sm:text-base font-medium">Gestão inteligente e transparente do seu consultório</p>
         </div>
-        <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-          <input
-            type="month"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="flex-1 lg:flex-none bg-surface border border-zinc-200/50 dark:border-zinc-800 rounded-3xl px-6 py-4 text-xs font-black uppercase tracking-widest text-text-primary outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all shadow-sm"
-          />
-          <button
-            onClick={() => setIsAdding(true)}
-            className="flex-1 lg:flex-none bg-indigo-600 text-white px-8 py-4 rounded-3xl flex items-center justify-center gap-3 hover:bg-indigo-700 active:scale-95 transition-all shadow-xl shadow-indigo-500/20 font-black text-xs uppercase tracking-widest"
-          >
-            <Plus size={20} /> Lançamento
-          </button>
+        
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto flex-shrink-0">
+          <div className="relative w-full sm:w-auto">
+            <input 
+              type="month" 
+              value={selectedMonth}
+              onChange={e => setSelectedMonth(e.target.value)}
+              className="bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-3 text-xs font-black uppercase tracking-widest text-text-primary focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto appearance-none cursor-pointer shadow-sm transition-all hover:border-zinc-300 dark:hover:border-zinc-700"
+            />
+          </div>
+          
+          <div className="flex gap-3 w-full sm:w-auto">
+            <input 
+              type="file" 
+              accept="image/*" 
+              className="hidden" 
+              ref={fileInputRef}
+              onChange={handleScanInvoice}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isScanning}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-zinc-100 dark:bg-zinc-800 text-text-primary px-6 py-3 rounded-2xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all text-[10px] font-black uppercase tracking-[0.2em] disabled:opacity-50 active:scale-95 border border-zinc-200 dark:border-zinc-800"
+              title="Escanear Nota Fiscal com IA"
+            >
+              {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+              <span>Escanear</span>
+            </button>
+
+            <AddFinanceForm
+              isAdding={isAdding}
+              setIsAdding={setIsAdding}
+              newFinance={newFinance}
+              setNewFinance={setNewFinance}
+              patients={Object.fromEntries(Object.entries(patients).map(([id, p]: [string, any]) => [id, p.name]))}
+              splits={splits}
+              handleAdd={handleAdd}
+              isLoading={isSavingFinance}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Stats Grid Premium */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 shrink-0 px-2 lg:px-4">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-surface p-8 rounded-[40px] border border-zinc-200/50 dark:border-zinc-800 shadow-sm relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-bl-[80px] -mr-8 -mt-8" />
-          <div className="flex items-center gap-3 mb-6 text-emerald-500">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center"><Up size={20} /></div>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Receitas</span>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          whileHover={{ y: -4, scale: 1.02 }}
+          className="bg-surface p-8 rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 relative overflow-hidden group"
+        >
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <TrendingUp size={120} className="text-emerald-500" />
           </div>
-          <p className="text-3xl font-black text-text-primary tracking-tighter">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totals.income)}</p>
-          <div className="mt-4 flex items-center gap-1.5 animate-pulse text-emerald-600 dark:text-emerald-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-current" />
-            <span className="text-[9px] font-black uppercase tracking-widest">Fluxo Ativo</span>
-          </div>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-surface p-8 rounded-[40px] border border-zinc-200/50 dark:border-zinc-800 shadow-sm relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-bl-[80px] -mr-8 -mt-8" />
-          <div className="flex items-center gap-3 mb-6 text-red-500">
-            <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center"><Down size={20} /></div>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Despesas</span>
-          </div>
-          <p className="text-3xl font-black text-text-primary tracking-tighter">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totals.expense)}</p>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-surface p-8 rounded-[40px] border border-zinc-200/50 dark:border-zinc-800 shadow-sm relative overflow-hidden group border-b-4 border-b-indigo-500/20">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-bl-[80px] -mr-8 -mt-8" />
-          <div className="flex items-center gap-3 mb-6 text-indigo-500">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center"><Wallet size={20} /></div>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Saldo</span>
-          </div>
-          <p className={`text-3xl font-black tracking-tighter ${totals.income - totals.expense >= 0 ? 'text-text-primary' : 'text-red-500'}`}>
-            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totals.income - totals.expense)}
-          </p>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-indigo-600 p-8 rounded-[40px] shadow-2xl shadow-indigo-500/20 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-bl-[100px] -mr-10 -mt-10" />
-          <div className="flex items-center gap-3 mb-6 text-white/60">
-            <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center"><Building size={20} className="text-white" /></div>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Valuation Clínica</span>
-          </div>
-          <p className="text-3xl font-black text-white tracking-tighter">
-            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(assetsValue + inventoryValue + inventoryAssetsValue)}
-          </p>
-          <button onClick={() => { setTempAssetsValue(assetsValue.toString()); setIsEditingAssets(true); }} className="mt-4 text-[9px] font-black text-white/40 uppercase tracking-widest hover:text-white transition-colors flex items-center gap-2">
-            <Edit2 size={10} /> AJUSTAR PATRIMÔNIO IMOBILIÁRIO
-          </button>
-        </motion.div>
-      </div>
-
-      {/* Main Charts & Table Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1 min-h-0 px-2 lg:px-4 pb-12">
-        {/* Activity List */}
-        <div className="lg:col-span-8 flex flex-col space-y-6 min-h-0 overflow-hidden">
-          <div className="bg-surface rounded-[40px] border border-zinc-200/50 dark:border-zinc-800 shadow-sm flex flex-col flex-1 min-h-[400px]">
-            <div className="p-8 border-b border-zinc-100 dark:border-zinc-900 flex justify-between items-center shrink-0">
-               <h3 className="text-xl font-black text-text-primary tracking-tight uppercase flex items-center gap-3">
-                 <History className="text-indigo-500" size={20} /> Extrato Detalhado
-               </h3>
-               <div className="flex gap-2 p-1.5 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                  {['all', 'income', 'expense'].map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setFilter(t as any)}
-                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter === t ? 'bg-white dark:bg-surface text-indigo-600 shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
-                    >
-                      {t === 'all' ? 'Ver Tudo' : t === 'income' ? 'Entradas' : 'Saídas'}
-                    </button>
-                  ))}
-               </div>
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-500/20" />
+          <div className="relative z-10">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <TrendingUp className="w-6 h-6" />
+              </div>
+              <h3 className="text-xs font-black text-text-secondary uppercase tracking-[0.2em]">Receitas</h3>
             </div>
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalIncome)}
+            </p>
+            <div className="flex items-center gap-2 mt-4">
+              <span className="text-[10px] font-black px-2.5 py-1 bg-emerald-500/10 text-emerald-600 rounded-lg border border-emerald-500/20">+12.5%</span>
+              <p className="text-[10px] text-text-secondary font-black uppercase tracking-widest">vs. mês anterior</p>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          whileHover={{ y: -4, scale: 1.02 }}
+          className="bg-surface p-8 rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 relative overflow-hidden group"
+        >
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <TrendingDown size={120} className="text-red-500" />
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-500/20" />
+          <div className="relative z-10">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-600 dark:text-red-400">
+                <TrendingDown className="w-6 h-6" />
+              </div>
+              <h3 className="text-xs font-black text-text-secondary uppercase tracking-[0.2em]">Despesas</h3>
+            </div>
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-black text-red-600 dark:text-red-400 tracking-tight">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalExpense)}
+            </p>
+            <div className="flex items-center gap-2 mt-4">
+              <span className="text-[10px] font-black px-2.5 py-1 bg-red-500/10 text-red-600 rounded-lg border border-red-500/20">-4.2%</span>
+              <p className="text-[10px] text-text-secondary font-black uppercase tracking-widest">vs. mês anterior</p>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          whileHover={{ y: -4, scale: 1.02 }}
+          className="bg-surface p-8 rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 relative overflow-hidden group"
+        >
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <DollarSign size={120} className="text-indigo-500" />
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-indigo-500/20" />
+          <div className="relative z-10">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                <DollarSign className="w-6 h-6" />
+              </div>
+              <h3 className="text-xs font-black text-text-secondary uppercase tracking-[0.2em]">Saldo</h3>
+            </div>
+            <p className={`text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight ${balance >= 0 ? 'text-text-primary' : 'text-red-600 dark:text-red-400'}`}>
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balance)}
+            </p>
+            <div className="flex items-center gap-2 mt-4">
+              <div className={`w-2.5 h-2.5 rounded-full animate-pulse ${balance >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`} />
+              <p className="text-[10px] text-text-secondary font-black uppercase tracking-widest">Status da conta</p>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 bg-surface p-8 rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center justify-between mb-10">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                <BarChartIcon className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-text-primary tracking-tight">Fluxo de Caixa</h3>
+                <p className="text-xs text-text-secondary font-bold uppercase tracking-widest">Análise dos últimos 6 meses</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                <span className="text-[10px] font-bold uppercase text-text-secondary tracking-wider">Receitas</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <span className="text-[10px] font-bold uppercase text-text-secondary tracking-wider">Despesas</span>
+              </div>
+            </div>
+          </div>
+          <div className="h-[400px] w-full min-h-[400px] min-w-[400px]">
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#71717a', fontSize: 10, fontWeight: 700 }}
+                    dy={15}
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#71717a', fontSize: 10, fontWeight: 700 }}
+                    tickFormatter={(value) => `R$ ${value >= 1000 ? (value/1000).toFixed(0) + 'k' : value}`}
+                  />
+                  <Tooltip 
+                    cursor={{ fill: 'rgba(0,0,0,0.02)' }}
+                    contentStyle={{ 
+                      backgroundColor: '#18181b', 
+                      border: 'none', 
+                      borderRadius: '20px',
+                      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+                      color: '#fff',
+                      fontSize: '12px',
+                      padding: '16px'
+                    }}
+                    itemStyle={{ padding: '4px 0' }}
+                    formatter={(value: number) => [new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value), '']}
+                  />
+                  <Bar dataKey="income" name="Receitas" fill="#10b981" radius={[8, 8, 0, 0]} barSize={32} activeBar={{ fill: '#059669' }} />
+                  <Bar dataKey="expense" name="Despesas" fill="#ef4444" radius={[8, 8, 0, 0]} barSize={32} activeBar={{ fill: '#dc2626' }} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-sm text-text-secondary">
+                Nenhum dado disponível para o gráfico
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-surface p-8 rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 flex flex-col h-full">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+              <Building className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-text-primary tracking-tight">Valuation</h3>
+              <p className="text-xs text-text-secondary font-bold uppercase tracking-widest">Valor da Clínica</p>
+            </div>
+          </div>
+          
+          <div className="flex-1 flex flex-col justify-center">
+            <p className="text-4xl font-black text-indigo-600 dark:text-indigo-400 tracking-tight mb-8 text-center">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(companyValuation)}
+            </p>
             
-            <div className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-thin scrollbar-thumb-indigo-500/10">
-               <div className="space-y-4">
-                  {filteredFinances.map((finance, idx) => (
-                    <motion.div key={finance.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.02 }} className="group flex items-center justify-between p-6 rounded-3xl bg-zinc-50/50 dark:bg-zinc-900/40 border border-transparent hover:border-indigo-500/10 hover:bg-white dark:hover:bg-zinc-900 transition-all">
-                       <div className="flex items-center gap-5 min-w-0">
-                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-inner ${finance.type === 'income' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600' : 'bg-red-50 dark:bg-red-500/10 text-red-600'}`}>
-                             {finance.type === 'income' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
-                          </div>
-                          <div className="min-w-0">
-                             <p className="text-sm font-black text-text-primary uppercase truncate tracking-tight">{finance.description}</p>
-                             <div className="flex items-center gap-3 mt-1.5">
-                                <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">{new Date(finance.date).toLocaleDateString('pt-BR')}</span>
-                                <span className="w-1 h-1 rounded-full bg-zinc-300" />
-                                <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{finance.paymentMethod || 'PIX'}</span>
-                                {finance.patientId && (
-                                  <>
-                                    <span className="w-1 h-1 rounded-full bg-zinc-300" />
-                                    <span className="text-[10px] font-black text-text-secondary truncate max-w-[150px] uppercase">{patients[finance.patientId]?.name}</span>
-                                  </>
-                                )}
-                             </div>
-                          </div>
-                       </div>
-                       <div className="text-right flex items-center gap-6">
-                          <p className={`text-lg font-black tracking-tight ${finance.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
-                             {finance.type === 'income' ? '+' : '-'} {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(finance.amount)}
-                          </p>
-                          <button onClick={() => setFinanceToDelete(finance)} className="p-2.5 text-zinc-300 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"><Trash2 size={18} /></button>
-                       </div>
-                    </motion.div>
-                  ))}
-                  {filteredFinances.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-20 opacity-30">
-                       <FileText size={48} className="mb-4" />
-                       <p className="text-xs font-black uppercase tracking-widest text-center">Nenhum lançamento no período selecionado.</p>
-                    </div>
-                  )}
-               </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">Rendimentos (Total)</span>
+                <span className="font-black text-text-primary">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalAllTimeIncome)}</span>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">Estoque de Consumo</span>
+                <span className="font-black text-text-primary">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(inventoryValue)}</span>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800 group relative">
+                <span className="text-xs font-bold text-text-secondary uppercase tracking-widest" title="Soma dos ativos cadastrados no almoxarifado com os valores informados manualmente">Patrimônio Físico</span>
+                {isEditingAssets ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={tempAssetsValue}
+                      onChange={e => setTempAssetsValue(e.target.value)}
+                      className="w-24 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm text-right outline-none focus:ring-2 focus:ring-indigo-500"
+                      autoFocus
+                      onKeyDown={e => e.key === 'Enter' && handleSaveAssets()}
+                    />
+                    <button onClick={handleSaveAssets} className="p-1 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-md">
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => setIsEditingAssets(false)} className="p-1 text-text-secondary hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-md">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <span className="font-black text-text-primary">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(assetsValue + inventoryAssetsValue)}</span>
+                    <button 
+                      onClick={() => { setTempAssetsValue(assetsValue.toString()); setIsEditingAssets(true); }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-text-secondary hover:text-indigo-600 transition-all cursor-pointer bg-white dark:bg-zinc-800 rounded shadow-md border border-zinc-200 dark:border-zinc-700 z-10"
+                      title="Forçar valor manual do Patrimônio (seus móveis e propriedades)"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Sidebar Charts & Splitting */}
-        <div className="lg:col-span-4 flex flex-col space-y-8 min-h-0">
-           {/* Chart Card */}
-           <div className="bg-surface rounded-[40px] border border-zinc-200/50 dark:border-zinc-800 shadow-sm p-8 flex flex-col h-[350px]">
-              <h4 className="text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mb-8 px-2 flex items-center gap-2">
-                 <BarChartIcon size={14} className="text-indigo-500" /> Desempenho Diário
-              </h4>
-              <div className="flex-1 w-full min-h-0">
-                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData}>
-                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                       <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 900 }} />
-                       <YAxis hide />
-                       <Tooltip cursor={{ fill: 'rgba(79, 70, 229, 0.05)' }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
-                       <Bar dataKey="income" fill="#10b981" radius={[4, 4, 0, 0]} />
-                       <Bar dataKey="expense" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                 </ResponsiveContainer>
-              </div>
-           </div>
-
-           {/* Percentage Splitting Premium */}
-           <div className="bg-surface rounded-[40px] border border-zinc-200/50 dark:border-zinc-800 shadow-sm p-8 flex-1 min-h-0 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-bl-[80px] -mr-8 -mt-8" />
-              <div className="flex justify-between items-center mb-8 px-2">
-                 <h4 className="text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] flex items-center gap-2">
-                    <PieChart size={14} className="text-indigo-500" /> Comissionamento
-                 </h4>
-                 <button onClick={() => setIsAddingSplit(true)} className="p-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-all"><Plus size={16} /></button>
-              </div>
-
-              <div className="space-y-4">
-                 {splits.map(s => (
-                   <div key={s.id} className="group p-5 rounded-3xl bg-zinc-50/50 dark:bg-zinc-900/40 border border-transparent hover:border-indigo-500/10 transition-all">
-                      <div className="flex justify-between items-center mb-3">
-                         <span className="text-[11px] font-black text-text-primary uppercase tracking-tight">{s.name}</span>
-                         <div className="flex items-center gap-2">
-                            <span className="text-sm font-black text-indigo-600">{s.percentage}%</span>
-                            <div className="flex opacity-0 group-hover:opacity-100 transition-all scale-90">
-                               <button onClick={() => { setEditingSplitId(s.id); setEditSplitData({ name: s.name, percentage: s.percentage }); }} className="p-1.5 text-zinc-400 hover:text-indigo-600"><Edit2 size={12} /></button>
-                               <button onClick={() => setSplits(prev => prev.filter(x => x.id !== s.id))} className="p-1.5 text-zinc-400 hover:text-red-500"><X size={12} /></button>
-                            </div>
-                         </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 bg-surface rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col">
+          <div className="p-8 border-b border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-zinc-50/30 dark:bg-zinc-900/10">
+            <div>
+              <h3 className="text-xl font-black text-text-primary tracking-tight">Histórico</h3>
+              <p className="text-xs text-text-secondary font-bold uppercase tracking-widest">Movimentações detalhadas</p>
+            </div>
+            <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1.5 rounded-2xl w-full sm:w-auto">
+              <button
+                onClick={() => setFilter('all')}
+                className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all ${filter === 'all' ? 'bg-surface text-text-primary shadow-md' : 'text-text-secondary hover:text-text-primary'}`}
+              >
+                Todos
+              </button>
+              <button
+                onClick={() => setFilter('income')}
+                className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all ${filter === 'income' ? 'bg-surface text-emerald-600 dark:text-emerald-400 shadow-md' : 'text-text-secondary hover:text-text-primary'}`}
+              >
+                Receitas
+              </button>
+              <button
+                onClick={() => setFilter('expense')}
+                className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all ${filter === 'expense' ? 'bg-surface text-red-600 dark:text-red-400 shadow-md' : 'text-text-secondary hover:text-text-primary'}`}
+              >
+                Despesas
+              </button>
+            </div>
+          </div>
+          
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead className="bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
+                <tr>
+                  <th className="text-left py-4 px-6 text-[10px] font-black text-text-secondary uppercase tracking-[0.2em]">Descrição</th>
+                  <th className="text-left py-4 px-6 text-[10px] font-black text-text-secondary uppercase tracking-[0.2em]">Data</th>
+                  <th className="text-left py-4 px-6 text-[10px] font-black text-text-secondary uppercase tracking-[0.2em]">Paciente</th>
+                  <th className="text-left py-4 px-6 text-[10px] font-black text-text-secondary uppercase tracking-[0.2em]">Método</th>
+                  <th className="text-right py-4 px-6 text-[10px] font-black text-text-secondary uppercase tracking-[0.2em]">Valor</th>
+                  <th className="text-right py-4 px-6 text-[10px] font-black text-text-secondary uppercase tracking-[0.2em]">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                {filteredFinances.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="p-20 text-center">
+                      <div className="bg-zinc-50 dark:bg-zinc-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <DollarSign className="text-text-secondary opacity-20 w-8 h-8" />
                       </div>
-                      <div className="h-2 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                         <motion.div initial={{ width: 0 }} animate={{ width: `${s.percentage}%` }} transition={{ duration: 1, ease: 'easeOut' }} className="h-full bg-indigo-500 rounded-full shadow-lg shadow-indigo-500/20" />
-                      </div>
-                      <p className="mt-3 text-[10px] font-bold text-text-secondary uppercase tracking-widest text-right">
-                         Saldo: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((totals.income - totals.expense) * (s.percentage / 100))}
-                      </p>
-                   </div>
-                 ))}
-                 
-                 <AnimatePresence>
-                   {isAddingSplit && (
-                     <motion.form initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} onSubmit={(e) => { e.preventDefault(); if (newSplit.name && newSplit.percentage) { setSplits([...splits, { id: Math.random().toString(), name: newSplit.name, percentage: Number(newSplit.percentage) }]); setIsAddingSplit(false); setNewSplit({ name: '', percentage: '' }); } }} className="p-6 rounded-3xl bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/20 space-y-4">
-                        <input type="text" value={newSplit.name} onChange={e => setNewSplit({ ...newSplit, name: e.target.value })} placeholder="NOME DO RECEPTOR..." className="w-full bg-white dark:bg-surface border-none rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-widest outline-none shadow-sm" required />
-                        <div className="flex gap-3">
-                           <input type="number" value={newSplit.percentage} onChange={e => setNewSplit({ ...newSplit, percentage: e.target.value === '' ? '' : Number(e.target.value) })} placeholder="%" className="w-20 bg-white dark:bg-surface border-none rounded-xl px-4 py-3 text-[10px] font-black outline-none shadow-sm" required />
-                           <button type="submit" className="flex-1 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all">OK</button>
-                           <button type="button" onClick={() => setIsAddingSplit(false)} className="p-3 text-text-secondary hover:text-red-500"><X size={16} /></button>
+                      <p className="text-text-secondary text-sm font-bold uppercase tracking-widest">Nenhum lançamento encontrado</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredFinances.map(finance => (
+                    <tr key={finance.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors group">
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${finance.type === 'income' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'}`}>
+                            {finance.type === 'income' ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+                          </div>
+                          <span className="font-bold text-text-primary text-sm">{finance.description}</span>
                         </div>
-                     </motion.form>
-                   )}
-                 </AnimatePresence>
+                      </td>
+                      <td className="py-4 px-6 text-xs text-text-secondary font-medium">
+                        {new Date(finance.date).toLocaleDateString('pt-BR')}
+                      </td>
+                      <td className="py-4 px-6 text-sm">
+                        {finance.patientId && patients[finance.patientId] ? (
+                          <span className="flex items-center gap-2 text-text-primary font-medium text-xs">
+                            <User className="w-4 h-4 text-text-secondary" />
+                            {patients[finance.patientId].name}
+                          </span>
+                        ) : <span className="text-text-secondary opacity-50">-</span>}
+                      </td>
+                      <td className="py-4 px-6">
+                        {finance.paymentMethod ? (
+                          <span className="text-[10px] font-bold uppercase bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md text-text-secondary tracking-wider">
+                            {finance.paymentMethod}
+                          </span>
+                        ) : <span className="text-text-secondary opacity-50">-</span>}
+                      </td>
+                      <td className={`py-4 px-6 text-right font-black text-sm ${finance.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {finance.type === 'income' ? '+' : '-'} {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(finance.amount)}
+                      </td>
+                      <td className="py-4 px-6 text-right">
+                        <div className="flex justify-end gap-2 transition-opacity">
+                          {finance.type === 'income' && (
+                            <button onClick={() => handlePrintTaxReceipt(finance)} className="p-2 text-text-secondary hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-colors" title="Emitir Recibo">
+                              <FileText className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button onClick={() => handleDelete(finance)} className="p-2 text-text-secondary hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors" title="Excluir">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="sm:hidden divide-y divide-zinc-100 dark:divide-zinc-800">
+            {filteredFinances.length === 0 ? (
+              <div className="p-12 text-center text-text-secondary text-sm">Nenhum lançamento encontrado.</div>
+            ) : (
+              filteredFinances.map(finance => (
+                <div key={finance.id} className="p-5 space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${finance.type === 'income' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600' : 'bg-red-50 dark:bg-red-500/10 text-red-600'}`}>
+                        {finance.type === 'income' ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+                      </div>
+                      <div>
+                        <p className="font-bold text-text-primary">{finance.description}</p>
+                        <p className="text-[10px] text-text-secondary uppercase font-bold tracking-wider">{new Date(finance.date).toLocaleDateString('pt-BR')}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-bold text-lg ${finance.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {finance.type === 'income' ? '+' : '-'} {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(finance.amount)}
+                      </p>
+                      {finance.paymentMethod && (
+                        <span className="text-[9px] font-bold uppercase bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-lg text-text-secondary">
+                          {finance.paymentMethod}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-2">
+                    <div className="flex items-center gap-2">
+                      {finance.patientId && patients[finance.patientId] && (
+                        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1 rounded-full">
+                          <User className="w-3 h-3" />
+                          {patients[finance.patientId].name}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {finance.type === 'income' && (
+                        <button onClick={() => handlePrintTaxReceipt(finance)} className="p-2.5 text-text-secondary bg-zinc-100 dark:bg-zinc-800 rounded-xl active:scale-95 transition-transform" title="Emitir Recibo">
+                          <FileText className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button onClick={() => handleDelete(finance)} className="p-2.5 text-red-500 bg-red-50 dark:bg-red-500/10 rounded-xl active:scale-95 transition-transform" title="Excluir">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="bg-surface rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 p-10 h-fit">
+          <div className="flex items-center justify-between mb-10">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                <PieChart className="w-6 h-6" />
               </div>
-           </div>
+              <div>
+                <h3 className="text-xl font-black text-text-primary tracking-tight">Revenue Split</h3>
+                <p className="text-xs text-text-secondary font-bold uppercase tracking-widest">Distribuição automática</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsAddingSplit(true)}
+              className="w-10 h-10 flex items-center justify-center text-text-secondary hover:text-indigo-600 hover:bg-indigo-500/10 rounded-2xl transition-all active:scale-90 border border-zinc-200 dark:border-zinc-800"
+              title="Adicionar categoria"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <div className="space-y-8">
+            {isAddingSplit && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-6 bg-zinc-50 dark:bg-zinc-900/50 rounded-[24px] border border-zinc-200 dark:border-zinc-800 space-y-4 shadow-inner"
+              >
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-text-secondary uppercase tracking-widest ml-1">Nome da Categoria</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Marketing"
+                    value={newSplit.name}
+                    onChange={e => setNewSplit({...newSplit, name: e.target.value})}
+                    className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-3 text-sm text-text-primary outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-text-secondary uppercase tracking-widest ml-1">Porcentagem</label>
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex-1">
+                      <input
+                        type="number"
+                        placeholder="0"
+                        value={newSplit.percentage}
+                        onChange={e => setNewSplit({...newSplit, percentage: e.target.value === '' ? '' : Number(e.target.value)})}
+                        className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-3 text-sm text-text-primary outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold"
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary text-xs font-black">%</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={handleAddSplit} className="w-11 h-11 flex items-center justify-center bg-emerald-500 text-white rounded-2xl hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20">
+                        <Check className="w-5 h-5" />
+                      </button>
+                      <button onClick={() => setIsAddingSplit(false)} className="w-11 h-11 flex items-center justify-center bg-zinc-200 dark:bg-zinc-800 text-text-secondary rounded-2xl hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors">
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {splits.map(split => (
+              <div key={split.id} className="group">
+                {editingSplitId === split.id ? (
+                  <div className="p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-[24px] border border-zinc-200 dark:border-zinc-800 space-y-4 shadow-inner">
+                    <input
+                      type="text"
+                      value={editSplitData.name}
+                      onChange={e => setEditSplitData({...editSplitData, name: e.target.value})}
+                      className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-2.5 text-sm text-text-primary outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                    />
+                    <div className="flex items-center gap-3">
+                      <div className="relative flex-1">
+                        <input
+                          type="number"
+                          value={editSplitData.percentage}
+                          onChange={e => setEditSplitData({...editSplitData, percentage: e.target.value === '' ? '' : Number(e.target.value)})}
+                          className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-2.5 text-sm text-text-primary outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold"
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary text-xs font-black">%</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={saveEditSplit} className="w-10 h-10 flex items-center justify-center bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-colors">
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => setEditingSplitId(null)} className="w-10 h-10 flex items-center justify-center bg-zinc-200 dark:bg-zinc-800 text-text-secondary rounded-xl hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-end">
+                      <div className="space-y-1">
+                        <span className="text-xs font-black text-text-secondary uppercase tracking-widest flex items-center gap-2">
+                          {split.name}
+                          <div className="hidden group-hover:flex items-center gap-1.5 ml-2">
+                            <button onClick={() => startEditSplit(split)} className="p-1 text-text-secondary hover:text-indigo-600 transition-colors">
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => handleDeleteSplit(split.id)} className="p-1 text-text-secondary hover:text-red-600 transition-colors">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </span>
+                        <p className="text-lg font-black text-text-primary tracking-tight">
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((totalIncome * split.percentage) / 100)}
+                        </p>
+                      </div>
+                      <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-xl">{split.percentage}%</span>
+                    </div>
+                    <div className="relative h-3 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden shadow-inner">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${split.percentage}%` }}
+                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-600 to-indigo-400 rounded-full shadow-[0_0_10px_rgba(79,70,229,0.4)]"
+                      />
+                      <input 
+                        type="range" 
+                        min="0" 
+                        max="100" 
+                        value={split.percentage} 
+                        onChange={(e) => {
+                          setSplits(splits.map(s => s.id === split.id ? { ...s, percentage: parseInt(e.target.value) } : s));
+                        }} 
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <div className="pt-8 border-t border-zinc-100 dark:border-zinc-800">
+              <div className={`flex items-center justify-center gap-3 px-6 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] transition-all ${totalPercentage === 100 ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-red-500/10 text-red-600 border border-red-500/20 animate-pulse'}`}>
+                {totalPercentage === 100 ? (
+                  <Check className="w-5 h-5" />
+                ) : (
+                  <AlertTriangle className="w-5 h-5" />
+                )}
+                Total: {totalPercentage}% 
+                {totalPercentage !== 100 && <span className="ml-1 opacity-70">(Ajuste para 100%)</span>}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Modals */}
-      <AnimatePresence>
-        {isAdding && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="bg-surface rounded-[40px] shadow-2xl border border-zinc-200/50 dark:border-zinc-800 w-full max-w-lg overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-bl-full -mr-12 -mt-12" />
-              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
-                <h2 className="text-2xl font-black text-text-primary tracking-tight uppercase">Novo Lançamento</h2>
-                <button onClick={() => setIsAdding(false)} className="p-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-2xl text-text-secondary border border-zinc-200/50 transition-all"><X size={20} /></button>
-              </div>
-              <form onSubmit={handleAddFinance} className="p-8 space-y-6">
-                <div className="flex gap-4 p-1.5 bg-zinc-50 dark:bg-zinc-950 rounded-[28px] border border-zinc-200/50">
-                  <button type="button" onClick={() => setNewFinance({ ...newFinance, type: 'income' })} className={`flex-1 py-4 rounded-3xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${newFinance.type === 'income' ? 'bg-emerald-500 text-white shadow-xl shadow-emerald-500/20' : 'text-text-secondary hover:text-emerald-500'}`}><TrendingUp size={14} /> Receita</button>
-                  <button type="button" onClick={() => setNewFinance({ ...newFinance, type: 'expense' })} className={`flex-1 py-4 rounded-3xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${newFinance.type === 'expense' ? 'bg-red-500 text-white shadow-xl shadow-red-500/20' : 'text-text-secondary hover:text-red-500'}`}><TrendingDown size={14} /> Despesa</button>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-text-secondary uppercase tracking-widest ml-1">Descrição</label>
-                  <input type="text" required value={newFinance.description} onChange={e => setNewFinance({ ...newFinance, description: e.target.value })} placeholder="Ex: Pagamento Tratamento Canal" className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-[28px] px-8 py-4 text-sm font-black uppercase tracking-widest focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all" />
-                </div>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-text-secondary uppercase tracking-widest ml-1">Valor (R$)</label>
-                    <input type="number" step="0.01" required value={newFinance.amount} onChange={e => setNewFinance({ ...newFinance, amount: e.target.value })} placeholder="0,00" className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-[28px] px-8 py-4 text-sm font-black focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-text-secondary uppercase tracking-widest ml-1">Data</label>
-                    <input type="date" required value={newFinance.date} onChange={e => setNewFinance({ ...newFinance, date: e.target.value })} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-[28px] px-8 py-4 text-sm font-black outline-none transition-all" />
-                  </div>
-                </div>
-                <div className="flex gap-4 pt-8">
-                   <button type="submit" disabled={isSavingFinance} className="flex-[2] py-5 bg-indigo-600 text-white rounded-[28px] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-700 shadow-2xl shadow-indigo-500/20 disabled:opacity-50 transition-all">{isSavingFinance ? 'PROCESSANDO...' : 'CONFIRMAR LANÇAMENTO'}</button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-
-        {isEditingAssets && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-surface rounded-[40px] p-10 w-full max-w-md shadow-2xl border border-zinc-200/50 dark:border-zinc-800">
-               <h3 className="text-2xl font-black text-text-primary tracking-tight uppercase mb-8">Valor Imobiliário</h3>
-               <p className="text-xs text-text-secondary uppercase font-medium tracking-widest mb-8 leading-relaxed">Insira o valor estimado do imóvel da clínica para o cálculo do Valuation total.</p>
-               <input type="number" value={tempAssetsValue} onChange={e => setTempAssetsValue(e.target.value)} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl px-8 py-5 text-lg font-black outline-none mb-8" placeholder="R$ 0,00" />
-               <div className="flex gap-4">
-                  <button onClick={() => setIsEditingAssets(false)} className="flex-1 py-4 text-[10px] font-black uppercase tracking-widest text-text-secondary hover:bg-zinc-100 rounded-2xl transition-all">Cancelar</button>
-                  <button onClick={handleSaveAssets} className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20">Salvar Valor</button>
-               </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      <ConfirmModal isOpen={!!financeToDelete} onCancel={() => setFinanceToDelete(null)} onConfirm={handleDeleteFinance} isLoading={isDeleting} title="Excluir Lançamento" message="Tem certeza que deseja excluir este registro financeiro? Ele será movido para a lixeira." variant="danger" />
+      <ConfirmModal
+        isOpen={!!financeToDelete}
+        title="Excluir Lançamento"
+        message="Tem certeza que deseja excluir este lançamento? Ele será movido para a lixeira."
+        confirmLabel="Excluir"
+        cancelLabel="Cancelar"
+        onConfirm={confirmDelete}
+        onCancel={() => setFinanceToDelete(null)}
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </div>
   );
 };
