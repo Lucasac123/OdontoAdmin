@@ -124,25 +124,25 @@ export const Patients: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary tracking-tight">Pacientes</h1>
-          <p className="text-text-secondary mt-1">Gerencie o cadastro e histórico de seus pacientes</p>
+          <h1 className="text-5xl font-black text-text-primary tracking-tight">Pacientes</h1>
+          <p className="text-text-secondary mt-2 font-medium">GERENCIE O CADASTRO E HISTÓRICO DE SEUS PACIENTES</p>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
           <div className="relative w-full sm:w-80 group">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary group-focus-within:text-indigo-500 transition-colors" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-text-secondary group-focus-within:text-indigo-500 transition-all" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar por nome..."
-              className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl pl-10 pr-4 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
+              placeholder="BUSCAR POR NOME..."
+              className="w-full bg-surface border border-zinc-200/50 dark:border-zinc-800 rounded-2xl pl-12 pr-4 py-3 text-xs font-black uppercase tracking-widest text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500/50 transition-all shadow-sm"
             />
           </div>
           <button
             onClick={() => setIsAdding(true)}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-md shadow-indigo-500/20 font-medium shrink-0"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-500/20 font-black text-xs uppercase tracking-widest shrink-0"
           >
             <Plus className="w-5 h-5" />
             Novo Paciente
@@ -156,10 +156,11 @@ export const Patients: React.FC = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-surface p-6 rounded-3xl shadow-xl shadow-zinc-200/50 dark:shadow-none border border-zinc-200 dark:border-zinc-800"
+            className="bg-surface p-8 rounded-[32px] shadow-2xl shadow-zinc-200/50 dark:shadow-none border border-zinc-200/50 dark:border-zinc-800 relative overflow-hidden"
           >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-text-primary">Cadastrar Novo Paciente</h2>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-bl-full -mr-12 -mt-12" />
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl font-black text-text-primary tracking-tight">Cadastrar Novo Paciente</h2>
               <button 
                 onClick={() => {
                   setIsAdding(false);
@@ -231,7 +232,7 @@ export const Patients: React.FC = () => {
                 </select>
               </div>
 
-              <div className="md:col-span-2 lg:col-span-4 flex justify-end gap-3 mt-2">
+              <div className="md:col-span-2 lg:col-span-4 flex justify-end gap-3 mt-6 pt-6 border-t border-zinc-100 dark:border-zinc-800">
                 <button 
                   type="button" 
                   disabled={isSaving}
@@ -240,19 +241,19 @@ export const Patients: React.FC = () => {
                     setNewPatient({ name: '', source: '', status: 'Ativo', responsibleDentistId: '' });
                     setError(null);
                   }} 
-                  className="px-6 py-2.5 rounded-2xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors font-medium disabled:opacity-50"
+                  className="px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all disabled:opacity-50"
                 >
                   Descartar
                 </button>
                 <button 
                   type="submit" 
                   disabled={isSaving}
-                  className="bg-indigo-600 text-white px-8 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-500/20 font-medium disabled:opacity-50 flex items-center gap-2"
+                  className="bg-indigo-600 text-white px-10 py-3 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-500/20 font-black text-xs uppercase tracking-widest disabled:opacity-50 flex items-center gap-2"
                 >
                   {isSaving ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Cadastrando...
+                      CADASTRANDO...
                     </>
                   ) : (
                     'Cadastrar Paciente'
@@ -282,23 +283,24 @@ export const Patients: React.FC = () => {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2, delay: index * 0.05 }}
+                transition={{ duration: 0.3, delay: index * 0.03 }}
                 onClick={() => navigate(`/patients/${patient.id}`)}
-                className="group bg-surface p-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/5 transition-all cursor-pointer relative overflow-hidden"
+                className="group bg-surface p-8 rounded-[32px] border border-zinc-200/50 dark:border-zinc-800 hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/5 transition-all cursor-pointer relative overflow-hidden flex flex-col"
               >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xl">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:bg-indigo-500/10" />
+                <div className="flex justify-between items-start mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-black text-2xl border border-indigo-100 dark:border-indigo-500/20 transition-all group-hover:scale-105">
                       {patient.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <h3 className="font-bold text-text-primary group-hover:text-indigo-600 transition-colors line-clamp-1">{patient.name}</h3>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider mt-1 ${
+                      <h3 className="font-black text-xl text-text-primary group-hover:text-indigo-600 transition-colors line-clamp-1 uppercase tracking-tight">{patient.name}</h3>
+                      <span className={`inline-flex items-center px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest mt-1.5 border ${
                         patient.status === 'Inativo' 
-                          ? 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                          ? 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700'
                           : patient.status === 'Em Tratamento'
-                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400'
-                          : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
+                          ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'
+                          : 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
                       }`}>
                         {patient.status || 'Ativo'}
                       </span>
@@ -306,34 +308,35 @@ export const Patients: React.FC = () => {
                   </div>
                   <button 
                     onClick={(e) => handleDelete(e, patient)}
-                    className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all md:opacity-0 md:group-hover:opacity-100"
+                    className="p-2.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all border border-transparent hover:border-red-100 opacity-0 group-hover:opacity-100"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-5 h-5" />
                   </button>
                 </div>
 
-                <div className="space-y-3 pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-text-secondary">Procedência</span>
-                    <span className="font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-md">
-                      {patient.source || 'Não informada'}
+                <div className="space-y-4 pt-6 border-t border-zinc-100 dark:border-zinc-800/50 flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Procedência</span>
+                    <span className="font-black text-[10px] text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1 rounded-lg border border-indigo-100 dark:border-indigo-500/20 uppercase tracking-widest">
+                      {patient.source || 'NÃO INFORMADA'}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-text-secondary">Responsável</span>
-                    <div className="flex items-center gap-1.5 font-medium text-text-primary">
-                      <UserCircle className="w-3.5 h-3.5 text-zinc-400" />
-                      <span className="line-clamp-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Responsável</span>
+                    <div className="flex items-center gap-1.5 font-bold text-text-primary text-xs">
+                      <UserCircle className="w-4 h-4 text-zinc-400" />
+                      <span className="line-clamp-1 uppercase">
                         {patient.responsibleDentistId 
-                          ? dentists.find(d => d.id === patient.responsibleDentistId)?.name || 'Dentista'
-                          : 'Sem filiação'}
+                          ? dentists.find(d => d.id === patient.responsibleDentistId)?.name || 'DENTISTA'
+                          : 'SEM FILIAÇÃO'}
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-text-secondary pt-1">
-                    <span>Cadastrado em</span>
-                    <span>{new Date(patient.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[10px] font-black text-text-secondary pt-6 uppercase tracking-widest opacity-60">
+                  <span>Criado em</span>
+                  <span>{new Date(patient.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                 </div>
 
                 <div className="absolute right-4 bottom-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">

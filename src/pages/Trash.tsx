@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType } from '../firebase';
 import { TrashItem } from '../types';
-import { Trash2, RotateCcw, Loader2, User, FileText, Calendar, RefreshCw, DollarSign, Package, Microscope, UserCircle, Activity, StickyNote, Clock } from 'lucide-react';
+import { Trash2, RotateCcw, Loader2, User, FileText, Calendar, RefreshCw, DollarSign, Package, Microscope, UserCircle, Activity, StickyNote, Clock, Zap, History, ShieldAlert } from 'lucide-react';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -21,7 +21,7 @@ export const Trash = () => {
       const items = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() } as TrashItem))
         .filter(item => new Date(item.deletedAt) >= fifteenDaysAgo);
-      setTrashItems(items);
+      setTrashItems(items.sort((a, b) => new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime()));
       setLoading(false);
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'trash');
@@ -55,16 +55,14 @@ export const Trash = () => {
 
   const confirmPermanentDelete = async () => {
     if (!itemToDelete || processingItems.has(itemToDelete)) return;
-    
     const idToDelete = itemToDelete;
     setProcessingItems(prev => new Set(prev).add(idToDelete));
-    
     try {
       await deleteDoc(doc(db, 'trash', idToDelete));
-      setItemToDelete(null); // Only close on success
+      setItemToDelete(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `trash/${idToDelete}`);
-      setItemToDelete(null); // Also close on error to not get stuck
+      setItemToDelete(null);
     } finally {
       setProcessingItems(prev => {
         const next = new Set(prev);
@@ -76,16 +74,16 @@ export const Trash = () => {
 
   const getCollectionIcon = (collection: string) => {
     switch (collection) {
-      case 'patients': return <User className="w-5 h-5 sm:w-6 sm:h-6" />;
-      case 'appointments': return <Calendar className="w-5 h-5 sm:w-6 sm:h-6" />;
-      case 'financial': return <DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />;
-      case 'inventory': return <Package className="w-5 h-5 sm:w-6 sm:h-6" />;
+      case 'patients': return <User className="w-5 h-5" />;
+      case 'appointments': return <Calendar className="w-5 h-5" />;
+      case 'financial': return <DollarSign className="w-5 h-5" />;
+      case 'inventory': return <Package className="w-5 h-5" />;
       case 'laboratory':
-      case 'lab_jobs': return <Microscope className="w-5 h-5 sm:w-6 sm:h-6" />;
-      case 'dentists': return <UserCircle className="w-5 h-5 sm:w-6 sm:h-6" />;
-      case 'clinical_evolutions': return <Activity className="w-5 h-5 sm:w-6 sm:h-6" />;
-      case 'quick_notes': return <StickyNote className="w-5 h-5 sm:w-6 sm:h-6" />;
-      default: return <FileText className="w-5 h-5 sm:w-6 sm:h-6" />;
+      case 'lab_jobs': return <Microscope className="w-5 h-5" />;
+      case 'dentists': return <UserCircle className="w-5 h-5" />;
+      case 'clinical_evolutions': return <Activity className="w-5 h-5" />;
+      case 'quick_notes': return <StickyNote className="w-5 h-5" />;
+      default: return <FileText className="w-5 h-5" />;
     }
   };
 
@@ -101,90 +99,95 @@ export const Trash = () => {
       case 'clinical_evolutions': return 'Evolução';
       case 'quick_notes': return 'Nota';
       case 'document_templates': return 'Template';
-      default: return 'Documento';
+      default: return 'Geral';
     }
   };
 
   return (
-    <div className="max-w-5xl mx-auto flex flex-col h-full min-h-0 gap-6 sm:gap-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-400">
-            <Trash2 className="w-5 h-5 sm:w-6 sm:h-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight">Lixeira</h1>
-            <p className="text-xs sm:text-sm text-text-secondary font-medium">Gerencie itens excluídos recentemente</p>
-          </div>
+    <div className="space-y-8 flex flex-col h-full bg-zinc-50/20 p-2 md:p-6 rounded-[48px]">
+      {/* Header Premium */}
+      <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12 shrink-0 px-4">
+        <div>
+          <h1 className="text-6xl font-black text-text-primary tracking-tighter uppercase leading-none">Lixeira</h1>
+          <p className="text-text-secondary mt-4 font-medium uppercase tracking-[0.3em] text-[10px] flex items-center gap-2">
+            <History size={14} className="text-zinc-500 fill-zinc-500/20" /> RECUPERAÇÃO DE DADOS E ITENS EXCLUÍDOS
+          </p>
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto pr-2 -mr-2">
+      <div className="flex-1 overflow-y-auto px-2 lg:px-4 pb-10">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Loader2 className="w-12 h-12 animate-spin text-zinc-300" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-text-secondary">Acessando registros temporários...</p>
           </div>
         ) : trashItems.length === 0 ? (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-surface rounded-[24px] sm:rounded-[32px] border-2 border-dashed border-zinc-200 dark:border-zinc-800 p-8 sm:p-16 text-center"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-surface rounded-[48px] border-2 border-dashed border-zinc-200 dark:border-zinc-800 p-16 sm:p-24 text-center max-w-4xl mx-auto"
           >
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-[24px] sm:rounded-[32px] bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center mx-auto mb-6 text-zinc-300 dark:text-zinc-700">
-              <Trash2 className="w-8 h-8 sm:w-10 sm:h-10" />
+            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-[40px] bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-center mx-auto mb-8 text-zinc-200 dark:text-zinc-800">
+               <Trash2 className="w-12 h-12" />
             </div>
-            <h3 className="text-lg sm:text-xl font-black text-text-primary mb-2">Sua lixeira está vazia</h3>
-            <p className="text-sm text-text-secondary max-w-xs mx-auto">Itens excluídos aparecerão aqui por 15 dias antes de serem removidos permanentemente.</p>
+            <h3 className="text-2xl font-black text-text-primary uppercase tracking-tight mb-4">Sua lixeira está vazia</h3>
+            <p className="text-xs font-medium text-text-secondary uppercase tracking-[0.2em] max-w-sm mx-auto leading-loose">Items excluídos permanecem aqui por 15 dias antes de serem permanentemente removidos do ecossistema.</p>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 max-w-7xl mx-auto">
             <AnimatePresence mode="popLayout">
-              {trashItems.map((item) => (
+              {trashItems.map((item, idx) => (
                 <motion.div
                   key={item.id}
                   layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="group bg-surface rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 sm:p-5 hover:shadow-md transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  transition={{ delay: idx * 0.05 }}
+                  className="group bg-surface rounded-[32px] border border-zinc-200/50 dark:border-zinc-800 p-8 hover:shadow-2xl hover:shadow-zinc-500/5 transition-all flex flex-col relative overflow-hidden"
                 >
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 flex items-center justify-center text-zinc-400 group-hover:text-indigo-500 transition-colors shrink-0">
-                      {getCollectionIcon(item.originalCollection)}
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="font-bold text-text-primary truncate text-sm sm:text-base">
-                        {item.displayName || item.data?.name || item.data?.title || item.data?.patientName || item.data?.description || 'Item sem nome'}
-                      </h3>
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1">
-                        <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
-                          {getCollectionLabel(item.originalCollection)}
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-zinc-500/5 rounded-bl-full -mr-8 -mt-8" />
+                  
+                  <div className="flex items-start justify-between mb-8">
+                     <div className="w-14 h-14 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 flex items-center justify-center text-zinc-400 group-hover:text-indigo-600 group-hover:bg-indigo-50 transition-all shadow-inner">
+                        {getCollectionIcon(item.originalCollection)}
+                     </div>
+                     <div className="flex flex-col items-end">
+                        <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 mb-2">
+                           {getCollectionLabel(item.originalCollection)}
                         </span>
-                        <span className="text-[10px] sm:text-xs text-text-secondary flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          Excluído em {new Date(item.deletedAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
+                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-text-secondary opacity-40">
+                           <Clock className="w-3 h-3" /> {new Date(item.deletedAt).toLocaleDateString()}
+                        </div>
+                     </div>
                   </div>
 
-                  <div className="flex items-center justify-end gap-2 shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0">
-                    <button
-                      onClick={() => handleRestore(item)}
-                      disabled={processingItems.has(item.id)}
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg sm:rounded-xl transition-colors disabled:opacity-50 text-xs font-bold"
-                    >
-                      {processingItems.has(item.id) ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
-                      <span className="sm:hidden">Restaurar</span>
-                    </button>
-                    <button
-                      onClick={() => handlePermanentDelete(item.id)}
-                      disabled={processingItems.has(item.id)}
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 text-destructive hover:bg-destructive/10 rounded-lg sm:rounded-xl transition-colors disabled:opacity-50 text-xs font-bold"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span className="sm:hidden">Excluir</span>
-                    </button>
+                  <div className="flex-1 min-w-0 mb-8">
+                     <h3 className="text-lg font-black text-text-primary uppercase tracking-tight truncate group-hover:text-indigo-600 transition-colors">
+                        {item.displayName || item.data?.name || item.data?.title || item.data?.patientName || item.data?.description || 'Item sem nome'}
+                     </h3>
+                     <p className="text-[10px] font-medium text-text-secondary uppercase tracking-[0.15em] mt-2 line-clamp-2 leading-relaxed h-10">
+                        {item.data?.treatment || item.data?.observation || item.data?.obs || 'Sem detalhes adicionais.'}
+                     </p>
+                  </div>
+
+                  <div className="flex gap-3 pt-6 border-t border-zinc-100 dark:border-zinc-800">
+                     <button
+                       onClick={() => handleRestore(item)}
+                       disabled={processingItems.has(item.id)}
+                       className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-2xl transition-all disabled:opacity-50 text-[10px] font-black uppercase tracking-widest"
+                     >
+                       {processingItems.has(item.id) ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                       Restaurar
+                     </button>
+                     <button
+                       onClick={() => handlePermanentDelete(item.id)}
+                       disabled={processingItems.has(item.id)}
+                       className="px-5 py-3.5 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all disabled:opacity-50"
+                       title="Excluir Permanentemente"
+                     >
+                       <Trash2 className="w-5 h-5" />
+                     </button>
                   </div>
                 </motion.div>
               ))}
@@ -196,9 +199,9 @@ export const Trash = () => {
       <ConfirmModal
         isOpen={!!itemToDelete}
         title="Excluir Permanentemente"
-        message="Tem certeza que deseja excluir este item permanentemente? Esta ação não pode ser desfeita."
-        confirmLabel="Excluir"
-        cancelLabel="Cancelar"
+        message="Tem certeza que deseja excluir este item permanentemente? Esta ação não pode ser desfeita e o item será removido definitivamente do banco de dados."
+        confirmLabel="Excluir Definitivamente"
+        cancelLabel="Vou Pensar Melhor"
         onConfirm={confirmPermanentDelete}
         onCancel={() => setItemToDelete(null)}
         variant="danger"

@@ -3,7 +3,7 @@ import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, updateDoc
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../firebase';
 import { Appointment, Patient, Dentist } from '../types';
 import { Calendar as CalendarIcon, Clock, Plus, Trash2, CheckCircle, XCircle, ExternalLink, Settings, Bell, Send, AlertCircle, Loader2 } from 'lucide-react';
-import { format, startOfWeek, addDays, isSameDay, parseISO, isAfter, subHours } from 'date-fns';
+import { format, startOfWeek, addDays, isSameDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'motion/react';
 import { NotificationSettings } from '../types';
@@ -55,7 +55,6 @@ export const Agenda: React.FC = () => {
       if (!snapshot.empty) {
         setNotifSettings({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as any);
       } else {
-        // Default settings
         setNotifSettings({
           dentistId: auth.currentUser!.uid,
           enabled: true,
@@ -115,7 +114,6 @@ export const Agenda: React.FC = () => {
           .replace('{data}', format(date, 'dd/MM/yyyy'))
           .replace('{hora}', format(date, 'HH:mm'));
 
-        // Simulation of API calls
         if (notifSettings.type === 'sms' || notifSettings.type === 'both' || notifSettings.type === 'all') {
           console.log(`[SMS] Enviando para ${patient.phone}: ${message}`);
         }
@@ -124,11 +122,8 @@ export const Agenda: React.FC = () => {
         }
         if (notifSettings.type === 'whatsapp' || notifSettings.type === 'all') {
           console.log(`[WHATSAPP] Enviando para ${patient.phone}: ${message}`);
-          // For a real integration without API, we could use:
-          // window.open(`https://wa.me/${patient.phone?.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`);
         }
         
-        // Simulate API call delay
         await new Promise(resolve => setTimeout(resolve, 500));
       }
       
@@ -147,12 +142,10 @@ export const Agenda: React.FC = () => {
 
     const patient = patients.find(p => p.id === newAppt.patientId);
     
-    // Combine selectedDate and time
     const [hours, minutes] = newAppt.time.split(':');
     const apptDate = new Date(selectedDate);
     apptDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
-    // Conflict check
     const hasConflict = appointments.some(app =>
       app.status !== 'cancelled' &&
       app.responsibleDentistId === newAppt.responsibleDentistId &&
@@ -221,9 +214,8 @@ export const Agenda: React.FC = () => {
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dates}&details=${details}`;
   };
 
-  // Generate week days
-  const startDate = startOfWeek(selectedDate, { weekStartsOn: 0 });
-  const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(startDate, i));
+  const startDateWeek = startOfWeek(selectedDate, { weekStartsOn: 0 });
+  const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(startDateWeek, i));
 
   const dayAppointments = appointments
     .filter(a => isSameDay(parseISO(a.date), selectedDate))
@@ -231,45 +223,45 @@ export const Agenda: React.FC = () => {
 
   return (
     <div className="space-y-6 h-full flex flex-col">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 shrink-0">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Agenda</h1>
-          <p className="text-xs sm:text-sm text-text-secondary">Gerencie seus atendimentos e sincronize com o Google Agenda.</p>
+          <h1 className="text-5xl font-black text-text-primary tracking-tight">Agenda</h1>
+          <p className="text-text-secondary mt-2 font-medium">GERENCIE SEUS ATENDIMENTOS E SINCRONIZE COM O GOOGLE AGENDA</p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center justify-center gap-2 bg-surface text-text-primary border border-zinc-200 dark:border-zinc-800 px-4 py-2 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-sm"
+            className="flex items-center justify-center gap-2 bg-surface text-text-primary border border-zinc-200/50 dark:border-zinc-800 px-6 py-3 rounded-2xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all text-xs font-black uppercase tracking-widest shadow-sm"
           >
-            <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Settings className="w-4 h-4 text-emerald-500" />
             Lembretes
           </button>
           <button
             onClick={() => setIsAdding(true)}
-            className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors text-sm"
+            className="flex items-center justify-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-2xl hover:bg-emerald-700 transition-all text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95"
           >
-            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Plus className="w-5 h-5" />
             Novo Agendamento
           </button>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0">
+      <div className="flex-1 flex flex-col lg:flex-row gap-8 min-h-0">
         <div className="w-full lg:w-1/3 flex flex-col gap-6 shrink-0">
-          <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-medium text-text-primary capitalize">
+          <div className="bg-surface rounded-[32px] shadow-sm border border-zinc-200/50 dark:border-zinc-800 p-8">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-xl font-black text-text-primary tracking-tight capitalize">
                 {format(selectedDate, 'MMMM yyyy', { locale: ptBR })}
               </h3>
               <div className="flex gap-2">
-                <button onClick={() => setSelectedDate(addDays(selectedDate, -7))} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-text-primary">&lt;</button>
-                <button onClick={() => setSelectedDate(addDays(selectedDate, 7))} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-text-primary">&gt;</button>
+                <button onClick={() => setSelectedDate(addDays(selectedDate, -7))} className="p-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl text-text-primary border border-zinc-200/50 transition-all shadow-sm">&lt;</button>
+                <button onClick={() => setSelectedDate(addDays(selectedDate, 7))} className="p-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl text-text-primary border border-zinc-200/50 transition-all shadow-sm">&gt;</button>
               </div>
             </div>
             
-            <div className="grid grid-cols-7 gap-2 text-center mb-2">
+            <div className="grid grid-cols-7 gap-2 text-center mb-4">
               {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(d => (
-                <div key={d} className="text-xs font-medium text-text-secondary">{d}</div>
+                <div key={d} className="text-[10px] font-black text-text-secondary uppercase tracking-widest">{d}</div>
               ))}
             </div>
             <div className="grid grid-cols-7 gap-2">
@@ -280,15 +272,15 @@ export const Agenda: React.FC = () => {
                   <button
                     key={i}
                     onClick={() => setSelectedDate(day)}
-                    className={`aspect-square flex flex-col items-center justify-center rounded-xl text-sm relative transition-colors ${
+                    className={`aspect-square flex flex-col items-center justify-center rounded-2xl text-sm relative transition-all duration-300 ${
                       isSelected 
-                        ? 'bg-indigo-600 text-white font-bold shadow-md' 
-                        : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-text-primary'
+                        ? 'bg-emerald-600 text-white font-black shadow-lg shadow-emerald-500/20 scale-110 z-10' 
+                        : 'hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-text-primary'
                     }`}
                   >
                     {format(day, 'd')}
                     {hasAppts && !isSelected && (
-                      <div className="absolute bottom-1 w-1 h-1 rounded-full bg-indigo-500" />
+                      <div className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-sm" />
                     )}
                   </button>
                 );
@@ -299,62 +291,62 @@ export const Agenda: React.FC = () => {
           <AnimatePresence>
             {isAdding && (
               <motion.form 
-                initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
-                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                transition={{ duration: 0.2 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
                 onSubmit={handleAdd} 
-                className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6 space-y-4 overflow-hidden"
+                className="bg-surface rounded-[32px] shadow-sm border border-zinc-200/50 dark:border-zinc-800 p-8 space-y-6 overflow-hidden relative"
               >
-                <h3 className="text-lg font-medium text-text-primary">Agendar para {format(selectedDate, 'dd/MM/yyyy')}</h3>
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-1">Paciente</label>
-                  <select required value={newAppt.patientId} onChange={e => setNewAppt({...newAppt, patientId: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500">
-                    <option value="">Selecione um paciente...</option>
-                    {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-1">Dentista Responsável</label>
-                  <select required value={newAppt.responsibleDentistId} onChange={e => setNewAppt({...newAppt, responsibleDentistId: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500">
-                    <option value="">Selecione um dentista...</option>
-                    {dentists.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                  </select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-bl-full -mr-8 -mt-8" />
+                <h3 className="text-xl font-black text-text-primary tracking-tight">Novo Agendamento</h3>
+                <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest -mt-4">{format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}</p>
+                
+                <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">Horário</label>
-                    <input type="time" required value={newAppt.time} onChange={e => setNewAppt({...newAppt, time: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" />
+                    <label className="block text-[10px] font-black text-text-secondary uppercase tracking-widest mb-2">Paciente</label>
+                    <select required value={newAppt.patientId} onChange={e => setNewAppt({...newAppt, patientId: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all">
+                      <option value="">Selecione um paciente...</option>
+                      {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">Duração (min)</label>
-                    <input type="number" step="15" required value={newAppt.duration} onChange={e => setNewAppt({...newAppt, duration: e.target.value === '' ? '' : parseInt(e.target.value)})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" />
+                    <label className="block text-[10px] font-black text-text-secondary uppercase tracking-widest mb-2">Dentista</label>
+                    <select required value={newAppt.responsibleDentistId} onChange={e => setNewAppt({...newAppt, responsibleDentistId: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all">
+                      <option value="">Selecione um dentista...</option>
+                      {dentists.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-text-secondary uppercase tracking-widest mb-2">Horário</label>
+                      <input type="time" required value={newAppt.time} onChange={e => setNewAppt({...newAppt, time: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-text-secondary uppercase tracking-widest mb-2">Duração (min)</label>
+                      <input type="number" step="15" required value={newAppt.duration} onChange={e => setNewAppt({...newAppt, duration: e.target.value === '' ? '' : parseInt(e.target.value)})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all" />
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-1">Observações</label>
-                  <textarea value={newAppt.notes} onChange={e => setNewAppt({...newAppt, notes: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-20" />
-                </div>
-                <div className="flex justify-end gap-3 pt-2">
-                  <button type="button" onClick={() => setIsAdding(false)} className="px-4 py-2 rounded-xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button>
-                  <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">Salvar</button>
+                <div className="flex gap-3 pt-4">
+                  <button type="button" onClick={() => setIsAdding(false)} className="flex-1 px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all text-center">Cancelar</button>
+                  <button type="submit" className="flex-1 px-4 py-3 rounded-2xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all text-center">Salvar</button>
                 </div>
               </motion.form>
             )}
           </AnimatePresence>
         </div>
 
-        <div className="flex-1 bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 shrink-0 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-text-primary flex items-center gap-2">
-              <CalendarIcon className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+        <div className="flex-1 bg-surface rounded-[32px] shadow-sm border border-zinc-200/50 dark:border-zinc-800 overflow-hidden flex flex-col">
+          <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-zinc-50/30 dark:bg-zinc-800/20">
+            <h2 className="text-2xl font-black text-text-primary flex items-center gap-3 tracking-tight">
+              <CalendarIcon className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
               Consultas do dia {format(selectedDate, 'dd/MM/yyyy')}
             </h2>
             {dayAppointments.length > 0 && notifSettings?.enabled && (
               <button
                 onClick={handleSendReminders}
                 disabled={isSending}
-                className="flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 text-xs font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-5 py-2.5 rounded-xl transition-all disabled:opacity-50 uppercase tracking-widest border border-emerald-100 dark:border-emerald-500/20 shadow-sm"
               >
                 {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 Enviar Lembretes
@@ -362,11 +354,13 @@ export const Agenda: React.FC = () => {
             )}
           </div>
           
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-8">
             {dayAppointments.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-text-secondary">
-                <CalendarIcon className="w-12 h-12 opacity-50 mb-4" />
-                <p>Nenhuma consulta agendada para este dia.</p>
+              <div className="h-full flex flex-col items-center justify-center text-text-secondary py-20">
+                <div className="w-20 h-20 bg-zinc-50 dark:bg-zinc-800/50 rounded-[28px] flex items-center justify-center mb-6">
+                  <CalendarIcon className="w-10 h-10 opacity-20" />
+                </div>
+                <p className="font-medium italic opacity-60">Nenhuma consulta agendada para este dia.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -374,31 +368,29 @@ export const Agenda: React.FC = () => {
                   {dayAppointments.map(app => (
                     <motion.div 
                       key={app.id} 
-                      initial={{ opacity: 0, height: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, height: 'auto', scale: 1 }}
-                      exit={{ opacity: 0, height: 0, scale: 0.95 }}
-                      transition={{ duration: 0.2 }}
-                      className={`p-4 rounded-2xl border ${
-                        app.status === 'completed' ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/30' :
-                        app.status === 'cancelled' ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/30' :
-                        'bg-surface border-zinc-200 dark:border-zinc-700'
-                      } flex flex-col sm:flex-row gap-4 sm:items-center justify-between transition-colors overflow-hidden`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className={`p-6 rounded-[28px] border transition-all duration-300 group hover:shadow-md ${
+                        app.status === 'completed' ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800/30' :
+                        app.status === 'cancelled' ? 'bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-800/30' :
+                        'bg-surface border-zinc-100 dark:border-zinc-800 hover:border-emerald-500/30'
+                      } flex flex-col sm:flex-row gap-6 sm:items-center justify-between overflow-hidden`}
                     >
-                      
-                      <div className="flex items-start gap-4">
-                        <div className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0 ${
-                          app.status === 'completed' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
-                          app.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' :
-                          'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400'
+                      <div className="flex items-center gap-6">
+                        <div className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center shrink-0 border transition-all duration-300 shadow-sm ${
+                          app.status === 'completed' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border-emerald-200' :
+                          app.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 border-red-200' :
+                          'bg-zinc-50 text-text-primary dark:bg-zinc-800 dark:text-text-primary border-zinc-200 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600'
                         }`}>
-                          <span className="text-sm font-bold">{format(parseISO(app.date), 'HH:mm')}</span>
+                          <span className="text-base font-black tracking-tight">{format(parseISO(app.date), 'HH:mm')}</span>
                         </div>
                         
                         <div>
-                          <h4 className="font-bold text-lg text-text-primary">{app.patientName}</h4>
-                          <div className="flex items-center gap-3 text-sm text-text-secondary mt-1">
-                            <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {app.duration} min</span>
-                            {app.notes && <span className="truncate max-w-[200px]">- {app.notes}</span>}
+                          <h4 className="font-black text-xl text-text-primary tracking-tight transition-colors group-hover:text-emerald-600 uppercase">{app.patientName}</h4>
+                          <div className="flex items-center gap-4 text-[10px] font-black text-text-secondary mt-2 uppercase tracking-widest">
+                            <span className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-xl border border-zinc-200/50"><Clock className="w-3.5 h-3.5 text-emerald-500" /> {app.duration} min</span>
+                            {app.notes && <span className="truncate max-w-[200px] italic border-l border-zinc-200 pl-4 ml-1">{app.notes}</span>}
                           </div>
                         </div>
                       </div>
@@ -410,21 +402,20 @@ export const Agenda: React.FC = () => {
                               href={generateGoogleCalendarLink(app)} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg flex items-center gap-2 text-sm font-medium"
-                              title="Adicionar ao Google Agenda"
+                              className="p-3 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-xl transition-all border border-transparent hover:border-blue-100"
+                              title="Google Agenda"
                             >
-                              <ExternalLink className="w-4 h-4" />
-                              Google Agenda
+                              <ExternalLink className="w-5 h-5" />
                             </a>
-                            <button onClick={() => handleStatusChange(app.id, 'completed')} className="p-2 text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg" title="Marcar como concluída">
+                            <button onClick={() => handleStatusChange(app.id, 'completed')} className="p-3 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-xl transition-all border border-transparent hover:border-emerald-100" title="Marcar como concluída">
                               <CheckCircle className="w-5 h-5" />
                             </button>
-                            <button onClick={() => handleStatusChange(app.id, 'cancelled')} className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg" title="Cancelar consulta">
+                            <button onClick={() => handleStatusChange(app.id, 'cancelled')} className="p-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-all border border-transparent hover:border-red-100" title="Cancelar">
                               <XCircle className="w-5 h-5" />
                             </button>
                           </>
                         )}
-                        <button onClick={() => handleDelete(app)} className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg">
+                        <button onClick={() => handleDelete(app)} className="p-3 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all">
                           <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
@@ -436,90 +427,86 @@ export const Agenda: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Settings Modal */}
       <AnimatePresence>
         {isSettingsOpen && notifSettings && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-surface rounded-3xl shadow-2xl border border-zinc-200 dark:border-zinc-800 w-full max-w-lg overflow-hidden"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-surface rounded-[32px] shadow-2xl border border-zinc-200/50 dark:border-zinc-800 w-full max-w-lg overflow-hidden relative"
             >
-              <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Bell className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-                  <h3 className="text-xl font-bold text-text-primary">Configurar Lembretes</h3>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-bl-full -mr-12 -mt-12" />
+              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Bell className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+                  <h3 className="text-2xl font-black text-text-primary tracking-tight">Lembretes</h3>
                 </div>
-                <button onClick={() => setIsSettingsOpen(false)} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors">
-                  <XCircle className="w-6 h-6 text-text-secondary" />
+                <button onClick={() => setIsSettingsOpen(false)} className="p-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all text-text-secondary border border-zinc-200/50 shadow-sm">
+                  <XCircle className="w-6 h-6" />
                 </button>
               </div>
 
-              <form onSubmit={handleSaveSettings} className="p-6 space-y-6">
-                <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-200 dark:border-zinc-700">
+              <form onSubmit={handleSaveSettings} className="p-8 space-y-6">
+                <div className="flex items-center justify-between p-6 bg-zinc-50 dark:bg-zinc-800/50 rounded-[24px] border border-zinc-200/50 dark:border-zinc-700">
                   <div>
-                    <h4 className="font-bold text-text-primary">Ativar Lembretes</h4>
-                    <p className="text-xs text-text-secondary">Enviar notificações automáticas para pacientes.</p>
+                    <h4 className="text-sm font-black text-text-primary uppercase tracking-tight">Ativar Notificações</h4>
+                    <p className="text-[10px] text-text-secondary uppercase tracking-widest mt-1">Sincronização com pacientes</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setNotifSettings({ ...notifSettings, enabled: !notifSettings.enabled })}
-                    className={`w-12 h-6 rounded-full transition-colors relative ${notifSettings.enabled ? 'bg-indigo-600' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                    className={`w-14 h-7 rounded-full transition-all relative ${notifSettings.enabled ? 'bg-emerald-600 shadow-lg shadow-emerald-500/30' : 'bg-zinc-300 dark:bg-zinc-700'}`}
                   >
-                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${notifSettings.enabled ? 'left-7' : 'left-1'}`} />
+                    <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all shadow-md ${notifSettings.enabled ? 'left-8' : 'left-1'}`} />
                   </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">Canal</label>
+                    <label className="block text-[10px] font-black text-text-secondary uppercase tracking-widest mb-2">Canal</label>
                     <select
                       value={notifSettings.type}
                       onChange={e => setNotifSettings({ ...notifSettings, type: e.target.value as any })}
-                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none"
                     >
                       <option value="sms">SMS</option>
                       <option value="email">E-mail</option>
                       <option value="whatsapp">WhatsApp</option>
-                      <option value="both">Ambos (SMS e E-mail)</option>
-                      <option value="all">Todos (SMS, E-mail e WhatsApp)</option>
+                      <option value="both">Ambos (SMS/E-mail)</option>
+                      <option value="all">Todos os Canais</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">Antecedência (horas)</label>
+                    <label className="block text-[10px] font-black text-text-secondary uppercase tracking-widest mb-2">Antecedência (h)</label>
                     <input
                       type="number"
                       value={notifSettings.hoursBefore}
                       onChange={e => setNotifSettings({ ...notifSettings, hoursBefore: e.target.value === '' ? '' : parseInt(e.target.value) })}
-                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-1">Modelo da Mensagem</label>
+                  <label className="block text-[10px] font-black text-text-secondary uppercase tracking-widest mb-2">Modelo da Mensagem</label>
                   <textarea
                     value={notifSettings.messageTemplate}
                     onChange={e => setNotifSettings({ ...notifSettings, messageTemplate: e.target.value })}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-32"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none resize-none h-32"
                   />
-                  <div className="mt-2 flex flex-wrap gap-2">
+                  <div className="mt-3 flex flex-wrap gap-2">
                     {['{paciente}', '{data}', '{hora}'].map(tag => (
-                      <span key={tag} className="text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-md text-text-secondary">{tag}</span>
+                      <span key={tag} className="text-[9px] font-black bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-md text-text-secondary border border-zinc-200/50 uppercase">{tag}</span>
                     ))}
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 bg-indigo-50 dark:bg-indigo-500/5 rounded-2xl border border-indigo-100 dark:border-indigo-500/10">
-                  <AlertCircle className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
-                  <p className="text-xs text-indigo-800 dark:text-indigo-400 leading-relaxed">
-                    Os lembretes serão enviados manualmente através do botão na agenda diária. Em breve teremos envio automático 24h por dia.
-                  </p>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4">
-                  <button type="button" onClick={() => setIsSettingsOpen(false)} className="px-6 py-2 rounded-xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button>
-                  <button type="submit" className="px-6 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-200 dark:shadow-none font-medium">Salvar Configurações</button>
+                <div className="flex justify-end gap-3 pt-6 border-t border-zinc-100 dark:border-zinc-800">
+                  <button type="button" onClick={() => setIsSettingsOpen(false)} className="px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-text-secondary hover:bg-zinc-100 transition-all">Cancelar</button>
+                  <button type="submit" className="px-8 py-3 rounded-2xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all">Salvar</button>
                 </div>
               </form>
             </motion.div>

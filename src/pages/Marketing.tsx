@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { Patient } from '../types';
-import { MessageSquare, Users, Calendar, Gift, Search, Filter, Send } from 'lucide-react';
-import { motion } from 'motion/react';
+import { MessageSquare, Users, Calendar, Gift, Search, Filter, Send, Sparkles, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 const Marketing = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -17,6 +17,7 @@ const Marketing = () => {
     birthdays: "Olá {nome}! 🎉 A equipe da OdontoAdmin deseja um Feliz Aniversário! Que seu dia seja cheio de sorrisos. Como presente, você tem 15% de desconto em uma limpeza este mês. Agende seu horário!",
     preventive: "Olá {nome}, tudo bem? Notamos que já faz um tempo desde sua última visita. A prevenção é o melhor caminho para um sorriso saudável! Vamos agendar sua avaliação de rotina?",
     inactive: "Oi {nome}! Sentimos sua falta aqui na clínica. Temos novidades e tratamentos especiais esperando por você. Que tal marcar uma visita para conversarmos?",
+    all: "",
     custom: ""
   };
 
@@ -40,12 +41,10 @@ const Marketing = () => {
 
   const getFilteredPatients = () => {
     let filtered = patients;
-
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
       filtered = filtered.filter(p => p.name.toLowerCase().includes(lowerSearch));
     }
-
     const today = new Date();
     const currentMonth = today.getMonth() + 1;
 
@@ -70,14 +69,13 @@ const Marketing = () => {
         filtered = filtered.filter(p => p.status === 'Inativo');
         break;
     }
-
     return filtered;
   };
 
   const handleFilterChange = (filter: typeof selectedFilter) => {
     setSelectedFilter(filter);
-    setMessageTemplate(templates[filter === 'all' ? 'custom' : filter]);
-    setSelectedPatients([]); // Clear selection on filter change
+    setMessageTemplate(templates[filter]);
+    setSelectedPatients([]); 
   };
 
   const togglePatientSelection = (id: string) => {
@@ -88,26 +86,12 @@ const Marketing = () => {
 
   const selectAll = () => {
     const filteredIds = getFilteredPatients().map(p => p.id);
-    if (selectedPatients.length === filteredIds.length) {
-      setSelectedPatients([]);
-    } else {
-      setSelectedPatients(filteredIds);
-    }
+    if (selectedPatients.length === filteredIds.length) setSelectedPatients([]);
+    else setSelectedPatients(filteredIds);
   };
 
   const handleSendMessages = () => {
-    if (selectedPatients.length === 0) {
-      alert("Selecione pelo menos um paciente.");
-      return;
-    }
-    if (!messageTemplate.trim()) {
-      alert("A mensagem não pode estar vazia.");
-      return;
-    }
-
-    // In a real application, this would integrate with a WhatsApp API (like Twilio, Z-API, Evolution API, etc.)
-    // or an email service (SendGrid, Mailgun).
-    // For this prototype, we'll simulate the sending process or open WhatsApp Web for a single user.
+    if (selectedPatients.length === 0 || !messageTemplate.trim()) return;
 
     if (selectedPatients.length === 1) {
       const patient = patients.find(p => p.id === selectedPatients[0]);
@@ -115,12 +99,9 @@ const Marketing = () => {
         const phone = patient.phone.replace(/\D/g, '');
         const message = messageTemplate.replace('{nome}', patient.name.split(' ')[0]);
         window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(message)}`, '_blank');
-      } else {
-        alert("O paciente selecionado não possui um número de telefone válido.");
-      }
+      } else alert("Paciente sem telefone válido.");
     } else {
-      // Simulate bulk sending
-      alert(`Simulação: Mensagem enviada para ${selectedPatients.length} pacientes com sucesso!\n\n(Nota: O envio em massa real requer integração com uma API oficial do WhatsApp ou serviço de SMS/Email).`);
+      alert(`Simulação: Campanha enviada para ${selectedPatients.length} pacientes.`);
       setSelectedPatients([]);
     }
   };
@@ -128,185 +109,138 @@ const Marketing = () => {
   const filteredPatients = getFilteredPatients();
 
   return (
-    <div className="p-4 md:p-8 min-h-screen bg-gray-50/30">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Marketing e Relacionamento</h1>
-            <p className="text-gray-500 mt-1">Comunique-se com seus pacientes e crie campanhas personalizadas.</p>
+    <div className="space-y-8 flex flex-col h-full bg-zinc-50/20 p-2 md:p-6 rounded-[48px]">
+      {/* Header Premium */}
+      <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12 shrink-0 px-4">
+        <div>
+          <h1 className="text-6xl font-black text-text-primary tracking-tighter uppercase leading-none">Marketing</h1>
+          <p className="text-text-secondary mt-4 font-medium uppercase tracking-[0.3em] text-[10px] flex items-center gap-2">
+            <Sparkles size={14} className="text-red-500 fill-red-500/20" /> RELACIONAMENTO E FIDELIZAÇÃO DE PACIENTES
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1 min-h-0 overflow-hidden px-2 lg:px-4 pb-10">
+        {/* Sidebar: Filters & List */}
+        <div className="lg:col-span-4 flex flex-col space-y-6 min-h-0 overflow-hidden">
+          <div className="bg-surface p-6 rounded-[32px] border border-zinc-200/50 dark:border-zinc-800 shadow-sm shrink-0">
+             <div className="relative group mb-6">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-red-500 transition-all" size={18} />
+                <input
+                  type="text"
+                  placeholder="BUSCAR PACIENTE..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl text-[10px] font-black uppercase tracking-widest focus:ring-4 focus:ring-red-500/5 outline-none transition-all shadow-inner"
+                />
+             </div>
+
+             <div className="grid grid-cols-2 gap-2">
+                {[
+                  { id: 'all', label: 'Todos', icon: <Users size={14} />, color: 'red' },
+                  { id: 'birthdays', label: 'Aniver.', icon: <Gift size={14} />, color: 'pink' },
+                  { id: 'preventive', label: 'Prev.', icon: <Calendar size={14} />, color: 'amber' },
+                  { id: 'inactive', label: 'Inativos', icon: <Filter size={14} />, color: 'red' }
+                ].map(f => (
+                  <button
+                    key={f.id}
+                    onClick={() => handleFilterChange(f.id as any)}
+                    className={`flex items-center gap-2 px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${selectedFilter === f.id ? 'bg-red-600 text-white border-red-500 shadow-lg shadow-red-500/20' : 'bg-white dark:bg-surface text-text-secondary border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50'}`}
+                  >
+                    {f.icon} {f.label}
+                  </button>
+                ))}
+             </div>
+          </div>
+
+          <div className="bg-surface rounded-[40px] border border-zinc-200/50 dark:border-zinc-800 shadow-sm flex-1 min-h-0 flex flex-col overflow-hidden">
+             <div className="p-6 border-b border-zinc-100 dark:border-zinc-900 flex justify-between items-center shrink-0">
+                <span className="text-[10px] font-black text-text-secondary uppercase tracking-[0.2em]">{filteredPatients.length} PACIENTES</span>
+                <button onClick={selectAll} className="text-[9px] font-black text-red-600 uppercase tracking-widest hover:bg-red-50 dark:hover:bg-red-500/10 px-3 py-1 rounded-lg transition-all">
+                  {selectedPatients.length === filteredPatients.length ? 'Desmarcar' : 'Selecionar Tudo'}
+                </button>
+             </div>
+             <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-red-500/10">
+                {filteredPatients.map(p => (
+                  <label key={p.id} className={`flex items-center gap-4 p-4 rounded-3xl cursor-pointer transition-all border ${selectedPatients.includes(p.id) ? 'bg-red-50/50 border-red-100 dark:bg-red-500/5 dark:border-red-500/10' : 'bg-transparent border-transparent hover:bg-zinc-50'}`}>
+                    <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${selectedPatients.includes(p.id) ? 'bg-red-600 border-red-600 text-white' : 'border-zinc-200 dark:border-zinc-800'}`}>
+                       {selectedPatients.includes(p.id) && <CheckCircle2 size={12} />}
+                    </div>
+                    <input type="checkbox" checked={selectedPatients.includes(p.id)} onChange={() => togglePatientSelection(p.id)} className="hidden" />
+                    <div className="min-w-0">
+                       <p className="text-xs font-black text-text-primary uppercase truncate tracking-tight">{p.name}</p>
+                       <p className="text-[9px] text-text-secondary font-black truncate">{p.phone || 'SEM TELEFONE'}</p>
+                    </div>
+                  </label>
+                ))}
+             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column: Filters and Patient List */}
-          <div className="lg:col-span-4 space-y-4">
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200/60">
-              <div className="relative mb-5">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4.5 h-4.5" />
-                <input
-                  type="text"
-                  placeholder="Buscar paciente por nome..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-11 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none text-sm"
-                />
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => handleFilterChange('all')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'all' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
-                >
-                  <Users size={14} /> Todos
-                </button>
-                <button
-                  onClick={() => handleFilterChange('birthdays')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'birthdays' ? 'bg-pink-600 text-white shadow-md shadow-pink-200' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
-                >
-                  <Gift size={14} /> Aniversariantes
-                </button>
-                <button
-                  onClick={() => handleFilterChange('preventive')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'preventive' ? 'bg-amber-600 text-white shadow-md shadow-amber-200' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
-                >
-                  <Calendar size={14} /> Preventivo
-                </button>
-                <button
-                  onClick={() => handleFilterChange('inactive')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'inactive' ? 'bg-red-600 text-white shadow-md shadow-red-200' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
-                >
-                  <Filter size={14} /> Inativos
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200/60 overflow-hidden flex flex-col max-h-[600px]">
-              <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  {filteredPatients.length} Pacientes
-                </span>
-                <button 
-                  onClick={selectAll}
-                  className="text-xs text-indigo-600 hover:text-indigo-700 font-bold uppercase tracking-tight"
-                >
-                  {selectedPatients.length === filteredPatients.length && filteredPatients.length > 0 ? 'Desmarcar' : 'Selecionar Tudo'}
-                </button>
-              </div>
+        {/* Composer: Right Side */}
+        <div className="lg:col-span-8 flex flex-col">
+           <div className="bg-surface rounded-[48px] border border-zinc-200/50 dark:border-zinc-800 shadow-sm p-10 flex flex-col h-full relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-red-500/5 rounded-bl-[160px] pointer-events-none" />
               
-              <div className="overflow-y-auto p-2 divide-y divide-gray-50">
-                {loading ? (
-                  <div className="text-center py-12 text-gray-400 text-sm italic">Carregando pacientes...</div>
-                ) : filteredPatients.length === 0 ? (
-                  <div className="text-center py-12 text-gray-400 text-sm italic">Nenhum paciente encontrado.</div>
-                ) : (
-                  <div className="space-y-1">
-                    {filteredPatients.map(patient => (
-                      <label 
-                        key={patient.id} 
-                        className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${selectedPatients.includes(patient.id) ? 'bg-indigo-50/80 border border-indigo-100 shadow-sm' : 'hover:bg-gray-50 border border-transparent'}`}
-                      >
-                        <div className="relative flex items-center justify-center">
-                          <input 
-                            type="checkbox" 
-                            checked={selectedPatients.includes(patient.id)}
-                            onChange={() => togglePatientSelection(patient.id)}
-                            className="w-5 h-5 text-indigo-600 rounded-lg border-gray-300 focus:ring-indigo-500/20 transition-all cursor-pointer"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate">{patient.name}</p>
-                          <p className="text-xs text-gray-500 truncate font-medium">{patient.phone || 'Sem telefone'}</p>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Message Composer */}
-          <div className="lg:col-span-8">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200/60 p-6 md:p-8 flex flex-col h-full">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                  <MessageSquare className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-gray-900">Compositor de Mensagens</h2>
-                  <p className="text-xs text-gray-500">Crie e envie mensagens personalizadas via WhatsApp.</p>
-                </div>
+              <div className="flex items-center gap-4 mb-10 shrink-0">
+                 <div className="w-14 h-14 rounded-3xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-600 shadow-inner">
+                    <MessageSquare size={24} />
+                 </div>
+                 <div>
+                    <h2 className="text-2xl font-black text-text-primary tracking-tight uppercase">Compositor de Campanha</h2>
+                    <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest mt-1">CRIE MENSAGENS PERSONALIZADAS VIA WHATSAPP</p>
+                 </div>
               </div>
 
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2.5">
-                    Conteúdo da Mensagem
-                  </label>
-                  <div className="relative group">
+              <div className="flex-1 min-h-0 space-y-8 flex flex-col">
+                 <div className="relative group flex-1 min-h-0">
+                    <div className="absolute inset-0 bg-red-500/5 blur-3xl opacity-0 group-focus-within:opacity-100 transition-all duration-700 pointer-events-none" />
                     <textarea
                       value={messageTemplate}
                       onChange={(e) => setMessageTemplate(e.target.value)}
-                      className="w-full h-72 p-5 bg-gray-50/50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all outline-none text-gray-700 leading-relaxed resize-none text-sm md:text-base"
-                      placeholder="Escreva sua mensagem aqui..."
+                      className="w-full h-full p-8 bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-100 dark:border-zinc-800 rounded-[32px] focus:ring-4 focus:ring-red-500/5 outline-none transition-all text-sm md:text-base font-medium text-text-primary leading-relaxed resize-none shadow-inner"
+                      placeholder="ESCREVA SUA MENSAGEM AQUI..."
                     />
-                    <div className="absolute bottom-4 right-4 flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-gray-400 uppercase bg-white px-2 py-1 rounded-md border border-gray-100">
-                        Variável: <code className="text-indigo-600">{'{nome}'}</code>
-                      </span>
+                    <div className="absolute bottom-6 right-8 p-3 bg-white dark:bg-surface rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
+                       <span className="text-[9px] font-black text-text-secondary uppercase tracking-widest">
+                          Variável Nome: <code className="text-red-600">{"{nome}"}</code>
+                       </span>
                     </div>
-                  </div>
-                </div>
+                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-5">
-                    <h4 className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-3 flex items-center gap-2">
-                      <Gift size={14} /> Dicas de Marketing
-                    </h4>
-                    <ul className="text-xs text-blue-700 space-y-2.5">
-                      <li className="flex items-start gap-2">
-                        <span className="w-1 h-1 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-                        Mantenha a mensagem curta e direta ao ponto.
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="w-1 h-1 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-                        Sempre ofereça um "Call to Action" claro.
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-5">
-                    <h4 className="text-xs font-bold text-indigo-800 uppercase tracking-wider mb-3 flex items-center gap-2">
-                      <Users size={14} /> Público Alvo
-                    </h4>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-indigo-700 font-medium">Pacientes Selecionados:</span>
-                      <span className="text-lg font-black text-indigo-600">{selectedPatients.length}</span>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 shrink-0">
+                    <div className="p-6 rounded-[32px] bg-red-50/50 dark:bg-red-500/5 border border-red-100/50 dark:border-red-500/10">
+                       <h4 className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                          <Zap size={14} /> Dica Estratégica
+                       </h4>
+                       <p className="text-[11px] text-red-700/70 font-medium leading-relaxed uppercase">Mantenha a mensagem curta e direta. Sempre inclua um convite claro para agendamento.</p>
                     </div>
-                    <div className="mt-2 h-1.5 bg-indigo-100 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-indigo-500 transition-all duration-500" 
-                        style={{ width: `${Math.min((selectedPatients.length / Math.max(filteredPatients.length, 1)) * 100, 100)}%` }}
-                      />
+                    <div className="p-6 rounded-[32px] bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-100/50 dark:border-indigo-500/10 flex flex-col justify-center">
+                       <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Alcance Estimado</span>
+                          <span className="text-3xl font-black text-indigo-700">{selectedPatients.length}</span>
+                       </div>
+                       <div className="mt-4 h-1.5 w-full bg-indigo-100/50 rounded-full overflow-hidden">
+                          <motion.div initial={{ width: 0 }} animate={{ width: `${(selectedPatients.length / Math.max(patients.length, 1)) * 100}%` }} transition={{ duration: 1 }} className="h-full bg-indigo-500" />
+                       </div>
                     </div>
-                  </div>
-                </div>
+                 </div>
 
-                <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <p className="text-xs text-gray-400 font-medium italic">
-                    * O envio em massa abrirá o WhatsApp para cada paciente individualmente ou simulará o envio.
-                  </p>
-                  <button
-                    onClick={handleSendMessages}
-                    disabled={selectedPatients.length === 0 || !messageTemplate.trim()}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-indigo-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-indigo-200 active:scale-[0.98]"
-                  >
-                    <Send className="w-4.5 h-4.5" />
-                    {selectedPatients.length > 1 ? 'Enviar em Massa' : 'Enviar WhatsApp'}
-                  </button>
-                </div>
+                 <div className="pt-8 border-t border-zinc-100 dark:border-zinc-900 shrink-0 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <p className="text-[9px] font-bold text-text-secondary uppercase tracking-widest italic opacity-40 max-w-sm">
+                       * O envio em massa simula a campanha, enquanto o individual abre o WhatsApp Web direto para o paciente.
+                    </p>
+                    <button
+                      onClick={handleSendMessages}
+                      disabled={selectedPatients.length === 0 || !messageTemplate.trim()}
+                      className="w-full md:w-auto flex items-center justify-center gap-3 bg-red-600 text-white px-10 py-5 rounded-[28px] font-black text-xs uppercase tracking-widest hover:bg-red-700 disabled:opacity-30 transition-all shadow-2xl shadow-red-500/30 active:scale-95"
+                    >
+                      <Send size={18} />
+                      {selectedPatients.length === 1 ? 'Enviar WhatsApp' : 'Disparar Campanha'}
+                    </button>
+                 </div>
               </div>
-            </div>
-          </div>
+           </div>
         </div>
       </div>
     </div>

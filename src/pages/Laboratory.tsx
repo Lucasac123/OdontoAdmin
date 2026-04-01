@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { db, auth, moveToTrash, handleFirestoreError, OperationType } from '../firebase';
 import { LabJob, Patient } from '../types';
-import { Plus, Edit2, Trash2, CheckCircle, Clock, Truck, FileText, Search, Loader2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckCircle, Clock, Truck, FileText, Search, Loader2, XCircle } from 'lucide-react';
 import { ConfirmModal } from '../components/ConfirmModal';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 
 const Laboratory = () => {
   const [jobs, setJobs] = useState<LabJob[]>([]);
@@ -25,7 +25,7 @@ const Laboratory = () => {
     sendDate: new Date().toISOString().split('T')[0],
     expectedDate: '',
     status: 'Enviado' as LabJob['status'],
-    cost: '' as number | '',
+    cost: 0,
     notes: ''
   });
 
@@ -73,9 +73,9 @@ const Laboratory = () => {
         prosthesisType: job.prosthesisType,
         labName: job.labName,
         sendDate: job.sendDate.split('T')[0],
-        expectedDate: job.expectedDate.split('T')[0],
+        expectedDate: (job.expectedDate || '').split('T')[0],
         status: job.status,
-        cost: job.cost,
+        cost: job.cost || 0,
         notes: job.notes || ''
       });
     } else {
@@ -114,7 +114,7 @@ const Laboratory = () => {
       const jobData = {
         ...formData,
         sendDate: new Date(formData.sendDate).toISOString(),
-        expectedDate: new Date(formData.expectedDate).toISOString(),
+        expectedDate: formData.expectedDate ? new Date(formData.expectedDate).toISOString() : null,
         dentistId: auth.currentUser.uid,
         createdAt: editingJob ? editingJob.createdAt : new Date().toISOString()
       };
@@ -157,21 +157,21 @@ const Laboratory = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Enviado': return <Truck size={16} className="text-blue-500" />;
-      case 'Em Confecção': return <Clock size={16} className="text-yellow-500" />;
-      case 'Recebido': return <FileText size={16} className="text-purple-500" />;
-      case 'Instalado': return <CheckCircle size={16} className="text-green-500" />;
+      case 'Enviado': return <Truck size={14} />;
+      case 'Em Confecção': return <Clock size={14} />;
+      case 'Recebido': return <FileText size={14} />;
+      case 'Instalado': return <CheckCircle size={14} />;
       default: return null;
     }
   };
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case 'Enviado': return 'bg-blue-100 text-blue-800';
-      case 'Em Confecção': return 'bg-yellow-100 text-yellow-800';
-      case 'Recebido': return 'bg-purple-100 text-purple-800';
-      case 'Instalado': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'Enviado': return 'bg-cyan-50 text-cyan-700 border-cyan-100 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-500/20';
+      case 'Em Confecção': return 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20';
+      case 'Recebido': return 'bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20';
+      case 'Instalado': return 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20';
+      default: return 'bg-zinc-50 text-zinc-600 border-zinc-100';
     }
   };
 
@@ -182,297 +182,245 @@ const Laboratory = () => {
   );
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6 flex flex-col h-full">
+      <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12 shrink-0">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Gestão de Laboratório</h1>
-          <p className="text-text-secondary mt-1">Acompanhe o status dos trabalhos enviados aos laboratórios.</p>
+          <h1 className="text-5xl font-black text-text-primary tracking-tight uppercase">Laboratório</h1>
+          <p className="text-text-secondary mt-2 font-medium uppercase tracking-widest text-xs">ACOMPANHE O STATUS DOS TRABALHOS DE PRÓTESE</p>
         </div>
-        <button
-          onClick={() => handleOpenModal()}
-          className="w-full sm:w-auto bg-indigo-600 text-white px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-[0.98] font-bold"
-        >
-          <Plus size={20} />
-          Novo Trabalho
-        </button>
-      </div>
-
-      <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-        <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/30">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-400" />
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          <div className="relative w-full sm:w-80 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-text-secondary group-focus-within:text-cyan-500 transition-all" />
             <input
               type="text"
-              placeholder="Buscar por paciente, laboratório ou trabalho..."
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-text-primary focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="BUSCAR TRABALHO..."
+              className="w-full bg-surface border border-zinc-200/50 dark:border-zinc-800 rounded-2xl pl-12 pr-4 py-3 text-xs font-black uppercase tracking-widest text-text-primary focus:outline-none focus:ring-2 focus:ring-cyan-500/10 focus:border-cyan-500/50 transition-all shadow-sm"
             />
           </div>
-        </div>
-
-        <div className="hidden lg:block overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-zinc-50/50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800">
-              <tr>
-                <th className="text-left py-4 px-6 text-[10px] font-bold text-text-secondary uppercase tracking-widest">Paciente</th>
-                <th className="text-left py-4 px-6 text-[10px] font-bold text-text-secondary uppercase tracking-widest">Trabalho / Prótese</th>
-                <th className="text-left py-4 px-6 text-[10px] font-bold text-text-secondary uppercase tracking-widest">Laboratório</th>
-                <th className="text-left py-4 px-6 text-[10px] font-bold text-text-secondary uppercase tracking-widest">Envio</th>
-                <th className="text-left py-4 px-6 text-[10px] font-bold text-text-secondary uppercase tracking-widest">Previsão</th>
-                <th className="text-left py-4 px-6 text-[10px] font-bold text-text-secondary uppercase tracking-widest">Status</th>
-                <th className="text-right py-4 px-6 text-[10px] font-bold text-text-secondary uppercase tracking-widest">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-              {filteredJobs.map((job) => (
-                <tr key={job.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50 transition-colors">
-                  <td className="py-4 px-6">
-                    <span className="text-sm font-bold text-text-primary">{job.patientName}</span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="text-sm text-text-secondary font-medium">{job.prosthesisType}</span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="text-sm text-text-secondary">{job.labName}</span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="text-sm text-text-secondary font-mono">
-                      {new Date(job.sendDate).toLocaleDateString('pt-BR')}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="text-sm text-text-secondary font-mono">
-                      {new Date(job.expectedDate).toLocaleDateString('pt-BR')}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${getStatusBadgeClass(job.status)}`}>
-                      {getStatusIcon(job.status)}
-                      {job.status}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-right">
-                    <div className="flex justify-end gap-1">
-                      <button
-                        onClick={() => handleOpenModal(job)}
-                        className="p-2 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-all"
-                        title="Editar"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick(job.id)}
-                        className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
-                        title="Excluir"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filteredJobs.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="py-16 text-center text-text-secondary italic text-sm">
-                    Nenhum trabalho de laboratório encontrado.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="lg:hidden divide-y divide-zinc-100 dark:divide-zinc-800">
-          {filteredJobs.length === 0 ? (
-            <div className="py-16 text-center text-text-secondary italic text-sm">Nenhum trabalho de laboratório encontrado.</div>
-          ) : (
-            filteredJobs.map((job) => (
-              <div key={job.id} className="p-5 space-y-4">
-                <div className="flex justify-between items-start gap-4">
-                  <div className="min-w-0">
-                    <h4 className="font-bold text-text-primary truncate">{job.patientName}</h4>
-                    <p className="text-xs text-text-secondary font-medium truncate">{job.prosthesisType}</p>
-                  </div>
-                  <span className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${getStatusBadgeClass(job.status)}`}>
-                    {getStatusIcon(job.status)}
-                    {job.status}
-                  </span>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 text-[11px] text-text-secondary">
-                  <div>
-                    <span className="block font-black uppercase text-[9px] opacity-40 mb-0.5 tracking-widest">Laboratório</span>
-                    <span className="font-medium text-text-primary">{job.labName}</span>
-                  </div>
-                  <div>
-                    <span className="block font-black uppercase text-[9px] opacity-40 mb-0.5 tracking-widest">Previsão</span>
-                    <span className="font-medium text-text-primary">{new Date(job.expectedDate).toLocaleDateString('pt-BR')}</span>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    onClick={() => handleOpenModal(job)}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-2 px-4 text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl text-xs font-bold transition-all active:scale-95"
-                  >
-                    <Edit2 size={14} /> Editar
-                  </button>
-                  <button
-                    onClick={() => handleDeleteClick(job.id)}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-2 px-4 text-red-600 bg-red-50 dark:bg-red-500/10 rounded-xl text-xs font-bold transition-all active:scale-95"
-                  >
-                    <Trash2 size={14} /> Excluir
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
+          <button
+            onClick={() => handleOpenModal()}
+            className="w-full sm:w-auto bg-cyan-600 text-white px-8 py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-cyan-700 active:scale-95 transition-all shadow-lg shadow-cyan-500/20 font-black text-xs uppercase tracking-widest shrink-0"
+          >
+            <Plus size={20} />
+            Novo Trabalho
+          </button>
         </div>
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="bg-surface rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-zinc-200 dark:border-zinc-800"
-          >
-            <h2 className="text-xl font-bold text-text-primary mb-6">
-              {editingJob ? 'Editar Trabalho' : 'Novo Trabalho de Laboratório'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-text-secondary uppercase mb-1">Paciente</label>
-                  <select
-                    required
-                    disabled={isSaving}
-                    value={formData.patientId}
-                    onChange={handlePatientChange}
-                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-                  >
-                    <option value="">Selecione um paciente</option>
-                    {patients.map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
+      <div className="flex-1 overflow-y-auto pr-2 pb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <AnimatePresence mode="popLayout">
+            {filteredJobs.map((job, index) => (
+              <motion.div
+                key={job.id}
+                layout
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+                className="group bg-surface p-8 rounded-[32px] border border-zinc-200/50 dark:border-zinc-800 hover:border-cyan-500/50 hover:shadow-2xl hover:shadow-cyan-500/5 transition-all relative overflow-hidden flex flex-col"
+              >
+                <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/5 rounded-bl-full -mr-8 -mt-8 transition-all group-hover:bg-cyan-500/10" />
+                <div className="flex justify-between items-start mb-6">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xl font-black text-text-primary group-hover:text-cyan-600 transition-colors uppercase tracking-tight truncate">{job.patientName}</h3>
+                    <div className="flex items-center gap-2 mt-2">
+                       <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border ${getStatusBadgeClass(job.status)}`}>
+                        {getStatusIcon(job.status)}
+                        {job.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 ml-4">
+                    <button 
+                      onClick={() => handleOpenModal(job)}
+                      className="p-2.5 text-zinc-400 hover:text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-500/10 rounded-xl transition-all border border-transparent hover:border-cyan-100"
+                    >
+                      <Edit2 size={18} />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteClick(job.id)}
+                      className="p-2.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all border border-transparent hover:border-red-100"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-text-secondary uppercase mb-1">Laboratório</label>
+
+                <div className="space-y-4 py-6 border-y border-zinc-100 dark:border-zinc-800/50">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Trabalho</span>
+                    <span className="text-xs font-black text-text-primary uppercase truncate max-w-[150px]">{job.prosthesisType}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Laboratório</span>
+                    <span className="text-xs font-black text-text-primary uppercase">{job.labName}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div className="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                      <span className="text-[9px] font-black text-text-secondary uppercase tracking-widest block mb-1">Data Envio</span>
+                      <span className="text-xs font-black text-text-primary">{new Date(job.sendDate).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                    <div className="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                      <span className="text-[9px] font-black text-text-secondary uppercase tracking-widest block mb-1">Previsão</span>
+                      <span className="text-xs font-black text-cyan-600 dark:text-cyan-400">{job.expectedDate ? new Date(job.expectedDate).toLocaleDateString('pt-BR') : '-'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-6 flex items-center justify-between">
+                  <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Investimento</span>
+                  <span className="text-lg font-black text-text-primary tracking-tight">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(job.cost || 0)}
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+
+        {filteredJobs.length === 0 && (
+          <div className="py-20 text-center bg-surface border border-dashed border-zinc-200 dark:border-zinc-800 rounded-[32px]">
+            <div className="bg-zinc-50 dark:bg-zinc-800/50 w-20 h-20 rounded-[28px] flex items-center justify-center mx-auto mb-6">
+              <Search size={32} className="text-zinc-200" />
+            </div>
+            <h3 className="text-xl font-black text-text-primary uppercase tracking-tight">Nenhum trabalho encontrado</h3>
+            <p className="text-text-secondary max-w-xs mx-auto mt-2 text-xs font-medium uppercase tracking-widest">
+              Tente ajustar sua busca ou adicione um novo trabalho.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-surface rounded-[32px] shadow-2xl border border-zinc-200/50 dark:border-zinc-800 w-full max-w-2xl overflow-hidden relative"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-bl-full -mr-12 -mt-12" />
+              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                <h2 className="text-2xl font-black text-text-primary tracking-tight uppercase">
+                  {editingJob ? 'Editar Trabalho' : 'Novo Trabalho'}
+                </h2>
+                <button onClick={() => setIsModalOpen(false)} className="p-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl text-text-secondary border border-zinc-200/50 transition-all">
+                  <XCircle className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-text-secondary uppercase tracking-widest ml-1">Paciente</label>
+                    <select
+                      required
+                      value={formData.patientId}
+                      onChange={handlePatientChange}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all uppercase font-black"
+                    >
+                      <option value="">Selecione um paciente</option>
+                      {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-text-secondary uppercase tracking-widest ml-1">Laboratório</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.labName}
+                      onChange={(e) => setFormData({ ...formData, labName: e.target.value })}
+                      placeholder="EX: LAB ORTHO"
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all uppercase font-black"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-text-secondary uppercase tracking-widest ml-1">Tipo de Prótese / Trabalho</label>
                   <input
                     type="text"
                     required
-                    disabled={isSaving}
-                    value={formData.labName}
-                    onChange={(e) => setFormData({ ...formData, labName: e.target.value })}
-                    placeholder="Nome do Laboratório"
-                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                    value={formData.prosthesisType}
+                    onChange={(e) => setFormData({ ...formData, prosthesisType: e.target.value })}
+                    placeholder="EX: COROA ZIRCÔNIA DENTE 21"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all uppercase font-black"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-xs font-bold text-text-secondary uppercase mb-1">Tipo de Prótese / Trabalho</label>
-                <input
-                  type="text"
-                  required
-                  disabled={isSaving}
-                  value={formData.prosthesisType}
-                  onChange={(e) => setFormData({ ...formData, prosthesisType: e.target.value })}
-                  placeholder="Ex: Coroa Porcelana Dente 14"
-                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-text-secondary uppercase mb-1">Data de Envio</label>
-                  <input
-                    type="date"
-                    required
-                    disabled={isSaving}
-                    value={formData.sendDate}
-                    onChange={(e) => setFormData({ ...formData, sendDate: e.target.value })}
-                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-text-secondary uppercase tracking-widest ml-1">Data de Envio</label>
+                    <input
+                      type="date"
+                      required
+                      value={formData.sendDate}
+                      onChange={(e) => setFormData({ ...formData, sendDate: e.target.value })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-cyan-500/20 font-black"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-text-secondary uppercase tracking-widest ml-1">Previsão de Retorno</label>
+                    <input
+                      type="date"
+                      value={formData.expectedDate}
+                      onChange={(e) => setFormData({ ...formData, expectedDate: e.target.value })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-cyan-500/20 font-black"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-text-secondary uppercase mb-1">Previsão de Retorno</label>
-                  <input
-                    type="date"
-                    required
-                    disabled={isSaving}
-                    value={formData.expectedDate}
-                    onChange={(e) => setFormData({ ...formData, expectedDate: e.target.value })}
-                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-text-secondary uppercase mb-1">Status</label>
-                  <select
-                    disabled={isSaving}
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as LabJob['status'] })}
-                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-text-secondary uppercase tracking-widest ml-1">Status</label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as LabJob['status'] })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-cyan-500/20 outline-none font-black uppercase"
+                    >
+                      <option value="Enviado">Enviado</option>
+                      <option value="Em Confecção">Em Confecção</option>
+                      <option value="Recebido">Recebido</option>
+                      <option value="Instalado">Instalado</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-text-secondary uppercase tracking-widest ml-1">Custo (R$)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.cost}
+                      onChange={(e) => setFormData({ ...formData, cost: Number(e.target.value) })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-cyan-500/20 font-black"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-4 pt-8 border-t border-zinc-100 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="flex-1 px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all text-center"
                   >
-                    <option value="Enviado">Enviado</option>
-                    <option value="Em Confecção">Em Confecção</option>
-                    <option value="Recebido">Recebido</option>
-                    <option value="Instalado">Instalado</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-text-secondary uppercase mb-1">Custo (R$)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
                     disabled={isSaving}
-                    value={formData.cost}
-                    onChange={(e) => setFormData({ ...formData, cost: e.target.value === '' ? '' : Number(e.target.value) })}
-                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-                  />
+                    className="flex-1 px-4 py-3 rounded-2xl bg-cyan-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-cyan-700 shadow-lg shadow-cyan-500/20 transition-all text-center disabled:opacity-50"
+                  >
+                    {isSaving ? 'SALVANDO...' : 'SALVAR TRABALHO'}
+                  </button>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-text-secondary uppercase mb-1">Observações</label>
-                <textarea
-                  disabled={isSaving}
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  rows={3}
-                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none disabled:opacity-50"
-                  placeholder="Cor, detalhes específicos, etc."
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 mt-8">
-                <button
-                  type="button"
-                  disabled={isSaving}
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-6 py-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors font-medium disabled:opacity-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="px-8 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-bold shadow-lg shadow-indigo-500/20 disabled:opacity-70 flex items-center gap-2"
-                >
-                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Salvar
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
-      )}
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <ConfirmModal
         isOpen={isConfirmModalOpen}
