@@ -252,7 +252,7 @@ export const Profile: React.FC = () => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-indigo-600 rounded-[24px] sm:rounded-[32px] p-6 sm:p-8 text-white shadow-lg shadow--/ dark:shadow-none relative overflow-hidden"
+            className="bg-indigo-600 rounded-[24px] sm:rounded-[32px] p-6 sm:p-8 text-white shadow-lg dark:shadow-none relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-3xl -mr-16 -mt-16" />
             <div className="relative z-10">
@@ -352,7 +352,7 @@ export const Profile: React.FC = () => {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="w-full sm:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl sm:rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all flex items-center justify-center gap-3 disabled:opacity-50 shadow-lg shadow--/ dark:shadow-none active:scale-95"
+                  className="w-full sm:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl sm:rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all flex items-center justify-center gap-3 disabled:opacity-50 shadow-lg dark:shadow-none active:scale-95"
                 >
                   {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                   {saving ? 'Salvando...' : 'Salvar Alterações'}

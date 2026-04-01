@@ -128,61 +128,61 @@ const Marketing = () => {
   const filteredPatients = getFilteredPatients();
 
   return (
-    <div className="p-4 md:p-8 min-h-screen bg-gray-50/30">
+    <div className="p-4 md:p-8 min-h-screen bg-bg">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Marketing e Relacionamento</h1>
-            <p className="text-gray-500 mt-1">Comunique-se com seus pacientes e crie campanhas personalizadas.</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Marketing e Relacionamento</h1>
+            <p className="text-text-secondary mt-1">Comunique-se com seus pacientes e crie campanhas personalizadas.</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column: Filters and Patient List */}
           <div className="lg:col-span-4 space-y-4">
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200/60">
+            <div className="bg-surface p-5 rounded-2xl shadow-sm border border-border-subtle">
               <div className="relative mb-5">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4.5 h-4.5" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-secondary w-4.5 h-4.5" />
                 <input
                   type="text"
                   placeholder="Buscar paciente por nome..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-11 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none text-sm"
+                  className="w-full pl-11 pr-4 py-2.5 bg-bg border border-border-subtle rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none text-sm text-text-primary"
                 />
               </div>
 
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => handleFilterChange('all')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'all' ? 'bg-indigo-600 text-white shadow-md shadow--/ dark:shadow-none dark:shadow-none' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'all' ? 'bg-indigo-600 text-white shadow-md' : 'bg-surface text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-border-subtle'}`}
                 >
                   <Users size={14} /> Todos
                 </button>
                 <button
                   onClick={() => handleFilterChange('birthdays')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'birthdays' ? 'bg-pink-600 text-white shadow-md shadow--/ dark:shadow-none dark:shadow-none' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'birthdays' ? 'bg-pink-600 text-white shadow-md' : 'bg-surface text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-border-subtle'}`}
                 >
                   <Gift size={14} /> Aniversariantes
                 </button>
                 <button
                   onClick={() => handleFilterChange('preventive')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'preventive' ? 'bg-amber-600 text-white shadow-md shadow--/ dark:shadow-none dark:shadow-none' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'preventive' ? 'bg-amber-600 text-white shadow-md' : 'bg-surface text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-border-subtle'}`}
                 >
                   <Calendar size={14} /> Preventivo
                 </button>
                 <button
                   onClick={() => handleFilterChange('inactive')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'inactive' ? 'bg-red-600 text-white shadow-md shadow--/ dark:shadow-none dark:shadow-none' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'inactive' ? 'bg-red-600 text-white shadow-md' : 'bg-surface text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-border-subtle'}`}
                 >
                   <Filter size={14} /> Inativos
                 </button>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200/60 overflow-hidden flex flex-col max-h-[600px]">
-              <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+            <div className="bg-surface rounded-2xl shadow-sm border border-border-subtle overflow-hidden flex flex-col max-h-[600px]">
+              <div className="p-4 border-b border-border-subtle flex justify-between items-center bg-bg">
+                <span className="text-xs font-bold text-text-secondary uppercase tracking-wider">
                   {filteredPatients.length} Pacientes
                 </span>
                 <button 
@@ -193,29 +193,29 @@ const Marketing = () => {
                 </button>
               </div>
               
-              <div className="overflow-y-auto p-2 divide-y divide-gray-50">
+              <div className="overflow-y-auto p-2 divide-y divide-border-subtle">
                 {loading ? (
-                  <div className="text-center py-12 text-gray-400 text-sm italic">Carregando pacientes...</div>
+                  <div className="text-center py-12 text-text-secondary text-sm italic">Carregando pacientes...</div>
                 ) : filteredPatients.length === 0 ? (
-                  <div className="text-center py-12 text-gray-400 text-sm italic">Nenhum paciente encontrado.</div>
+                  <div className="text-center py-12 text-text-secondary text-sm italic">Nenhum paciente encontrado.</div>
                 ) : (
                   <div className="space-y-1">
                     {filteredPatients.map(patient => (
                       <label 
                         key={patient.id} 
-                        className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${selectedPatients.includes(patient.id) ? 'bg-indigo-50/80 border border-indigo-100 shadow-sm' : 'hover:bg-gray-50 border border-transparent'}`}
+                        className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${selectedPatients.includes(patient.id) ? 'bg-accent/10 border border-accent shadow-sm' : 'hover:bg-bg border border-transparent'}`}
                       >
                         <div className="relative flex items-center justify-center">
                           <input 
                             type="checkbox" 
                             checked={selectedPatients.includes(patient.id)}
                             onChange={() => togglePatientSelection(patient.id)}
-                            className="w-5 h-5 text-indigo-600 rounded-lg border-gray-300 focus:ring-indigo-500/20 transition-all cursor-pointer"
+                            className="w-5 h-5 text-accent rounded-lg border-border-subtle focus:ring-accent/10 transition-all cursor-pointer bg-bg"
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate">{patient.name}</p>
-                          <p className="text-xs text-gray-500 truncate font-medium">{patient.phone || 'Sem telefone'}</p>
+                          <p className="text-sm font-semibold text-text-primary truncate">{patient.name}</p>
+                          <p className="text-xs text-text-secondary truncate font-medium">{patient.phone || 'Sem telefone'}</p>
                         </div>
                       </label>
                     ))}
@@ -227,43 +227,43 @@ const Marketing = () => {
 
           {/* Right Column: Message Composer */}
           <div className="lg:col-span-8">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200/60 p-6 md:p-8 flex flex-col h-full">
+            <div className="bg-surface rounded-2xl shadow-sm border border-border-subtle p-6 md:p-8 flex flex-col h-full">
               <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
                   <MessageSquare className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">Compositor de Mensagens</h2>
-                  <p className="text-xs text-gray-500">Crie e envie mensagens personalizadas via WhatsApp.</p>
+                  <h2 className="text-lg font-bold text-text-primary">Compositor de Mensagens</h2>
+                  <p className="text-xs text-text-secondary">Crie e envie mensagens personalizadas via WhatsApp.</p>
                 </div>
               </div>
 
               <div className="space-y-6">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2.5">
+                  <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2.5">
                     Conteúdo da Mensagem
                   </label>
                   <div className="relative group">
                     <textarea
                       value={messageTemplate}
                       onChange={(e) => setMessageTemplate(e.target.value)}
-                      className="w-full h-72 p-5 bg-gray-50/50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all outline-none text-gray-700 leading-relaxed resize-none text-sm md:text-base"
+                      className="w-full h-72 p-5 bg-bg border border-border-subtle rounded-2xl focus:ring-4 focus:ring-accent/5 focus:border-accent transition-all outline-none text-text-primary leading-relaxed resize-none text-sm md:text-base"
                       placeholder="Escreva sua mensagem aqui..."
                     />
                     <div className="absolute bottom-4 right-4 flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-gray-400 uppercase bg-white px-2 py-1 rounded-md border border-gray-100">
-                        Variável: <code className="text-indigo-600">{'{nome}'}</code>
+                      <span className="text-[10px] font-bold text-text-secondary uppercase bg-surface px-2 py-1 rounded-md border border-border-subtle">
+                        Variável: <code className="text-accent">{'{nome}'}</code>
                       </span>
                     </div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-5">
-                    <h4 className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-5">
+                    <h4 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                       <Gift size={14} /> Dicas de Marketing
                     </h4>
-                    <ul className="text-xs text-blue-700 space-y-2.5">
+                    <ul className="text-xs text-blue-700 dark:text-blue-300/80 space-y-2.5">
                       <li className="flex items-start gap-2">
                         <span className="w-1 h-1 rounded-full bg-blue-400 mt-1.5 shrink-0" />
                         Mantenha a mensagem curta e direta ao ponto.
@@ -274,31 +274,31 @@ const Marketing = () => {
                       </li>
                     </ul>
                   </div>
-                  <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-5">
-                    <h4 className="text-xs font-bold text-indigo-800 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <div className="bg-accent/10 border border-accent/20 rounded-2xl p-5">
+                    <h4 className="text-xs font-bold text-accent uppercase tracking-wider mb-3 flex items-center gap-2">
                       <Users size={14} /> Público Alvo
                     </h4>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-indigo-700 font-medium">Pacientes Selecionados:</span>
-                      <span className="text-lg font-black text-indigo-600">{selectedPatients.length}</span>
+                      <span className="text-xs text-text-secondary font-medium">Pacientes Selecionados:</span>
+                      <span className="text-lg font-black text-accent">{selectedPatients.length}</span>
                     </div>
-                    <div className="mt-2 h-1.5 bg-indigo-100 rounded-full overflow-hidden">
+                    <div className="mt-2 h-1.5 bg-accent/10 rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-indigo-500 transition-all duration-500" 
+                        className="h-full bg-accent transition-all duration-500" 
                         style={{ width: `${Math.min((selectedPatients.length / Math.max(filteredPatients.length, 1)) * 100, 100)}%` }}
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <p className="text-xs text-gray-400 font-medium italic">
+                <div className="pt-6 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <p className="text-xs text-text-secondary font-medium italic">
                     * O envio em massa abrirá o WhatsApp para cada paciente individualmente ou simulará o envio.
                   </p>
                   <button
                     onClick={handleSendMessages}
                     disabled={selectedPatients.length === 0 || !messageTemplate.trim()}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-indigo-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow--/ dark:shadow-none dark:shadow-none active:scale-[0.98]"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-accent text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-accent-hover transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg active:scale-[0.98]"
                   >
                     <Send className="w-4.5 h-4.5" />
                     {selectedPatients.length > 1 ? 'Enviar em Massa' : 'Enviar WhatsApp'}

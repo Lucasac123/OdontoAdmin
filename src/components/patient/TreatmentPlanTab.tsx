@@ -224,7 +224,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
               <button 
                 onClick={handleSave}
                 disabled={isSaving}
-                className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow--/ dark:shadow-none flex items-center gap-2 transition-all active:scale-95"
+                className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg dark:shadow-none flex items-center gap-2 transition-all active:scale-95"
               >
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Salvar Agora
@@ -465,7 +465,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                 </button>
                 <button 
                   onClick={() => deleteProcedure(deleteConfirmId)}
-                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium shadow-lg shadow--/ dark:shadow-none transition-all"
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium shadow-lg dark:shadow-none transition-all"
                 >
                   Excluir
                 </button>

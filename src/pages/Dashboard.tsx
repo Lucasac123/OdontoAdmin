@@ -556,7 +556,7 @@ export const Dashboard: React.FC = () => {
             <button 
               type="submit" 
               disabled={isAddingNote}
-              className="mt-3 w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all font-medium shadow-lg shadow--/ dark:shadow-none disabled:opacity-50"
+              className="mt-3 w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all font-medium shadow-lg dark:shadow-none disabled:opacity-50"
             >
               {isAddingNote ? (
                 <>
@@ -627,11 +627,13 @@ export const Dashboard: React.FC = () => {
                   </Pie>
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: 'white', 
+                      backgroundColor: 'var(--card-bg)', 
                       borderRadius: '16px', 
-                      border: 'none', 
-                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' 
-                    }} 
+                      border: '1px solid var(--border-subtle)', 
+                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                      color: 'var(--text-primary)'
+                    }}
+                    itemStyle={{ color: 'var(--text-primary)' }}
                   />
                   <Legend verticalAlign="bottom" height={36}/>
                 </PieChart>

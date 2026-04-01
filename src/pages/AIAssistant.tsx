@@ -29,7 +29,7 @@ const genAI = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 export const AIAssistant: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'chat' | 'search' | 'analyze'>('chat');
-  const [selectedModel, setSelectedModel] = useState('gemini-flash-latest');
+  const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash');
   const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
@@ -128,14 +128,11 @@ export const AIAssistant: React.FC = () => {
     try {
       if (!genAI) throw new Error('Chave de API do Gemini não configurada.');
       
-      const response = await (genAI as any).models.generateContent({
-        model: selectedModel,
-        contents: {
-          parts: [{ text: `INSTRUÇÃO DE SISTEMA: Você é um assistente especializado em odontologia. Ajude dentistas com diagnósticos, planos de tratamento, legislação e dúvidas gerais.\n\nUSUÁRIO: ${userMessage}` }]
-        }
-      });
+      const model = genAI.getGenerativeModel({ model: selectedModel });
+      const response = await model.generateContent(`INSTRUÇÃO DE SISTEMA: Você é um assistente especializado em odontologia. Ajude dentistas com diagnósticos, planos de tratamento, legislação e dúvidas gerais.\n\nUSUÁRIO: ${userMessage}`);
       
-      setChatMessages(prev => [...prev, { role: 'model', text: response.text || 'Desculpe, não consegui gerar uma resposta.' }]);
+      const text = response.response.text();
+      setChatMessages(prev => [...prev, { role: 'model', text: text || 'Desculpe, não consegui gerar uma resposta.' }]);
     } catch (error) {
       const errorMessage = formatAIError(error);
       setChatMessages(prev => [...prev, { role: 'model', text: errorMessage, isError: true }]);
@@ -167,20 +164,17 @@ export const AIAssistant: React.FC = () => {
     try {
       if (!genAI) throw new Error('Chave de API do Gemini não configurada.');
       
-      const response = await (genAI as any).models.generateContent({
+      const model = genAI.getGenerativeModel({ 
         model: selectedModel,
-        contents: {
-          parts: [{ text: searchQuery }]
-        },
-        config: {
-          tools: [{ googleSearch: {} } as any]
-        }
+        tools: [{ googleSearchRetrieval: {} } as any]
       });
       
-      setSearchResult(response.text || 'Nenhum resultado encontrado.');
+      const response = await model.generateContent(searchQuery);
+      const text = response.response.text();
+      setSearchResult(text || 'Nenhum resultado encontrado.');
       
       // Grounding metadata
-      const grounding = (response as any).candidates?.[0]?.groundingMetadata;
+      const grounding = (response.response as any).candidates?.[0]?.groundingMetadata;
       if (grounding?.groundingChunks) {
         const links = grounding.groundingChunks
           .filter((chunk: any) => chunk.web)
@@ -235,17 +229,19 @@ export const AIAssistant: React.FC = () => {
       const base64Data = analyzeImage.split(',')[1];
       const mimeType = analyzeImage.match(/data:(.*?);/)?.[1] || 'image/jpeg';
 
-      const response = await (genAI as any).models.generateContent({
-        model: selectedModel,
-        contents: {
-          parts: [
-            { inlineData: { data: base64Data, mimeType } },
-            { text: analyzePrompt }
-          ]
+      const model = genAI.getGenerativeModel({ model: selectedModel });
+      const response = await model.generateContent([
+        analyzePrompt,
+        {
+          inlineData: {
+            data: base64Data,
+            mimeType
+          }
         }
-      });
+      ]);
       
-      setAnalyzeResult(response.text || 'Não foi possível analisar a imagem.');
+      const text = response.response.text();
+      setAnalyzeResult(text || 'Não foi possível analisar a imagem.');
     } catch (error) {
       const errorMessage = formatAIError(error);
       setAnalyzeResult(errorMessage);
@@ -264,7 +260,7 @@ export const AIAssistant: React.FC = () => {
       <div className="flex flex-col gap-4 shrink-0">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow--/ dark:shadow-none shrink-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg dark:shadow-none shrink-0">
               <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
@@ -678,7 +674,7 @@ export const AIAssistant: React.FC = () => {
               <button
                 onClick={handleAnalyzeSubmit}
                 disabled={!analyzeImage || isAnalyzeLoading || cooldown > 0}
-                className="w-full bg-indigo-600 text-white py-4 rounded-[20px] font-black uppercase tracking-[0.2em] text-xs hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-3 transition-all shadow-lg shadow--/ dark:shadow-none active:scale-95"
+                className="w-full bg-indigo-600 text-white py-4 rounded-[20px] font-black uppercase tracking-[0.2em] text-xs hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-3 transition-all shadow-lg dark:shadow-none active:scale-95"
               >
                 {isAnalyzeLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
                 Analisar Agora

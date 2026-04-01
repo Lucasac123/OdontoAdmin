@@ -494,7 +494,7 @@ const Inventory = () => {
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="w-full sm:w-auto px-8 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all font-bold text-sm shadow-lg shadow--/ dark:shadow-none active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto px-8 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all font-bold text-sm shadow-lg dark:shadow-none active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {isSaving ? (
                       <>

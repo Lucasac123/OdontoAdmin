@@ -891,7 +891,7 @@ export const Financial: React.FC = () => {
                       <span className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary text-xs font-black">%</span>
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={handleAddSplit} className="w-11 h-11 flex items-center justify-center bg-emerald-500 text-white rounded-2xl hover:bg-emerald-600 transition-colors shadow-lg shadow--/ dark:shadow-none">
+                      <button onClick={handleAddSplit} className="w-11 h-11 flex items-center justify-center bg-emerald-500 text-white rounded-2xl hover:bg-emerald-600 transition-colors shadow-lg dark:shadow-none">
                         <Check className="w-5 h-5" />
                       </button>
                       <button onClick={() => setIsAddingSplit(false)} className="w-11 h-11 flex items-center justify-center bg-zinc-200 dark:bg-zinc-800 text-text-secondary rounded-2xl hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors">

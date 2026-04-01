@@ -69,7 +69,7 @@ export const ConsentFormsTab = ({ patient }: { patient: Patient }) => {
           </button>
           <button 
             onClick={handlePrint}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-3 sm:px-4 py-2 rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors text-xs sm:text-sm shadow-lg shadow--/ dark:shadow-none dark:shadow-none"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-3 sm:px-4 py-2 rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors text-xs sm:text-sm shadow-lg dark:shadow-none dark:shadow-none"
           >
             <Printer className="w-3.5 h-3.5" />
             Imprimir

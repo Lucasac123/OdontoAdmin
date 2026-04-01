@@ -247,7 +247,7 @@ export const Patients: React.FC = () => {
                 <button 
                   type="submit" 
                   disabled={isSaving}
-                  className="bg-indigo-600 text-white px-8 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow--/ dark:shadow-none font-medium disabled:opacity-50 flex items-center gap-2"
+                  className="bg-indigo-600 text-white px-8 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg dark:shadow-none font-medium disabled:opacity-50 flex items-center gap-2"
                 >
                   {isSaving ? (
                     <>
