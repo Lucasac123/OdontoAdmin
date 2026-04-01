@@ -121,7 +121,6 @@ export const Pricing: React.FC = () => {
         const mimeType = file.type;
 
         const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-        const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const prompt = `Analise esta fatura/conta. Extraia as seguintes informações em formato JSON:
         {
           "name": "Nome da despesa (ex: Conta de Luz, Aluguel, Internet)",
@@ -130,12 +129,20 @@ export const Pricing: React.FC = () => {
         }
         Retorne APENAS o JSON válido, sem formatação markdown ou texto adicional.`;
 
-        const response = await model.generateContent([
-          prompt,
-          { inlineData: { data: base64Data, mimeType } }
-        ]);
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.0-flash',
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                { text: prompt },
+                { inlineData: { data: base64Data, mimeType } }
+              ]
+            }
+          ]
+        });
 
-        const text = response.response.text()?.replace(/```json/g, '').replace(/```/g, '').trim();
+        const text = response.text?.replace(/```json/g, '').replace(/```/g, '').trim();
         if (text) {
           const result = JSON.parse(text);
           

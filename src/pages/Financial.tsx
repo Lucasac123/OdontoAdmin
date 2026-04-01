@@ -61,20 +61,23 @@ export const Financial: React.FC = () => {
         
         const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
         const response = await ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
-          contents: {
-            parts: [
-              {
-                inlineData: {
-                  data: base64Data,
-                  mimeType: file.type
+          model: 'gemini-2.0-flash',
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  inlineData: {
+                    data: base64Data,
+                    mimeType: file.type
+                  }
+                },
+                {
+                  text: "Analise esta nota fiscal ou recibo. Extraia a descrição do item ou serviço, o valor total numérico, o tipo (income para receita/venda, expense para despesa/compra) e a data no formato YYYY-MM-DD. Retorne apenas o JSON."
                 }
-              },
-              {
-                text: "Analise esta nota fiscal ou recibo. Extraia a descrição do item ou serviço, o valor total numérico, o tipo (income para receita/venda, expense para despesa/compra) e a data no formato YYYY-MM-DD. Retorne apenas o JSON."
-              }
-            ]
-          },
+              ]
+            }
+          ],
           config: {
             responseMimeType: "application/json",
             responseSchema: {

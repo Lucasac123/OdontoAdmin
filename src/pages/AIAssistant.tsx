@@ -34,9 +34,10 @@ export const AIAssistant: React.FC = () => {
   const [cooldown, setCooldown] = useState(0);
 
   const MODELS = [
-    { id: 'gemini-1.5-flash', name: 'Flash', fullName: 'Gemini 1.5 Flash', description: 'Equilíbrio entre velocidade e inteligência' },
-    { id: 'gemini-2.0-flash-exp', name: 'Flash 2.0', fullName: 'Gemini 2.0 Flash (Exp)', description: 'Última geração, ultra rápido' },
-    { id: 'gemini-1.5-pro', name: 'Pro', fullName: 'Gemini 1.5 Pro', description: 'Mais inteligente, maior raciocínio' },
+    { id: 'gemini-2.0-flash', name: 'Flash 2.0', fullName: 'Gemini 2.0 Flash', description: 'Velocidade ultra-rápida e inteligência aprimorada' },
+    { id: 'gemini-2.0-flash-lite-preview-02-05', name: 'Lite 2.0', fullName: 'Gemini 2.0 Flash Lite', description: 'Otimizado para solicitações rápidas e básicas' },
+    { id: 'gemini-1.5-pro', name: 'Pro 1.5', fullName: 'Gemini 1.5 Pro', description: 'Raciocínio complexo e análise profunda' },
+    { id: 'gemini-1.5-flash', name: 'Flash 1.5', fullName: 'Gemini 1.5 Flash', description: 'Equilíbrio entre velocidade e inteligência' },
   ];
   
   const currentModel = MODELS.find(m => m.id === selectedModel) || MODELS[0];
@@ -128,10 +129,17 @@ export const AIAssistant: React.FC = () => {
     try {
       if (!genAI) throw new Error('Chave de API do Gemini não configurada.');
       
-      const model = genAI.getGenerativeModel({ model: selectedModel });
-      const response = await model.generateContent(`INSTRUÇÃO DE SISTEMA: Você é um assistente especializado em odontologia. Ajude dentistas com diagnósticos, planos de tratamento, legislação e dúvidas gerais.\n\nUSUÁRIO: ${userMessage}`);
+      const response = await genAI.models.generateContent({
+        model: selectedModel,
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: `INSTRUÇÃO DE SISTEMA: Você é um assistente especializado em odontologia. Ajude dentistas com diagnósticos, planos de tratamento, legislação e dúvidas gerais.\n\nUSUÁRIO: ${userMessage}` }]
+          }
+        ]
+      });
       
-      const text = response.response.text();
+      const text = response.text;
       setChatMessages(prev => [...prev, { role: 'model', text: text || 'Desculpe, não consegui gerar uma resposta.' }]);
     } catch (error) {
       const errorMessage = formatAIError(error);
@@ -164,17 +172,17 @@ export const AIAssistant: React.FC = () => {
     try {
       if (!genAI) throw new Error('Chave de API do Gemini não configurada.');
       
-      const model = genAI.getGenerativeModel({ 
+      const response = await (genAI.models as any).generateContent({ 
         model: selectedModel,
-        tools: [{ googleSearchRetrieval: {} } as any]
+        contents: [{ role: 'user', parts: [{ text: searchQuery }] }],
+        tools: [{ googleSearchRetrieval: {} }]
       });
       
-      const response = await model.generateContent(searchQuery);
-      const text = response.response.text();
+      const text = response.text;
       setSearchResult(text || 'Nenhum resultado encontrado.');
       
       // Grounding metadata
-      const grounding = (response.response as any).candidates?.[0]?.groundingMetadata;
+      const grounding = (response as any).candidates?.[0]?.groundingMetadata;
       if (grounding?.groundingChunks) {
         const links = grounding.groundingChunks
           .filter((chunk: any) => chunk.web)
@@ -229,18 +237,25 @@ export const AIAssistant: React.FC = () => {
       const base64Data = analyzeImage.split(',')[1];
       const mimeType = analyzeImage.match(/data:(.*?);/)?.[1] || 'image/jpeg';
 
-      const model = genAI.getGenerativeModel({ model: selectedModel });
-      const response = await model.generateContent([
-        analyzePrompt,
-        {
-          inlineData: {
-            data: base64Data,
-            mimeType
+      const response = await genAI.models.generateContent({
+        model: selectedModel,
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: analyzePrompt },
+              {
+                inlineData: {
+                  data: base64Data,
+                  mimeType
+                }
+              }
+            ]
           }
-        }
-      ]);
+        ]
+      });
       
-      const text = response.response.text();
+      const text = response.text;
       setAnalyzeResult(text || 'Não foi possível analisar a imagem.');
     } catch (error) {
       const errorMessage = formatAIError(error);

@@ -114,7 +114,7 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
         setIsAnalyzing(false);
         return;
       }
-      const ai = new GoogleGenAI(apiKey);
+      const ai = new GoogleGenAI({ apiKey });
       
       const imageParts = files.slice(0, 3).map(file => ({
         inlineData: {
@@ -124,13 +124,16 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
       }));
 
       const response = await ai.models.generateContent({
-        model: 'gemini-1.5-flash',
-        contents: {
-          parts: [
-            ...imageParts,
-            { text: `Analise estas imagens odontológicas para o dente número ${toothId}. Sugira possíveis diagnósticos como cáries, restaurações, etc. Seja breve.` }
-          ]
-        }
+        model: 'gemini-2.0-flash',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              ...imageParts,
+              { text: `Analise estas imagens odontológicas para o dente número ${toothId}. Sugira possíveis diagnósticos como cáries, restaurações, etc. Seja breve.` }
+            ]
+          }
+        ]
       });
       setAiAnalysis(response.text || 'Nenhuma análise disponível.');
     } catch (error) {

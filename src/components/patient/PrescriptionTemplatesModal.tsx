@@ -100,22 +100,25 @@ export const PrescriptionTemplatesModal: React.FC<PrescriptionTemplatesModalProp
       reader.onloadend = async () => {
         const base64Data = (reader.result as string).split(',')[1];
         
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
         const response = await ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
-          contents: {
-            parts: [
-              {
-                inlineData: {
-                  data: base64Data,
-                  mimeType: file.type
+          model: 'gemini-2.0-flash',
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  inlineData: {
+                    data: base64Data,
+                    mimeType: file.type
+                  }
+                },
+                {
+                  text: "Extraia o texto deste documento odontológico (receita, atestado, etc). Formate o texto de forma limpa, mantendo a estrutura de parágrafos e listas. Não inclua cabeçalhos com dados específicos de pacientes se puder evitar, ou substitua por espaços em branco para preenchimento. Retorne apenas o texto extraído."
                 }
-              },
-              {
-                text: "Extraia o texto deste documento odontológico (receita, atestado, etc). Formate o texto de forma limpa, mantendo a estrutura de parágrafos e listas. Não inclua cabeçalhos com dados específicos de pacientes se puder evitar, ou substitua por espaços em branco para preenchimento. Retorne apenas o texto extraído."
-              }
-            ]
-          }
+              ]
+            }
+          ]
         });
 
         if (response.text) {

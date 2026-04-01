@@ -73,16 +73,18 @@ const SidebarContent = ({
         to="/ai-assistant"
         onClick={() => setIsMobileMenuOpen(false)}
         className={({ isActive }) =>
-          `flex items-center gap-3 rounded-2xl transition-all duration-300 ${
+          `flex items-center rounded-2xl transition-[background-color,border-color,color] duration-200 ${
             isActive 
               ? 'bg-indigo-600 text-white shadow-premium border-l-4 border-indigo-400' 
               : 'text-text-secondary hover:text-indigo-600 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5'
-          } ${isCollapsed ? 'w-12 h-12 justify-center px-0 mx-auto' : 'px-4 py-3.5 w-full'}`
+          } ${isCollapsed ? 'w-12 h-12 justify-center mx-auto' : 'px-4 py-3.5 w-full gap-3'}`
         }
         title="IA Assistente"
       >
-        <BrainCircuit className="w-5 h-5" />
-        {!isCollapsed && <span className="font-medium">IA Assistente</span>}
+        <div className="w-5 h-5 flex items-center justify-center shrink-0">
+          <BrainCircuit className="w-5 h-5" />
+        </div>
+        {!isCollapsed && <span className="font-medium whitespace-nowrap">IA Assistente</span>}
       </NavLink>
     </div>
 
@@ -93,16 +95,18 @@ const SidebarContent = ({
           to={item.to}
           onClick={() => setIsMobileMenuOpen(false)}
           className={({ isActive }) =>
-            `flex items-center gap-3 rounded-2xl transition-all duration-300 ${
+            `flex items-center rounded-2xl transition-[background-color,border-color,color] duration-200 ${
               isActive 
                 ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold border-l-4 border-indigo-500 shadow-premium dark:shadow-none' 
                 : 'text-text-secondary hover:text-indigo-600 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5'
-            } ${isCollapsed ? 'w-12 h-12 justify-center px-0 mx-auto' : 'px-4 py-3.5 w-full'}`
+            } ${isCollapsed ? 'w-12 h-12 justify-center mx-auto' : 'px-4 py-3.5 w-full gap-3'}`
           }
           title={isCollapsed ? item.label : undefined}
         >
-          <item.icon className="w-5 h-5" />
-          {!isCollapsed && <span>{item.label}</span>}
+          <div className="w-5 h-5 flex items-center justify-center shrink-0">
+            <item.icon className="w-5 h-5" />
+          </div>
+          {!isCollapsed && <span className="whitespace-nowrap">{item.label}</span>}
         </NavLink>
       ))}
     </nav>
@@ -293,11 +297,15 @@ export const Layout: React.FC = () => {
         {/* Floating Collapse Button - Increased touch area */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-5 top-12 z-50 w-10 h-10 rounded-full bg-surface border border-border-subtle shadow-premium flex items-center justify-center text-text-secondary hover:text-indigo-600 transition-all active:scale-90"
+          className="absolute right-0 translate-x-1/2 top-12 z-50 w-8 h-8 rounded-full bg-surface border border-border-subtle shadow-premium flex items-center justify-center text-text-secondary hover:text-indigo-600 transition-all hover:scale-110 active:scale-95 group"
           title={isCollapsed ? "Expandir" : "Recolher"}
           aria-label={isCollapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
         >
-          {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+          {isCollapsed ? (
+            <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+          ) : (
+            <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+          )}
         </button>
       </div>
 
