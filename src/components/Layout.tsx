@@ -302,14 +302,14 @@ export const Layout: React.FC = () => {
         {/* Floating Collapse Button - Increased touch area */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute right-0 translate-x-1/2 top-8 z-50 w-8 h-8 rounded-full bg-surface border border-border-subtle shadow-premium flex items-center justify-center text-text-secondary hover:text-indigo-600 transition-all hover:scale-110 active:scale-95 group"
+          className="absolute right-0 translate-x-1/2 top-12 z-50 w-8 h-16 rounded-[24px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-center text-zinc-900 dark:text-zinc-100 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all hover:scale-105 active:scale-95 group"
           title={isCollapsed ? "Expandir" : "Recolher"}
           aria-label={isCollapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
         >
           {isCollapsed ? (
-            <ChevronRight className="w-4 h-4 ml-0.5 transition-transform group-hover:translate-x-0.5" />
+            <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" strokeWidth={3} />
           ) : (
-            <ChevronLeft className="w-4 h-4 mr-0.5 transition-transform group-hover:-translate-x-0.5" />
+            <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-0.5" strokeWidth={3} />
           )}
         </button>
       </div>
