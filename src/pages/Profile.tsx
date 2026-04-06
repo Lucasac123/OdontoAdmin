@@ -6,9 +6,10 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { motion } from 'motion/react';
-import { User, Mail, Phone, Calendar, Award, Save, Loader2, Camera, Lock, HardDrive } from 'lucide-react';
+import { User, Mail, Phone, Calendar, Award, Save, Loader2, Camera, Lock, HardDrive, Download, Upload } from 'lucide-react';
 import { storage } from '../firebase';
 import { getDriveAccessToken } from '../services/googleDriveService';
+import { backupToDrive, restoreFromDrive } from '../services/backupService';
 
 export const Profile: React.FC = () => {
   const { user } = useAuth();
@@ -17,6 +18,8 @@ export const Profile: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [isAuthenticatingDrive, setIsAuthenticatingDrive] = useState(false);
+  const [isBackingUp, setIsBackingUp] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -204,6 +207,46 @@ export const Profile: React.FC = () => {
       }
     } else {
       setStorageLocation('firebase');
+    }
+  };
+
+  const handleBackup = async () => {
+    if (!user) return;
+    setIsBackingUp(true);
+    try {
+      const success = await backupToDrive(user.uid);
+      if (success) {
+        alert('Backup realizado com sucesso no Google Drive!');
+      } else {
+        alert('Erro ao realizar backup. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('Backup error:', error);
+      alert('Erro ao realizar backup.');
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!user) return;
+    if (!window.confirm('Tem certeza que deseja restaurar os dados do Google Drive? Isso irá sobrescrever os dados atuais no Firebase.')) {
+      return;
+    }
+    setIsRestoring(true);
+    try {
+      const success = await restoreFromDrive(user.uid);
+      if (success) {
+        alert('Dados restaurados com sucesso do Google Drive!');
+        window.location.reload();
+      } else {
+        alert('Nenhum backup encontrado ou erro ao restaurar.');
+      }
+    } catch (error) {
+      console.error('Restore error:', error);
+      alert('Erro ao restaurar dados.');
+    } finally {
+      setIsRestoring(false);
     }
   };
 
@@ -491,11 +534,37 @@ export const Profile: React.FC = () => {
                   <motion.div 
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
-                    className="p-4 rounded-xl sm:rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30"
+                    className="p-4 rounded-xl sm:rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 space-y-4"
                   >
                     <p className="text-xs sm:text-sm font-medium text-indigo-700 dark:text-indigo-300 leading-relaxed">
                       Autenticado com sucesso! Seus dados do Assistente IA (histórico de chat) estão sendo salvos em uma pasta "DentalApp_Data" no seu Google Drive.
                     </p>
+                    
+                    <div className="pt-4 border-t border-indigo-200 dark:border-indigo-800/50">
+                      <h3 className="text-sm font-bold text-indigo-900 dark:text-indigo-100 mb-3">Backup e Restauração</h3>
+                      <p className="text-xs text-indigo-700 dark:text-indigo-300 mb-4">
+                        Você pode fazer o backup de todos os dados do seu consultório para o Google Drive ou restaurá-los a partir de um backup existente.
+                      </p>
+                      
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <button
+                          onClick={handleBackup}
+                          disabled={isBackingUp || isRestoring}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
+                        >
+                          {isBackingUp ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                          Fazer Backup
+                        </button>
+                        <button
+                          onClick={handleRestore}
+                          disabled={isBackingUp || isRestoring}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
+                        >
+                          {isRestoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                          Restaurar Dados
+                        </button>
+                      </div>
+                    </div>
                   </motion.div>
                 )}
               </div>
