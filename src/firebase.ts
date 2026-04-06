@@ -12,7 +12,7 @@ import {
   getDocFromCache,
   getDocFromServer,
   Firestore,
-  persistentLocalCache
+  memoryLocalCache
 } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import configFromJson from '../firebase-applet-config.json';
@@ -44,16 +44,16 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firestore with settings to maximize connectivity in restricted environments
 console.log("Initializing Firestore with databaseId:", firebaseConfig.firestoreDatabaseId);
 export const db: Firestore = initializeFirestore(app, {
-  localCache: persistentLocalCache()
+  localCache: memoryLocalCache(),
+  experimentalForceLongPolling: true
 }, firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)' 
   ? firebaseConfig.firestoreDatabaseId 
   : undefined);
 
+
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const storage = getStorage(app);
-
-// Connection test removed to prevent false positive UI errors
 
 export enum OperationType {
   CREATE = 'create',

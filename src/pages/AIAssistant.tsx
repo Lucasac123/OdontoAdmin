@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
+import { useStorage } from '../context/StorageContext';
+import { getDataService } from '../services/storageService';
+import { useAuth } from '../context/AuthContext';
 import { 
   Send, 
   Bot, 
@@ -28,8 +31,10 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 export const AIAssistant: React.FC = () => {
+  const { user } = useAuth();
+  const { storageLocation } = useStorage();
   const [activeTab, setActiveTab] = useState<'chat' | 'search' | 'analyze'>('chat');
-  const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash');
+  const [selectedModel, setSelectedModel] = useState('gemini-3-flash-preview');
   const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
@@ -47,6 +52,31 @@ export const AIAssistant: React.FC = () => {
   const [chatInput, setChatInput] = useState('');
   const [isChatLoading, setIsChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Load chat history
+  useEffect(() => {
+    const loadHistory = async () => {
+      if (!user) return;
+      const service = getDataService(storageLocation);
+      const history = await service.getData('chats', user.uid);
+      if (history && history.messages) {
+        setChatMessages(history.messages);
+      } else {
+        setChatMessages([]);
+      }
+    };
+    loadHistory();
+  }, [user, storageLocation]);
+
+  // Save chat history
+  useEffect(() => {
+    const saveHistory = async () => {
+      if (!user) return;
+      const service = getDataService(storageLocation);
+      await service.saveData('chats', user.uid, { messages: chatMessages });
+    };
+    saveHistory();
+  }, [chatMessages, user, storageLocation]);
 
   // Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -73,6 +103,15 @@ export const AIAssistant: React.FC = () => {
       setIsApiKeyMissing(true);
     }
   }, []);
+
+  const [suggestions, setSuggestions] = useState([
+    "Como tratar cárie profunda?",
+    "Protocolo de cirurgia siso",
+    "Legislação CRO 2024",
+    "Dicas de marketing clínico"
+  ]);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState('');
 
   useEffect(() => {
     if (cooldown > 0) {
@@ -271,11 +310,11 @@ export const AIAssistant: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 h-full min-h-0 max-w-5xl mx-auto w-full">
-      <div className="flex flex-col gap-4 shrink-0">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-4">
+    <div className="flex flex-col gap-2 h-full min-h-0 max-w-5xl mx-auto w-full">
+      <div className="flex flex-col gap-2 shrink-0">
+        <div className="flex flex-row items-center justify-between w-full gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg dark:shadow-none shrink-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-lg dark:shadow-none shrink-0">
               <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
@@ -284,7 +323,7 @@ export const AIAssistant: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-3 shrink-0 justify-end">
             {cooldown > 0 && (
               <motion.div 
                 initial={{ opacity: 0, x: 10 }}
@@ -322,7 +361,7 @@ export const AIAssistant: React.FC = () => {
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2 overflow-hidden"
+                    className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-[500px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-4 overflow-hidden"
                   >
                     <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 mb-1">
                       <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Configurações do Modelo</p>
@@ -446,22 +485,48 @@ export const AIAssistant: React.FC = () => {
                   <p className="text-text-secondary mb-12 text-sm">Sou seu assistente especializado em odontologia. Posso ajudar com diagnósticos, planos de tratamento, legislação e dúvidas gerais.</p>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
-                    {[
-                      "Como tratar cárie profunda?",
-                      "Protocolo de cirurgia siso",
-                      "Legislação CRO 2024",
-                      "Dicas de marketing clínico"
-                    ].map(suggestion => (
-                      <button 
-                        key={suggestion}
-                        onClick={() => {
-                          setChatInput(suggestion);
-                        }}
-                        className="p-4 text-xs font-bold text-left bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800 rounded-2xl hover:border-indigo-500 transition-colors text-text-secondary hover:text-indigo-600 group"
-                      >
-                        <span className="block mb-2 opacity-50 group-hover:opacity-100 transition-opacity"><MessageSquare className="w-4 h-4" /></span>
-                        {suggestion}
-                      </button>
+                    {suggestions.map((suggestion, index) => (
+                      <div key={index} className="relative group">
+                        {editingIndex === index ? (
+                          <input
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onBlur={() => {
+                              const newSuggestions = [...suggestions];
+                              newSuggestions[index] = editValue;
+                              setSuggestions(newSuggestions);
+                              setEditingIndex(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                const newSuggestions = [...suggestions];
+                                newSuggestions[index] = editValue;
+                                setSuggestions(newSuggestions);
+                                setEditingIndex(null);
+                              }
+                            }}
+                            className="w-full p-4 text-xs font-bold bg-white dark:bg-zinc-900 border border-indigo-500 rounded-2xl focus:outline-none"
+                            autoFocus
+                          />
+                        ) : (
+                          <button 
+                            onClick={() => setChatInput(suggestion)}
+                            className="w-full p-4 text-xs font-bold text-left bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800 rounded-2xl hover:border-indigo-500 transition-colors text-text-secondary hover:text-indigo-600 group"
+                          >
+                            <span className="block mb-2 opacity-50 group-hover:opacity-100 transition-opacity"><MessageSquare className="w-4 h-4" /></span>
+                            {suggestion}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            setEditingIndex(index);
+                            setEditValue(suggestion);
+                          }}
+                          className="absolute top-2 right-2 p-1.5 bg-white dark:bg-zinc-800 rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-opacity text-text-secondary hover:text-indigo-600"
+                        >
+                          <Settings className="w-3 h-3" />
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -612,9 +677,9 @@ export const AIAssistant: React.FC = () => {
                       </button>
                     )}
 
-                    {searchLinks.length > 0 && (
-                      <div className="mt-8 pt-8 border-t border-zinc-200 dark:border-zinc-800">
-                        <h4 className="text-xs font-black text-text-secondary uppercase tracking-[0.2em] mb-4">Referências e Fontes</h4>
+                    <div className="mt-8 pt-8 border-t border-zinc-200 dark:border-zinc-800">
+                      <h4 className="text-xs font-black text-text-secondary uppercase tracking-[0.2em] mb-4">Referências e Fontes</h4>
+                      {searchLinks.length > 0 ? (
                         <div className="grid grid-cols-1 gap-2">
                           {searchLinks.map((link, idx) => (
                             <a 
@@ -635,8 +700,10 @@ export const AIAssistant: React.FC = () => {
                             </a>
                           ))}
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        <p className="text-xs text-text-secondary italic">Nenhuma fonte encontrada para esta pesquisa.</p>
+                      )}
+                    </div>
                   </motion.div>
                 ) : null}
               </div>

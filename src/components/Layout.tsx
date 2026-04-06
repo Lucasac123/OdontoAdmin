@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Logo } from './Logo';
 import { GlobalSearch } from './GlobalSearch';
+import { useStorage } from '../context/StorageContext';
 import { 
   LayoutDashboard, 
   User,
@@ -25,7 +26,10 @@ import {
   Megaphone,
   Calculator,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Database,
+  Cloud,
+  HardDrive
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -46,6 +50,7 @@ const SidebarContent = ({
   toggleCalculator
 }: any) => {
   const [showSettings, setShowSettings] = React.useState(false);
+  const { storageLocation, setStorageLocation } = useStorage();
 
   return (
   <div className={`flex flex-col h-full bg-surface border-r border-border-subtle transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${isCollapsed ? 'w-20' : 'w-64'}`}>
@@ -88,7 +93,7 @@ const SidebarContent = ({
       </NavLink>
     </div>
 
-    <nav className="flex-1 px-4 space-y-2 mt-2 overflow-y-auto pb-4">
+    <nav className="flex-1 px-4 space-y-2 mt-2 overflow-y-auto hide-scrollbar pb-4">
       {navItems.map((item: any) => (
         <NavLink
           key={item.to}
@@ -297,14 +302,14 @@ export const Layout: React.FC = () => {
         {/* Floating Collapse Button - Increased touch area */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute right-0 translate-x-1/2 top-12 z-50 w-8 h-8 rounded-full bg-surface border border-border-subtle shadow-premium flex items-center justify-center text-text-secondary hover:text-indigo-600 transition-all hover:scale-110 active:scale-95 group"
+          className="absolute right-0 translate-x-1/2 top-8 z-50 w-8 h-8 rounded-full bg-surface border border-border-subtle shadow-premium flex items-center justify-center text-text-secondary hover:text-indigo-600 transition-all hover:scale-110 active:scale-95 group"
           title={isCollapsed ? "Expandir" : "Recolher"}
           aria-label={isCollapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
         >
           {isCollapsed ? (
-            <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+            <ChevronRight className="w-4 h-4 ml-0.5 transition-transform group-hover:translate-x-0.5" />
           ) : (
-            <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+            <ChevronLeft className="w-4 h-4 mr-0.5 transition-transform group-hover:-translate-x-0.5" />
           )}
         </button>
       </div>

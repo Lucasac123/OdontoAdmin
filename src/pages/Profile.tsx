@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../firebase';
+import { useStorage } from '../context/StorageContext';
+import { db, OperationType, handleFirestoreError } from '../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { motion } from 'motion/react';
-import { User, Mail, Phone, Calendar, Award, Save, Loader2, Camera, Lock } from 'lucide-react';
+import { User, Mail, Phone, Calendar, Award, Save, Loader2, Camera, Lock, HardDrive } from 'lucide-react';
 import { storage } from '../firebase';
+import { getDriveAccessToken } from '../services/googleDriveService';
 
 export const Profile: React.FC = () => {
   const { user } = useAuth();
+  const { storageLocation, setStorageLocation } = useStorage();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [passwordSaving, setPasswordSaving] = useState(false);
+  const [isAuthenticatingDrive, setIsAuthenticatingDrive] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -49,7 +53,7 @@ export const Profile: React.FC = () => {
           }));
         }
       } catch (error) {
-        console.error("Error fetching profile:", error);
+        handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
       } finally {
         setLoading(false);
       }
@@ -78,8 +82,7 @@ export const Profile: React.FC = () => {
       });
       alert('Perfil atualizado com sucesso!');
     } catch (error) {
-      console.error("Error updating profile:", error);
-      alert('Erro ao atualizar perfil. Tente novamente.');
+      handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
     } finally {
       setSaving(false);
     }
@@ -175,6 +178,32 @@ export const Profile: React.FC = () => {
       alert('Erro ao atualizar foto de perfil. Tente novamente.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleStorageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value as 'firebase' | 'drive';
+    
+    if (value === 'drive') {
+      setIsAuthenticatingDrive(true);
+      try {
+        const token = await getDriveAccessToken();
+        if (token) {
+          setStorageLocation('drive');
+          alert('Autenticado com sucesso no Google Drive!');
+        } else {
+          alert('Falha ao autenticar com o Google Drive. O armazenamento retornou para o Firebase.');
+          setStorageLocation('firebase');
+        }
+      } catch (error) {
+        console.error('Drive auth error:', error);
+        alert('Erro ao conectar com o Google Drive.');
+        setStorageLocation('firebase');
+      } finally {
+        setIsAuthenticatingDrive(false);
+      }
+    } else {
+      setStorageLocation('firebase');
     }
   };
 
@@ -424,6 +453,53 @@ export const Profile: React.FC = () => {
                 </>
               )}
             </form>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-surface rounded-[24px] sm:rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+          >
+            <div className="p-6 sm:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+              <h2 className="text-lg sm:text-xl font-black text-text-primary tracking-tight">Armazenamento de Dados</h2>
+              <HardDrive className="w-5 h-5 text-indigo-600" />
+            </div>
+
+            <div className="p-6 sm:p-8 space-y-6">
+              <div className="space-y-4">
+                <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Local de Armazenamento</label>
+                <div className="relative">
+                  <select
+                    value={storageLocation}
+                    onChange={handleStorageChange}
+                    disabled={isAuthenticatingDrive}
+                    className="w-full px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium appearance-none cursor-pointer disabled:opacity-50"
+                  >
+                    <option value="firebase">Firebase (Nuvem Padrão)</option>
+                    <option value="drive">Google Drive (Pasta Pessoal)</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                    {isAuthenticatingDrive ? (
+                      <Loader2 className="w-4 h-4 text-indigo-600 animate-spin" />
+                    ) : (
+                      <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                    )}
+                  </div>
+                </div>
+                {storageLocation === 'drive' && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="p-4 rounded-xl sm:rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30"
+                  >
+                    <p className="text-xs sm:text-sm font-medium text-indigo-700 dark:text-indigo-300 leading-relaxed">
+                      Autenticado com sucesso! Seus dados do Assistente IA (histórico de chat) estão sendo salvos em uma pasta "DentalApp_Data" no seu Google Drive.
+                    </p>
+                  </motion.div>
+                )}
+              </div>
+            </div>
           </motion.div>
         </div>
       </div>

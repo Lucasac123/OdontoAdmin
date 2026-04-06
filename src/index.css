@@ -1,6 +1,18 @@
 @import "tailwindcss";
 
 @theme {
+  --color-indigo-50: #f7f3f0;
+  --color-indigo-100: #f5f5f1;
+  --color-indigo-200: #e8d5c4;
+  --color-indigo-300: #c2a385;
+  --color-indigo-400: #e6ab3b;
+  --color-indigo-500: #c96520;
+  --color-indigo-600: #af571b;
+  --color-indigo-700: #8a4415;
+  --color-indigo-800: #6b3510;
+  --color-indigo-900: #4a240b;
+  --color-indigo-950: #2b1506;
+  
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-text-primary: var(--text-primary);
@@ -18,8 +30,8 @@
   --surface: #ffffff;
   --text-primary: #0f172a;
   --text-secondary: #64748b;
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
+  --accent: #af571b;
+  --accent-hover: #8a4415;
   --border-subtle: rgba(0, 0, 0, 0.06);
   --shadow-premium: 0 10px 30px -10px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
   --shadow-premium-hover: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
@@ -31,8 +43,8 @@
   --surface: #0f172a;
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
-  --accent: #818cf8;
-  --accent-hover: #a5b4fc;
+  --accent: #e6ab3b;
+  --accent-hover: #c2a385;
   --border-subtle: rgba(255, 255, 255, 0.08);
   --shadow-premium: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
   --shadow-premium-hover: 0 20px 40px -12px rgba(0, 0, 0, 0.7);
