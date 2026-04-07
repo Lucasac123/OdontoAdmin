@@ -143,7 +143,7 @@ export const PatientDetail: React.FC = () => {
         </div>
         
         <div className="p-4 md:p-6 min-h-[400px]">
-          <AnimatePresence mode="popLayout" custom={direction}>
+          <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={activeTab}
               custom={direction}

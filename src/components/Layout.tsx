@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation, useOutlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Logo } from './Logo';
@@ -53,9 +53,9 @@ const SidebarContent = ({
   const { storageLocation, setStorageLocation } = useStorage();
 
   return (
-  <div className={`flex flex-col h-full bg-surface border-r border-border-subtle transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${isCollapsed ? 'w-20' : 'w-64'}`}>
-    <div className={`p-6 pb-4 flex items-center justify-between gap-2 ${isCollapsed ? 'flex-col px-2 items-center' : ''}`}>
-      <div className={`${isCollapsed ? '' : 'flex-1'}`}>
+  <div className={`flex flex-col h-full bg-surface border-r border-border-subtle transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${isCollapsed ? 'w-20' : 'w-full md:w-64'}`}>
+    <div className={`p-4 md:p-6 pb-4 flex items-center justify-between gap-2 ${isCollapsed ? 'flex-col px-2 items-center' : ''}`}>
+      <div className={`${isCollapsed ? '' : 'flex-1 min-w-0'}`}>
         {!isCollapsed ? (
           <Logo />
         ) : (
@@ -66,7 +66,7 @@ const SidebarContent = ({
       {/* Mobile Close Button */}
       <button 
         onClick={() => setIsMobileMenuOpen(false)}
-        className="md:hidden p-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl"
+        className="md:hidden p-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl shrink-0"
         aria-label="Fechar menu"
       >
         <X className="w-6 h-6" />
@@ -189,14 +189,15 @@ const SidebarContent = ({
             )}
           </button>
           
-          {!isCollapsed && deferredPrompt && (
+          {deferredPrompt && (
             <button
               onClick={handleInstallPWA}
-              className="p-2 rounded-xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600/20 transition-all border border-indigo-500/20"
+              className={`p-2 rounded-xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600/20 transition-all border border-indigo-500/20 flex items-center justify-center ${isCollapsed ? 'w-10 h-10' : 'w-full gap-2 px-3 py-2'}`}
               title="Instalar App"
               aria-label="Instalar aplicativo"
             >
-              <Download className="w-5 h-5" />
+              <Download className="w-5 h-5 shrink-0" />
+              {!isCollapsed && <span className="font-bold text-xs">Instalar App</span>}
             </button>
           )}
           
@@ -237,6 +238,7 @@ export const Layout: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const outlet = useOutlet();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = React.useState(false);
@@ -381,7 +383,7 @@ export const Layout: React.FC = () => {
             </div>
           )}
           <div className="pt-6 p-4 md:pt-10 md:p-8 max-w-7xl mx-auto min-h-full flex flex-col">
-            <AnimatePresence mode="popLayout">
+            <AnimatePresence mode="wait">
               <motion.div 
                 key={location.pathname}
                 initial={{ opacity: 0, y: 10 }}
@@ -390,7 +392,7 @@ export const Layout: React.FC = () => {
                 transition={{ duration: 0.2, ease: 'easeOut' }}
                 className="flex-1 flex flex-col"
               >
-                <Outlet />
+                {outlet}
               </motion.div>
             </AnimatePresence>
           </div>
