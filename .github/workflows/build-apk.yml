@@ -77,6 +77,12 @@ jobs:
           with open('android/app/release.keystore', 'wb') as f:
               f.write(base64.b64decode(keystore_b64))
 
+      - name: Restore Gradle Wrapper JAR
+        working-directory: ./android/gradle/wrapper
+        run: |
+          rm -f gradle-wrapper.jar
+          wget -q https://raw.githubusercontent.com/gradle/gradle/master/gradle/wrapper/gradle-wrapper.jar
+
       - name: Build APK
         working-directory: ./android
         run: |
