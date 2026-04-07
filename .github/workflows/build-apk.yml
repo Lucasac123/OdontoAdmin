@@ -77,6 +77,10 @@ jobs:
           with open('android/app/release.keystore', 'wb') as f:
               f.write(base64.b64decode(keystore_b64))
 
+      - name: Regenerate Gradle Wrapper
+        working-directory: ./android
+        run: gradle wrapper
+
       - name: Build APK
         working-directory: ./android
         run: |
