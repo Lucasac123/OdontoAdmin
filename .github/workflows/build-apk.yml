@@ -85,7 +85,7 @@ jobs:
         working-directory: ./android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug \
+          ./gradlew assembleDebug --stacktrace --info \
             -PRELEASE_STORE_FILE=release.keystore \
             -PRELEASE_STORE_PASSWORD="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
             -PRELEASE_KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}" \

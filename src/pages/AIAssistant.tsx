@@ -211,10 +211,12 @@ export const AIAssistant: React.FC = () => {
     try {
       if (!genAI) throw new Error('Chave de API do Gemini não configurada.');
       
-      const response = await (genAI.models as any).generateContent({ 
+      const response = await genAI.models.generateContent({ 
         model: selectedModel,
-        contents: [{ role: 'user', parts: [{ text: searchQuery }] }],
-        tools: [{ googleSearchRetrieval: {} }]
+        contents: searchQuery,
+        config: {
+          tools: [{ googleSearch: {} }]
+        }
       });
       
       const text = response.text;
