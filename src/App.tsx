@@ -5,6 +5,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { StorageProvider } from './context/StorageContext';
 import { Layout } from './components/Layout';
 import { LoadingScreen } from './components/LoadingScreen';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Dashboard } from './pages/Dashboard';
 import { Patients } from './pages/Patients';
 import { PatientDetail } from './pages/PatientDetail';
@@ -50,31 +51,33 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <StorageProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-              <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                <Route index element={<Dashboard />} />
-                <Route path="dentists" element={<Dentists />} />
-                <Route path="patients" element={<Patients />} />
-                <Route path="patients/:id" element={<PatientDetail />} />
-                <Route path="agenda" element={<Agenda />} />
-                <Route path="financial" element={<Financial />} />
-                <Route path="pricing" element={<Pricing />} />
-                <Route path="inventory" element={<Inventory />} />
-                <Route path="laboratory" element={<Laboratory />} />
-                <Route path="marketing" element={<Marketing />} />
-                <Route path="ai-assistant" element={<AIAssistant />} />
-                <Route path="trash" element={<Trash />} />
-                <Route path="profile" element={<Profile />} />
-              </Route>
-            </Routes>
-          </BrowserRouter>
-        </StorageProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AuthProvider>
+          <StorageProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+                <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="dentists" element={<Dentists />} />
+                  <Route path="patients" element={<Patients />} />
+                  <Route path="patients/:id" element={<PatientDetail />} />
+                  <Route path="agenda" element={<Agenda />} />
+                  <Route path="financial" element={<Financial />} />
+                  <Route path="pricing" element={<Pricing />} />
+                  <Route path="inventory" element={<Inventory />} />
+                  <Route path="laboratory" element={<Laboratory />} />
+                  <Route path="marketing" element={<Marketing />} />
+                  <Route path="ai-assistant" element={<AIAssistant />} />
+                  <Route path="trash" element={<Trash />} />
+                  <Route path="profile" element={<Profile />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </StorageProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }

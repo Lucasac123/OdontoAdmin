@@ -1,33 +1,53 @@
+import { Capacitor } from '@capacitor/core';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+
 export const getDriveAccessToken = async (): Promise<string | null> => {
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
     const token = sessionStorage.getItem('gdrive_access_token');
     if (token) {
       resolve(token);
       return;
     }
 
-    const win = window as any;
-    if (!win.google) {
-      console.error('Google Identity Services not loaded');
-      resolve(null);
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const googleUser = await GoogleAuth.signIn();
+        if (googleUser.authentication.accessToken) {
+          sessionStorage.setItem('gdrive_access_token', googleUser.authentication.accessToken);
+          resolve(googleUser.authentication.accessToken);
+        } else {
+          resolve(null);
+        }
+      } catch (error) {
+        console.error('Error getting Drive token natively:', error);
+        resolve(null);
+      }
       return;
     }
 
-    const client = win.google.accounts.oauth2.initTokenClient({
-      client_id: '531539311792-07banoj8gike53of1ra4u4cin42cdt20.apps.googleusercontent.com',
-      scope: 'https://www.googleapis.com/auth/drive.file',
-      callback: (response: any) => {
-        if (response.error) {
-          console.error('Error getting Drive token:', response.error);
-          resolve(null);
-          return;
-        }
-        sessionStorage.setItem('gdrive_access_token', response.access_token);
-        resolve(response.access_token);
-      },
-    });
-
-    client.requestAccessToken();
+    // Web Platform - Use Firebase Auth to avoid redirect_uri_mismatch
+    try {
+      const auth = getAuth();
+      const provider = new GoogleAuthProvider();
+      provider.addScope('https://www.googleapis.com/auth/drive.file');
+      provider.setCustomParameters({
+        prompt: 'consent'
+      });
+      
+      const result = await signInWithPopup(auth, provider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      
+      if (credential && credential.accessToken) {
+        sessionStorage.setItem('gdrive_access_token', credential.accessToken);
+        resolve(credential.accessToken);
+      } else {
+        resolve(null);
+      }
+    } catch (error) {
+      console.error('Error getting Drive token via Firebase:', error);
+      resolve(null);
+    }
   });
 };
 
