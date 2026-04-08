@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, updateDoc, getDocs } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../firebase';
 import { Finance } from '../types';
-import { Plus, Trash2, DollarSign, TrendingUp, TrendingDown, PieChart, Edit2, Check, X, BarChart as BarChartIcon, User, Camera, Loader2, FileText, AlertTriangle, Building, Zap } from 'lucide-react';
+import { Plus, Trash2, DollarSign, TrendingUp, TrendingDown, PieChart, Edit2, Check, X, BarChart as BarChartIcon, User, Camera, Loader2, FileText, AlertTriangle, Building, Zap, Calendar } from 'lucide-react';
 import { AddFinanceForm } from '../components/patient/AddFinanceForm';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Patient } from '../types';
@@ -120,8 +120,11 @@ export const Financial: React.FC = () => {
   const [inventoryValue, setInventoryValue] = useState(0);
   const [inventoryAssetsValue, setInventoryAssetsValue] = useState(0);
   const [assetsValue, setAssetsValue] = useState(0);
+  const [valuationStartDate, setValuationStartDate] = useState<string | null>(null);
   const [isEditingAssets, setIsEditingAssets] = useState(false);
+  const [isEditingValuationDate, setIsEditingValuationDate] = useState(false);
   const [tempAssetsValue, setTempAssetsValue] = useState('');
+  const [tempValuationDate, setTempValuationDate] = useState('');
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -179,6 +182,7 @@ export const Financial: React.FC = () => {
       if (!snapshot.empty) {
         const data = snapshot.docs[0].data();
         setAssetsValue(data.assetsValue || 0);
+        setValuationStartDate(data.valuationStartDate || null);
       }
     });
 
@@ -218,6 +222,32 @@ export const Financial: React.FC = () => {
 
     addSyncTask(savePromise);
     setIsEditingAssets(false);
+  };
+
+  const handleSaveValuationDate = () => {
+    if (!auth.currentUser) return;
+    
+    const settingsQuery = query(collection(db, 'clinicSettings'), where('dentistId', '==', auth.currentUser.uid));
+    
+    const savePromise = getDocs(settingsQuery).then(async (snapshot) => {
+      if (snapshot.empty) {
+        await addDoc(collection(db, 'clinicSettings'), {
+          dentistId: auth.currentUser!.uid,
+          valuationStartDate: tempValuationDate,
+          updatedAt: new Date().toISOString()
+        });
+      } else {
+        await updateDoc(doc(db, 'clinicSettings', snapshot.docs[0].id), {
+          valuationStartDate: tempValuationDate,
+          updatedAt: new Date().toISOString()
+        });
+      }
+    }).catch(error => {
+      console.error("Error saving valuation start date:", error);
+    });
+
+    addSyncTask(savePromise);
+    setIsEditingValuationDate(false);
   };
 
   const handleAdd = (e: React.FormEvent) => {
@@ -423,7 +453,7 @@ export const Financial: React.FC = () => {
 
   const totalAllTimeIncome = finances.filter(f => f.type === 'income').reduce((acc, curr) => acc + curr.amount, 0);
   
-  const firstFinanceDate = finances.length > 0 ? new Date(finances[finances.length - 1].date) : new Date();
+  const firstFinanceDate = valuationStartDate ? new Date(valuationStartDate + '-01T12:00:00Z') : (finances.length > 0 ? new Date(finances[finances.length - 1].date) : new Date());
   const monthsSinceStart = Math.max(1, (new Date().getFullYear() - firstFinanceDate.getFullYear()) * 12 + (new Date().getMonth() - firstFinanceDate.getMonth()) + 1);
   const yearsSinceStart = Math.max(1, new Date().getFullYear() - firstFinanceDate.getFullYear() + 1);
 
@@ -646,12 +676,38 @@ export const Financial: React.FC = () => {
                 <p className="text-xs text-text-secondary font-bold uppercase tracking-widest">Valor estimado</p>
               </div>
             </div>
-            <button
-              onClick={() => setValuationMode(valuationMode === 'monthly' ? 'yearly' : 'monthly')}
-              className="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-[10px] font-black uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
-            >
-              {valuationMode === 'monthly' ? 'Mensal' : 'Anual'}
-            </button>
+            <div className="flex items-center gap-2">
+              {isEditingValuationDate ? (
+                <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
+                  <input
+                    type="month"
+                    value={tempValuationDate}
+                    onChange={e => setTempValuationDate(e.target.value)}
+                    className="bg-transparent border-none text-[10px] font-black uppercase outline-none text-text-primary"
+                  />
+                  <button onClick={handleSaveValuationDate} className="p-1 text-emerald-600 hover:bg-emerald-500/10 rounded">
+                    <Check className="w-3 h-3" />
+                  </button>
+                  <button onClick={() => setIsEditingValuationDate(false)} className="p-1 text-text-secondary hover:bg-zinc-500/10 rounded">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { setTempValuationDate(valuationStartDate || new Date().toISOString().substring(0, 7)); setIsEditingValuationDate(true); }}
+                  className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-text-secondary hover:text-indigo-600 transition-colors"
+                  title="Configurar data de início para média"
+                >
+                  <Calendar className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                onClick={() => setValuationMode(valuationMode === 'monthly' ? 'yearly' : 'monthly')}
+                className="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-[10px] font-black uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
+              >
+                {valuationMode === 'monthly' ? 'Mensal' : 'Anual'}
+              </button>
+            </div>
           </div>
           
           <div className="flex-1 flex flex-col justify-center">
