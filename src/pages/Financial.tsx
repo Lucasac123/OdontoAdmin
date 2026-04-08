@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, updateDoc, getDocs } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../firebase';
 import { Finance } from '../types';
-import { Plus, Trash2, DollarSign, TrendingUp, TrendingDown, PieChart, Edit2, Check, X, BarChart as BarChartIcon, User, Camera, Loader2, FileText, AlertTriangle, Building } from 'lucide-react';
+import { Plus, Trash2, DollarSign, TrendingUp, TrendingDown, PieChart, Edit2, Check, X, BarChart as BarChartIcon, User, Camera, Loader2, FileText, AlertTriangle, Building, Zap } from 'lucide-react';
 import { AddFinanceForm } from '../components/patient/AddFinanceForm';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Patient } from '../types';
@@ -45,6 +45,7 @@ export const Financial: React.FC = () => {
 
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().toISOString().substring(0, 7));
+  const [valuationMode, setValuationMode] = useState<'monthly' | 'yearly'>('monthly');
   const { addSyncTask } = useSync();
 
   const [isScanning, setIsScanning] = useState(false);
@@ -253,7 +254,7 @@ export const Financial: React.FC = () => {
     setFinanceToDelete(finance);
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (!financeToDelete) return;
     
     const deletePromise = moveToTrash('finances', financeToDelete.id, financeToDelete).catch(error => {
@@ -262,7 +263,6 @@ export const Financial: React.FC = () => {
     });
     
     addSyncTask(deletePromise);
-    await deletePromise;
     setFinanceToDelete(null);
   };
 
@@ -404,6 +404,12 @@ export const Financial: React.FC = () => {
     setEditSplitData({ name: split.name, percentage: split.percentage });
   };
 
+  const adjustTo100 = (id: string) => {
+    const currentTotal = splits.reduce((acc, curr) => acc + curr.percentage, 0);
+    const diff = 100 - currentTotal;
+    setSplits(splits.map(s => s.id === id ? { ...s, percentage: Math.max(0, s.percentage + diff) } : s));
+  };
+
   const saveEditSplit = () => {
     if (editingSplitId && editSplitData.name && editSplitData.percentage !== '' && editSplitData.percentage >= 0) {
       setSplits(splits.map(s => s.id === editingSplitId ? { 
@@ -416,7 +422,16 @@ export const Financial: React.FC = () => {
   };
 
   const totalAllTimeIncome = finances.filter(f => f.type === 'income').reduce((acc, curr) => acc + curr.amount, 0);
-  const companyValuation = totalAllTimeIncome + inventoryValue + assetsValue + inventoryAssetsValue;
+  
+  const firstFinanceDate = finances.length > 0 ? new Date(finances[finances.length - 1].date) : new Date();
+  const monthsSinceStart = Math.max(1, (new Date().getFullYear() - firstFinanceDate.getFullYear()) * 12 + (new Date().getMonth() - firstFinanceDate.getMonth()) + 1);
+  const yearsSinceStart = Math.max(1, new Date().getFullYear() - firstFinanceDate.getFullYear() + 1);
+
+  const averageMonthlyIncome = totalAllTimeIncome / monthsSinceStart;
+  const averageYearlyIncome = totalAllTimeIncome / yearsSinceStart;
+
+  const currentAverageIncome = valuationMode === 'monthly' ? averageMonthlyIncome : averageYearlyIncome;
+  const companyValuation = currentAverageIncome + inventoryValue + assetsValue + inventoryAssetsValue;
 
   return (
     <div className="space-y-8 overflow-hidden">
@@ -621,14 +636,22 @@ export const Financial: React.FC = () => {
         </div>
 
         <div className="premium-card p-8 !translate-y-0 hover:!shadow-premium flex flex-col h-full border-indigo-500/10">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-              <Building className="w-6 h-6" />
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                <Building className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-text-primary tracking-tight">Avaliação do Consultório</h3>
+                <p className="text-xs text-text-secondary font-bold uppercase tracking-widest">Valor estimado</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-black text-text-primary tracking-tight">Valuation</h3>
-              <p className="text-xs text-text-secondary font-bold uppercase tracking-widest">Valor da Clínica</p>
-            </div>
+            <button
+              onClick={() => setValuationMode(valuationMode === 'monthly' ? 'yearly' : 'monthly')}
+              className="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-[10px] font-black uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
+            >
+              {valuationMode === 'monthly' ? 'Mensal' : 'Anual'}
+            </button>
           </div>
           
           <div className="flex-1 flex flex-col justify-center">
@@ -640,6 +663,10 @@ export const Financial: React.FC = () => {
               <div className="flex justify-between items-center p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                 <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">Rendimentos (Total)</span>
                 <span className="font-black text-text-primary">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalAllTimeIncome)}</span>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">Média ({valuationMode === 'monthly' ? 'Mensal' : 'Anual'})</span>
+                <span className="font-black text-text-primary">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentAverageIncome)}</span>
               </div>
               <div className="flex justify-between items-center p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                 <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">Estoque de Consumo</span>
@@ -848,7 +875,7 @@ export const Financial: React.FC = () => {
                 <PieChart className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-xl font-black text-text-primary tracking-tight">Revenue Split</h3>
+                <h3 className="text-xl font-black text-text-primary tracking-tight">Divisão de ganhos</h3>
                 <p className="text-xs text-text-secondary font-bold uppercase tracking-widest">Distribuição automática</p>
               </div>
             </div>
@@ -953,7 +980,16 @@ export const Financial: React.FC = () => {
                           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((totalIncome * split.percentage) / 100)}
                         </p>
                       </div>
-                      <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-xl">{split.percentage}%</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-xl">{split.percentage}%</span>
+                        <button 
+                          onClick={() => adjustTo100(split.id)}
+                          className="p-1.5 text-text-secondary hover:text-indigo-600 hover:bg-indigo-500/10 rounded-lg transition-all active:scale-90 border border-zinc-200 dark:border-zinc-800"
+                          title="Ajustar para completar 100%"
+                        >
+                          <Zap className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                     <div className="relative h-3 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden shadow-inner">
                       <motion.div 
@@ -1001,7 +1037,6 @@ export const Financial: React.FC = () => {
         onConfirm={confirmDelete}
         onCancel={() => setFinanceToDelete(null)}
         variant="danger"
-        isLoading={!!financeToDelete}
       />
     </div>
   );
