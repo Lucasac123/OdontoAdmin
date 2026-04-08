@@ -1,4 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, Stage } from '@react-three/drei';
+import { STLLoader } from 'three-stdlib';
+import * as THREE from 'three';
+import daikon from 'daikon';
+import { FileText, Save, FileBox, Cuboid, Stethoscope, Layers } from 'lucide-react';
 import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
 import { 
   Send, 
@@ -26,6 +32,25 @@ import Markdown from 'react-markdown';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
+
+const PRESETS = [
+  { id: 'geral', name: 'Clínica Geral', prompt: 'Você é um assistente odontológico geral. Ajude o dentista com diagnósticos e condutas.' },
+  { id: 'panoramica', name: 'Radiologia: Panorâmica', prompt: 'Você é especialista em radiologia analisando uma panorâmica. Identifique estruturas maxilomandibulares, ATM, seios maxilares, dentes inclusos, lesões ósseas, áreas hipo/hiperdensas. Seja metodológico.' },
+  { id: 'periapical', name: 'Radiologia: Periapical', prompt: 'Foque em ápices radiculares, espaço periodontal, cristas alveolares, lâmina dura, lesões periapicais, adaptação de restaurações e tratamentos endoperiodontais.' },
+  { id: 'hof', name: 'Harmonização Orofacial', prompt: 'Você é especialista em HOF e anatomia facial. Analise proporções divinas, simetria facial, lipoatrofias estruturais, ptoses de coxins, e sulcamentos (nasogeniano, marionete). Sugira indicações e pontos de injeção de toxina ou preenchedores baseando-se em protocolos de anatomia avançada.' },
+  { id: 'odontograma', name: 'Mapeamento (Odontograma)', prompt: 'Atue como clínico em diagnóstico. Identifique, listando sistematicamente por elemento dental através da Notação FDI, dentes ausentes, hígidos, cariados, e presença de próteses, resinas ou implantes.' },
+  { id: 'tomografia', name: 'Tomografia (DICOM)', prompt: 'Você é Radiologista Avançado analisando fatia tomográfica. Descreva expansão/rompimento de corticais, alterações inflamatórias do seio maxilar, canalículos articulares, lesões císticas/tumorais (odontogênicas e não-odontogênicas) e íntima relação alveolar em terceiros molares.' },
+  { id: 'doc', name: 'Análise de Documento/Livro', prompt: 'Atue como pesquisador-consultor. Leia o PDF anexo e sintetize as condutas. Você tem as respostas baseadas e extraídas exclusivamente deste documento para servir de base bibliográfica sólida.'}
+];
+
+// Helper to render STL Object
+const STLModel = ({ geometry }: { geometry: THREE.BufferGeometry }) => {
+  return (
+    <mesh geometry={geometry}>
+      <meshStandardMaterial color="#c0c0c0" roughness={0.3} metalness={0.2} />
+    </mesh>
+  );
+};
 
 export const AIAssistant: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'chat' | 'search' | 'analyze'>('chat');
@@ -58,6 +83,14 @@ export const AIAssistant: React.FC = () => {
   // Analyze State
   const [analyzeImage, setAnalyzeImage] = useState<string | null>(null);
   const [analyzePrompt, setAnalyzePrompt] = useState('Analise esta imagem odontológica e descreva os achados.');
+  
+  const [fileType, setFileType] = useState<'image' | 'dcm' | 'stl' | 'pdf' | null>(null);
+  const [pdfData, setPdfData] = useState<string | null>(null);
+  const [pdfName, setPdfName] = useState<string | null>(null);
+  const [stlGeometry, setStlGeometry] = useState<THREE.BufferGeometry | null>(null);
+  const [selectedPreset, setSelectedPreset] = useState('geral');
+  const dcmCanvasRef = React.useRef<HTMLCanvasElement>(null);
+  const threeCanvasRef = React.useRef<HTMLCanvasElement>(null);
   const [analyzeResult, setAnalyzeResult] = useState('');
   const [isAnalyzeError, setIsAnalyzeError] = useState(false);
   const [isAnalyzeLoading, setIsAnalyzeLoading] = useState(false);
@@ -215,7 +248,87 @@ export const AIAssistant: React.FC = () => {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    setAnalyzeResult('');
+    setAnalyzeImage(null);
+    setPdfData(null);
+    setStlGeometry(null);
+
+    const fileName = file.name.toLowerCase();
+    
+    if (fileName.endsWith('.stl')) {
+      setFileType('stl');
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const result = event.target?.result as ArrayBuffer;
+        const loader = new STLLoader();
+        const geometry = loader.parse(result);
+        geometry.computeVertexNormals();
+        geometry.center();
+        setStlGeometry(geometry);
+      };
+      reader.readAsArrayBuffer(file);
+    } 
+    else if (fileName.endsWith('.dcm')) {
+      setFileType('dcm');
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const result = event.target?.result as ArrayBuffer;
+          const data = new DataView(result);
+          // @ts-ignore
+          const image = daikon.Series.parseImage(data);
+          if (image) {
+             const cols = image.getCols();
+             const rows = image.getRows();
+             
+             const canvas = document.createElement('canvas');
+             canvas.width = cols;
+             canvas.height = rows;
+             const ctx = canvas.getContext('2d');
+             
+             const imageData = ctx!.createImageData(cols, rows);
+             const pixels = image.getInterpretedData();
+             
+             let min = Infinity;
+             let max = -Infinity;
+             for(let i=0; i<pixels.length; i++) {
+                 if (pixels[i] < min) min = pixels[i];
+                 if (pixels[i] > max) max = pixels[i];
+             }
+             for (let i = 0; i < pixels.length; i++) {
+               const val = ((pixels[i] - window.Math.min(min, 0)) / (max - window.Math.min(min, 0))) * 255;
+               const index = i * 4;
+               imageData.data[index] = val;
+               imageData.data[index + 1] = val;
+               imageData.data[index + 2] = val;
+               imageData.data[index + 3] = 255;
+             }
+             ctx!.putImageData(imageData, 0, 0);
+             setAnalyzeImage(canvas.toDataURL('image/jpeg'));
+          }
+        } catch (err) {
+            console.error("Daikon falhou, fallback", err);
+            setAnalyzeResult("Erro ao ler o arquivo DICOM.");
+            setIsAnalyzeError(true);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } 
+    else if (file.type === 'application/pdf' || fileName.endsWith('.pdf')) {
+      setFileType('pdf');
+      setPdfName(file.name);
+      setSelectedPreset('doc');
+      const reader = new FileReader();
+      reader.onload = () => {
+         const result = reader.result as string;
+         setPdfData(result.split(',')[1]); 
+      };
+      reader.readAsDataURL(file);
+    } 
+    else {
+      setFileType('image');
       const reader = new FileReader();
       reader.onloadend = () => {
         setAnalyzeImage(reader.result as string);
@@ -225,32 +338,54 @@ export const AIAssistant: React.FC = () => {
   };
 
   const handleAnalyzeSubmit = async () => {
-    if (!analyzeImage) return;
+    if (!analyzeImage && !pdfData && !stlGeometry) return;
 
     setIsAnalyzeLoading(true);
     setAnalyzeResult('');
     setIsAnalyzeError(false);
 
     try {
-      if (!genAI) throw new Error('Chave de API do Gemini não configurada.');
       
-      const base64Data = analyzeImage.split(',')[1];
-      const mimeType = analyzeImage.match(/data:(.*?);/)?.[1] || 'image/jpeg';
+      let finalBase64 = analyzeImage ? analyzeImage.split(',')[1] : null;
+      let finalMime = analyzeImage ? (analyzeImage.match(/data:(.*?);/)?.[1] || 'image/jpeg') : null;
+
+      if (fileType === 'stl' && threeCanvasRef.current) {
+         try {
+           const dataUrl = threeCanvasRef.current.toDataURL('image/jpeg');
+           finalBase64 = dataUrl.split(',')[1];
+           finalMime = 'image/jpeg';
+         } catch(e) { }
+      }
+
+      if (!finalBase64 && !pdfData) throw new Error("Nenhum arquivo processado.");
+
+      const presetPrompt = PRESETS.find(p => p.id === selectedPreset)?.prompt || PRESETS[0].prompt;
+      const fullText = `INSTRUÇÃO DE COMPORTAMENTO: ${presetPrompt}\n\nUSUÁRIO: ${analyzePrompt}`;
+      
+      const parts: any[] = [{ text: fullText }];
+      
+      if (fileType === 'pdf' && pdfData) {
+         parts.push({
+           inlineData: {
+             data: pdfData,
+             mimeType: 'application/pdf'
+           }
+         });
+      } else if (finalBase64) {
+         parts.push({
+           inlineData: {
+             data: finalBase64,
+             mimeType: finalMime
+           }
+         });
+      }
 
       const response = await genAI.models.generateContent({
         model: selectedModel,
         contents: [
           {
             role: 'user',
-            parts: [
-              { text: analyzePrompt },
-              {
-                inlineData: {
-                  data: base64Data,
-                  mimeType
-                }
-              }
-            ]
+            parts
           }
         ]
       });
@@ -647,32 +782,74 @@ export const AIAssistant: React.FC = () => {
         {activeTab === 'analyze' && (
           <div className="h-full flex flex-col lg:flex-row p-6 sm:p-8 gap-8 overflow-y-auto">
             <div className="w-full lg:w-1/3 flex flex-col gap-6">
+              <div className="w-full">
+                <label className="text-xs font-black text-text-secondary uppercase tracking-[0.2em] ml-2 block mb-3">Especialidade / Foco da IA</label>
+                <div className="relative">
+                  <select
+                    value={selectedPreset}
+                    onChange={(e) => setSelectedPreset(e.target.value)}
+                    className="w-full appearance-none bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800 rounded-2xl py-3 pl-12 pr-10 text-sm font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                  >
+                    {PRESETS.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                  <Stethoscope className="w-5 h-5 text-indigo-500 absolute left-4 top-1/2 -translate-y-1/2" />
+                  <ChevronDown className="w-4 h-4 text-zinc-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+
               <div className="group relative aspect-square border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-[32px] flex flex-col items-center justify-center text-center bg-zinc-50 dark:bg-zinc-900/30 hover:border-indigo-500 transition-all overflow-hidden">
-                {analyzeImage ? (
+                {fileType === 'stl' && stlGeometry ? (
                   <>
-                    <img src={analyzeImage} alt="Upload" className="absolute inset-0 w-full h-full object-cover" referrerPolicy="no-referrer" />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                      <p className="text-white font-black uppercase tracking-widest text-xs flex items-center gap-2">
-                        <Camera className="w-4 h-4" /> Trocar Imagem
-                      </p>
+                    <Canvas ref={threeCanvasRef} gl={{ preserveDrawingBuffer: true }} camera={{ position: [0, 0, 100], fov: 50 }}>
+                      <color attach="background" args={['#18181b']} />
+                      <ambientLight intensity={0.5} />
+                      <directionalLight position={[10, 10, 10]} intensity={1} />
+                      <Stage environment="city" intensity={0.5}>
+                        <STLModel geometry={stlGeometry} />
+                      </Stage>
+                      <OrbitControls makeDefault />
+                    </Canvas>
+                    <div className="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-md rounded-xl p-2 z-10 flex items-center justify-center pointer-events-none">
+                       <p className="text-[10px] text-white font-bold tracking-widest uppercase">Rotacione para focar → Capturar Análise</p>
                     </div>
+                  </>
+                ) : fileType === 'pdf' && pdfData ? (
+                  <div className="flex flex-col items-center justify-center p-8 space-y-4 h-full w-full bg-indigo-50 dark:bg-indigo-500/10">
+                    <div className="w-20 h-20 bg-white dark:bg-zinc-800 rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm">
+                       <FileText className="w-10 h-10" />
+                    </div>
+                    <p className="text-sm font-bold text-text-primary px-4 line-clamp-2">{pdfName}</p>
+                    <span className="text-[10px] font-black uppercase text-indigo-500 bg-white dark:bg-zinc-900 px-3 py-1 rounded-full">PDF Carregado</span>
+                  </div>
+                ) : analyzeImage ? (
+                  <>
+                    <img src={analyzeImage} alt="Upload" className="absolute inset-0 w-full h-full object-contain bg-black/5" referrerPolicy="no-referrer" />
                   </>
                 ) : (
                   <div className="p-8 space-y-4">
                     <div className="w-16 h-16 rounded-3xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto text-zinc-400 group-hover:text-indigo-500 transition-colors">
-                      <Upload className="w-8 h-8" />
+                      <Layers className="w-8 h-8" />
                     </div>
                     <div>
-                      <p className="text-sm font-black text-text-primary uppercase tracking-widest mb-2">Upload de Imagem</p>
-                      <p className="text-xs text-text-secondary font-medium">Radiografias, fotos intraorais ou exames</p>
+                      <p className="text-sm font-black text-text-primary uppercase tracking-widest mb-2">Upload Extendido</p>
+                      <p className="text-xs text-text-secondary font-medium">Imagens, Radiologia DICOM, PDFs ou Modelos 3D (STL)</p>
                     </div>
                   </div>
                 )}
+                
+                <div className={`absolute inset-0 flex items-center justify-center backdrop-blur-sm transition-opacity opacity-0 group-hover:opacity-100 ${(fileType === 'stl' || fileType === 'pdf') ? 'pointer-events-none' : ''}`}>
+                  <p className="text-white bg-black/70 px-4 py-2 rounded-xl font-black uppercase tracking-widest text-xs flex items-center gap-2">
+                    <Upload className="w-4 h-4" /> Substituir Arquivo
+                  </p>
+                </div>
+
                 <input 
                   type="file" 
-                  accept="image/*" 
+                  accept="image/*, .dcm, application/dicom, .stl, application/pdf" 
                   onChange={handleImageUpload}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                 />
               </div>
               
@@ -688,7 +865,7 @@ export const AIAssistant: React.FC = () => {
 
               <button
                 onClick={handleAnalyzeSubmit}
-                disabled={!analyzeImage || isAnalyzeLoading || cooldown > 0}
+                disabled={(!analyzeImage && !pdfData && !stlGeometry) || isAnalyzeLoading || cooldown > 0}
                 className="w-full bg-indigo-600 text-white py-4 rounded-[20px] font-black uppercase tracking-[0.2em] text-xs hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-3 transition-all shadow-lg dark:shadow-none active:scale-95"
               >
                 {isAnalyzeLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}

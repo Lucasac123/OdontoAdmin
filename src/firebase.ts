@@ -38,11 +38,9 @@ const firebaseConfig = {
   firestoreDatabaseId: getEnvVar(import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID, configFromJson.firestoreDatabaseId)
 };
 
-console.log("firebaseConfig:", firebaseConfig);
 const app = initializeApp(firebaseConfig);
 
 // Initialize Firestore with settings to maximize connectivity in restricted environments
-console.log("Initializing Firestore with databaseId:", firebaseConfig.firestoreDatabaseId);
 export const db: Firestore = initializeFirestore(app, {
   localCache: persistentLocalCache()
 }, firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)' 
@@ -52,8 +50,6 @@ export const db: Firestore = initializeFirestore(app, {
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const storage = getStorage(app);
-
-// Connection test removed to prevent false positive UI errors
 
 export enum OperationType {
   CREATE = 'create',

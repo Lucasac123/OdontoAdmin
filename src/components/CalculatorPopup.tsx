@@ -30,8 +30,9 @@ export const CalculatorPopup: React.FC<CalculatorPopupProps> = ({ isOpen, onClos
 
   const calculate = () => {
     try {
-      // eslint-disable-next-line no-eval
-      const result = eval(equation + display);
+      // Remove everything that is not a digit, math operator, or parenthesis
+      const sanitized = (equation + display).replace(/[^-()\d/*+.]/g, '');
+      const result = new Function('return ' + sanitized)();
       setDisplay(String(result));
       setEquation('');
     } catch (e) {

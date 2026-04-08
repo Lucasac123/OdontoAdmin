@@ -12,10 +12,6 @@ export default defineConfig(({mode}) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        workbox: {
-          maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MiB
-        },
-        includeAssets: ['logo.svg', 'icon.png'],
         manifest: {
           name: 'OdontoAdmin - Gestão Clínica',
           short_name: 'OdontoAdmin',
@@ -42,15 +38,16 @@ export default defineConfig(({mode}) => {
               purpose: 'any maskable'
             }
           ]
+        },
+        workbox: {
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // Aumentado para 5 MiB para suportar apps maiores
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}']
         }
       })
     ],
-    define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || ''),
-    },
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(__dirname, './src'),
       },
     },
     server: {
