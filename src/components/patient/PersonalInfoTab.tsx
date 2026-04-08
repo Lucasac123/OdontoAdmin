@@ -3,9 +3,11 @@ import { doc, updateDoc, collection, query, where, onSnapshot } from 'firebase/f
 import { db, auth, handleFirestoreError, OperationType } from '../../firebase';
 import { Patient, Dentist } from '../../types';
 import { Save, Loader2, User, Mail, Briefcase, CreditCard, MapPin, Phone, Calendar, Users, Stethoscope, MessageCircle, UserCircle } from 'lucide-react';
+import { useSync } from '../../context/SyncContext';
 
 export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => {
   const [isSaving, setIsSaving] = useState(false);
+  const { addSyncTask } = useSync();
   const [dentists, setDentists] = useState<Dentist[]>([]);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [cpfError, setCpfError] = useState<string | null>(null);
@@ -137,22 +139,19 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
 
     if (hasError) return;
 
-    setIsSaving(true);
-    try {
-      await updateDoc(doc(db, 'patients', patient.id), {
-        ...formData,
-        legalRepDetails: JSON.stringify(legalRep),
-        spouseDetails: JSON.stringify(spouse),
-        referenceDoctor: JSON.stringify(refDoctor),
-        previousDentist: JSON.stringify(prevDentist),
-        appointmentPreference: JSON.stringify(apptPref),
-        updatedAt: new Date().toISOString()
-      });
-    } catch (error) {
+    const savePromise = updateDoc(doc(db, 'patients', patient.id), {
+      ...formData,
+      legalRepDetails: JSON.stringify(legalRep),
+      spouseDetails: JSON.stringify(spouse),
+      referenceDoctor: JSON.stringify(refDoctor),
+      previousDentist: JSON.stringify(prevDentist),
+      appointmentPreference: JSON.stringify(apptPref),
+      updatedAt: new Date().toISOString()
+    }).catch(error => {
       handleFirestoreError(error, OperationType.UPDATE, `patients/${patient.id}`);
-    } finally {
-      setIsSaving(false);
-    }
+    });
+
+    addSyncTask(savePromise);
   };
 
   return (
@@ -164,8 +163,8 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
           disabled={isSaving}
           className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-sm shadow-indigo-200 dark:shadow-none"
         >
-          {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          Salvar Alterações
+          <Save className="w-4 h-4" />
+          <span className="truncate">Salvar Alterações</span>
         </button>
       </div>
 

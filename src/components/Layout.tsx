@@ -5,6 +5,7 @@ import { useTheme } from '../context/ThemeContext';
 import { Logo } from './Logo';
 import { GlobalSearch } from './GlobalSearch';
 import { useStorage } from '../context/StorageContext';
+import { SyncIndicator } from './SyncIndicator';
 import { 
   LayoutDashboard, 
   User,
@@ -47,7 +48,9 @@ const SidebarContent = ({
   handleInstallPWA,
   isCollapsed,
   setIsCollapsed,
-  toggleCalculator
+  toggleCalculator,
+  isSearchOpen,
+  setIsSearchOpen
 }: any) => {
   const [showSettings, setShowSettings] = React.useState(false);
   const { storageLocation, setStorageLocation } = useStorage();
@@ -71,6 +74,11 @@ const SidebarContent = ({
       >
         <X className="w-6 h-6" />
       </button>
+    </div>
+    
+    {/* Sidebar Search - Integrated */}
+    <div className={`px-4 mb-4 hidden md:block`}>
+       <GlobalSearch variant="sidebar" isCollapsed={isCollapsed} isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} />
     </div>
     
     <div className="px-4 mb-2">
@@ -242,6 +250,7 @@ export const Layout: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = React.useState(false);
+  const [isSearchOpen, setIsSearchOpen] = React.useState(false);
   const [deferredPrompt, setDeferredPrompt] = React.useState<any>(null);
 
   React.useEffect(() => {
@@ -300,11 +309,15 @@ export const Layout: React.FC = () => {
           isCollapsed={isCollapsed}
           setIsCollapsed={setIsCollapsed}
           toggleCalculator={() => setIsCalculatorOpen(!isCalculatorOpen)}
+          isSearchOpen={isSearchOpen}
+          setIsSearchOpen={setIsSearchOpen}
         />
+        
         {/* Floating Collapse Button - Increased touch area */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute right-0 translate-x-1/2 top-12 z-50 w-8 h-16 rounded-[24px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-center text-zinc-900 dark:text-zinc-100 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all hover:scale-105 active:scale-95 group"
+          disabled={isSearchOpen}
+          className={`absolute right-0 translate-x-1/2 top-12 z-50 w-8 h-16 rounded-[24px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-center text-zinc-900 dark:text-zinc-100 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all hover:scale-105 active:scale-95 group ${isSearchOpen ? 'opacity-50 cursor-not-allowed' : ''}`}
           title={isCollapsed ? "Expandir" : "Recolher"}
           aria-label={isCollapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
         >
@@ -317,19 +330,15 @@ export const Layout: React.FC = () => {
       </div>
 
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
-        {/* App Header */}
-        <header className="h-20 bg-surface border-b border-border-subtle z-40 flex items-center justify-between px-4 md:px-10 shrink-0">
-          <div className="md:hidden">
-            <Logo />
-          </div>
-          <div className="hidden md:block">
-            {/* Page title or breadcrumbs could go here */}
-          </div>
-          <div className="flex items-center gap-2 md:gap-4">
-            <GlobalSearch variant="header" />
+        {/* Mobile Header only */}
+        <header className="md:hidden h-20 bg-surface border-b border-border-subtle z-40 flex items-center justify-between px-4 shrink-0">
+          <Logo />
+          <div className="flex items-center gap-2">
+            <SyncIndicator variant="header" />
+            <GlobalSearch variant="header" isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} />
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-              className="md:hidden p-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+              className="p-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
               aria-label={isMobileMenuOpen ? "Fechar menu" : "Abrir menu"}
               aria-expanded={isMobileMenuOpen}
             >
@@ -367,6 +376,8 @@ export const Layout: React.FC = () => {
                     deferredPrompt={deferredPrompt}
                     handleInstallPWA={handleInstallPWA}
                     toggleCalculator={() => setIsCalculatorOpen(!isCalculatorOpen)}
+                    isSearchOpen={isSearchOpen}
+                    setIsSearchOpen={setIsSearchOpen}
                   />
                 </div>
               </motion.div>
@@ -377,12 +388,13 @@ export const Layout: React.FC = () => {
         {/* Main Content */}
         <CalculatorPopup isOpen={isCalculatorOpen} onClose={() => setIsCalculatorOpen(false)} />
         <main className="flex-1 overflow-y-auto relative bg-bg scroll-smooth">
+          <SyncIndicator variant="floating" />
           {firestoreError && (
             <div className="sticky top-0 z-30 bg-red-500 text-white px-4 py-2 text-sm text-center font-medium shadow-md">
               {firestoreError}
             </div>
           )}
-          <div className="pt-6 p-4 md:pt-10 md:p-8 max-w-7xl mx-auto min-h-full flex flex-col">
+          <div className="pt-6 p-4 md:pt-10 md:p-8 w-full min-h-full flex flex-col">
             <AnimatePresence mode="wait">
               <motion.div 
                 key={location.pathname}

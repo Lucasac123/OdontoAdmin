@@ -26,7 +26,6 @@ export const PrescriptionTemplatesModal: React.FC<PrescriptionTemplatesModalProp
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [saveTitle, setSaveTitle] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -76,18 +75,17 @@ export const PrescriptionTemplatesModal: React.FC<PrescriptionTemplatesModalProp
     setIsConfirmModalOpen(true);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!templateToDelete || isDeleting) return;
-    setIsDeleting(true);
-    try {
-      await moveToTrash('documentTemplates', templateToDelete);
-      setIsConfirmModalOpen(false);
-      setTemplateToDelete(null);
-    } catch (error) {
+  const handleConfirmDelete = () => {
+    if (!templateToDelete) return;
+    
+    const deletePromise = moveToTrash('documentTemplates', templateToDelete).catch(error => {
+      console.error("Erro ao excluir modelo:", error);
       handleFirestoreError(error, OperationType.DELETE, `documentTemplates/${templateToDelete}`);
-    } finally {
-      setIsDeleting(false);
-    }
+    });
+    
+    addSyncTask(deletePromise);
+    setIsConfirmModalOpen(false);
+    setTemplateToDelete(null);
   };
 
   const handleScanTemplate = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -262,7 +260,6 @@ export const PrescriptionTemplatesModal: React.FC<PrescriptionTemplatesModalProp
         isOpen={isConfirmModalOpen}
         onCancel={() => setIsConfirmModalOpen(false)}
         onConfirm={handleConfirmDelete}
-        isLoading={isDeleting}
         title="Excluir Modelo"
         message="Tem certeza que deseja excluir este modelo de documento? Ele será movido para a lixeira."
       />

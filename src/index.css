@@ -1,3 +1,13 @@
+.search-open button {
+  pointer-events: none;
+}
+.search-open .sidebar-collapse-button {
+  opacity: 0;
+  visibility: hidden;
+}
+.search-open .search-modal button {
+  pointer-events: auto;
+}
 @import "tailwindcss";
 
 @theme {

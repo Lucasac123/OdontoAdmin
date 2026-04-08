@@ -5,6 +5,7 @@ import { LabJob, Patient } from '../types';
 import { Plus, Edit2, Trash2, CheckCircle, Clock, Truck, FileText, Search, Loader2 } from 'lucide-react';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { motion } from 'motion/react';
+import { useSync } from '../context/SyncContext';
 
 const Laboratory = () => {
   const [jobs, setJobs] = useState<LabJob[]>([]);
@@ -15,7 +16,7 @@ const Laboratory = () => {
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { addSyncTask } = useSync();
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -106,32 +107,32 @@ const Laboratory = () => {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser || isSaving) return;
+    if (!auth.currentUser) return;
 
-    setIsSaving(true);
-    try {
-      const jobData = {
-        ...formData,
-        sendDate: new Date(formData.sendDate).toISOString(),
-        expectedDate: new Date(formData.expectedDate).toISOString(),
-        dentistId: auth.currentUser.uid,
-        createdAt: editingJob ? editingJob.createdAt : new Date().toISOString()
-      };
+    const jobData = {
+      ...formData,
+      sendDate: new Date(formData.sendDate).toISOString(),
+      expectedDate: new Date(formData.expectedDate).toISOString(),
+      dentistId: auth.currentUser.uid,
+      createdAt: editingJob ? editingJob.createdAt : new Date().toISOString()
+    };
 
-      if (editingJob) {
-        await updateDoc(doc(db, 'lab_jobs', editingJob.id), jobData);
-      } else {
-        await addDoc(collection(db, 'lab_jobs'), jobData);
-      }
-      setIsModalOpen(false);
-    } catch (error) {
+    let savePromise;
+    if (editingJob) {
+      savePromise = updateDoc(doc(db, 'lab_jobs', editingJob.id), jobData);
+    } else {
+      savePromise = addDoc(collection(db, 'lab_jobs'), jobData);
+    }
+    
+    savePromise.catch(error => {
       console.error('Error saving lab job:', error);
       alert('Erro ao salvar trabalho de laboratório.');
-    } finally {
-      setIsSaving(false);
-    }
+    });
+
+    addSyncTask(savePromise);
+    setIsModalOpen(false);
   };
 
   const handleDeleteClick = (id: string) => {
@@ -139,24 +140,21 @@ const Laboratory = () => {
     setIsConfirmModalOpen(true);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!jobToDelete || isDeleting) return;
+  const handleConfirmDelete = () => {
+    if (!jobToDelete) return;
     const job = jobs.find(j => j.id === jobToDelete);
     if (!job) return;
 
-    setIsDeleting(true);
-    try {
-      await moveToTrash('lab_jobs', jobToDelete, job);
-      setIsConfirmModalOpen(false);
-      setJobToDelete(null);
-      setDeleteError(null);
-    } catch (error) {
+    const deletePromise = moveToTrash('lab_jobs', jobToDelete, job).catch(error => {
       const errMessage = error instanceof Error ? error.message : 'Erro ao excluir. Verifique suas permissões.';
       setDeleteError(errMessage);
       console.error(error);
-    } finally {
-      setIsDeleting(false);
-    }
+    });
+    
+    addSyncTask(deletePromise);
+    setIsConfirmModalOpen(false);
+    setJobToDelete(null);
+    setDeleteError(null);
   };
 
   const getStatusIcon = (status: string) => {
@@ -186,11 +184,11 @@ const Laboratory = () => {
   );
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Gestão de Laboratório</h1>
-          <p className="text-text-secondary mt-1">Acompanhe o status dos trabalhos enviados aos laboratórios.</p>
+          <p className="text-sm text-text-secondary mt-1">Acompanhe o status dos trabalhos enviados aos laboratórios.</p>
         </div>
         <button
           onClick={() => handleOpenModal()}
@@ -458,18 +456,15 @@ const Laboratory = () => {
               <div className="flex justify-end gap-3 mt-8">
                 <button
                   type="button"
-                  disabled={isSaving}
                   onClick={() => setIsModalOpen(false)}
-                  className="px-6 py-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors font-medium disabled:opacity-50"
+                  className="px-6 py-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors font-medium"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  disabled={isSaving}
-                  className="px-8 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-bold shadow-lg dark:shadow-none disabled:opacity-70 flex items-center gap-2"
+                  className="px-8 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-bold shadow-lg dark:shadow-none flex items-center gap-2"
                 >
-                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
                   Salvar
                 </button>
               </div>
@@ -482,7 +477,6 @@ const Laboratory = () => {
         isOpen={isConfirmModalOpen}
         onCancel={() => setIsConfirmModalOpen(false)}
         onConfirm={handleConfirmDelete}
-        isLoading={isDeleting}
         title="Excluir Trabalho"
         message="Tem certeza que deseja mover este trabalho para a lixeira?"
         confirmLabel="Excluir"

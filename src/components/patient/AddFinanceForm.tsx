@@ -10,8 +10,7 @@ interface AddFinanceFormProps {
   setNewFinance: (finance: any) => void;
   patients: Record<string, string>;
   splits: any[];
-  handleAdd: (e: React.FormEvent) => Promise<void>;
-  isLoading?: boolean;
+  handleAdd: (e: React.FormEvent) => void;
 }
 
 export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
@@ -22,13 +21,12 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
   patients,
   splits,
   handleAdd,
-  isLoading = false,
 }) => {
   return (
     <div className="w-full sm:w-auto">
       <button
         onClick={() => setIsAdding(true)}
-        className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-2xl hover:bg-indigo-700 transition-all font-bold shadow-lg dark:shadow-none active:scale-95 w-full sm:w-auto whitespace-nowrap"
+        className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-2xl hover:bg-indigo-700 transition-all font-bold shadow-lg dark:shadow-none active:scale-95 w-full sm:w-auto max-w-full whitespace-nowrap"
       >
         <Plus className="w-5 h-5" />
         Novo Lançamento
@@ -42,7 +40,7 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-zinc-950/40 backdrop-blur-sm"
-              onClick={isLoading ? undefined : () => setIsAdding(false)}
+              onClick={() => setIsAdding(false)}
             />
             
             <motion.div
@@ -50,42 +48,38 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative w-full max-w-lg bg-surface shadow-2xl rounded-[32px] border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+              className="relative w-full max-w-lg bg-surface shadow-2xl rounded-[32px] border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col max-h-[90vh]"
             >
-              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between shrink-0">
                 <div>
                   <h3 className="text-xl font-bold text-text-primary tracking-tight">Novo Lançamento</h3>
                   <p className="text-xs text-text-secondary mt-1">Registre uma nova movimentação financeira</p>
                 </div>
-                {!isLoading && (
-                  <button 
-                    onClick={() => setIsAdding(false)}
-                    className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors text-text-secondary"
-                  >
-                    <Plus className="w-6 h-6 rotate-45" />
-                  </button>
-                )}
+                <button 
+                  onClick={() => setIsAdding(false)}
+                  className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors text-text-secondary"
+                >
+                  <Plus className="w-6 h-6 rotate-45" />
+                </button>
               </div>
 
-              <form onSubmit={handleAdd} className="p-8 space-y-6">
+              <form onSubmit={handleAdd} className="p-8 space-y-6 overflow-y-auto">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="sm:col-span-2">
                     <label className="block text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mb-2 ml-1">Tipo de Lançamento</label>
                     <div className="flex bg-zinc-100 dark:bg-zinc-900 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800">
                       <button
                         type="button"
-                        disabled={isLoading}
                         onClick={() => setNewFinance({ ...newFinance, type: 'income' })}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newFinance.type === 'income' ? 'bg-surface text-emerald-600 shadow-md' : 'text-text-secondary hover:text-text-primary'} disabled:opacity-50`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newFinance.type === 'income' ? 'bg-surface text-emerald-600 shadow-md' : 'text-text-secondary hover:text-text-primary'}`}
                       >
                         <TrendingUp className="w-4 h-4" />
                         Receita
                       </button>
                       <button
                         type="button"
-                        disabled={isLoading}
                         onClick={() => setNewFinance({ ...newFinance, type: 'expense' })}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newFinance.type === 'expense' ? 'bg-surface text-red-600 shadow-md' : 'text-text-secondary hover:text-text-primary'} disabled:opacity-50`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newFinance.type === 'expense' ? 'bg-surface text-red-600 shadow-md' : 'text-text-secondary hover:text-text-primary'}`}
                       >
                         <TrendingDown className="w-4 h-4" />
                         Despesa
@@ -98,11 +92,10 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
                     <input 
                       type="text" 
                       required 
-                      disabled={isLoading}
                       placeholder="Ex: Pagamento de Fornecedor"
                       value={newFinance.description} 
                       onChange={e => setNewFinance({ ...newFinance, description: e.target.value })} 
-                      className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-text-secondary/30 disabled:opacity-50" 
+                      className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-text-secondary/30" 
                     />
                   </div>
                   
@@ -114,11 +107,10 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
                         type="number" 
                         step="0.01" 
                         required 
-                        disabled={isLoading}
                         placeholder="0,00"
                         value={newFinance.amount} 
                         onChange={e => setNewFinance({ ...newFinance, amount: e.target.value })} 
-                        className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl pl-12 pr-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-black text-lg disabled:opacity-50" 
+                        className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl pl-12 pr-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-black text-lg" 
                       />
                     </div>
                   </div>
@@ -128,10 +120,9 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
                     <input 
                       type="date" 
                       required 
-                      disabled={isLoading}
                       value={newFinance.date} 
                       onChange={e => setNewFinance({ ...newFinance, date: e.target.value })} 
-                      className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer disabled:opacity-50" 
+                      className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer" 
                     />
                   </div>
 
@@ -141,10 +132,9 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
                         <label className="block text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mb-2 ml-1">Forma de Pagamento</label>
                         <div className="relative">
                           <select
-                            disabled={isLoading}
                             value={newFinance.paymentMethod}
                             onChange={e => setNewFinance({ ...newFinance, paymentMethod: e.target.value as any })}
-                            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none cursor-pointer font-bold disabled:opacity-50"
+                            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none cursor-pointer font-bold"
                           >
                             <option value="pix">PIX</option>
                             <option value="money">Dinheiro</option>
@@ -161,10 +151,9 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
                         <label className="block text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mb-2 ml-1">Paciente (Opcional)</label>
                         <div className="relative">
                           <select
-                            disabled={isLoading}
                             value={newFinance.patientId}
                             onChange={e => setNewFinance({ ...newFinance, patientId: e.target.value })}
-                            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none cursor-pointer font-bold disabled:opacity-50"
+                            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none cursor-pointer font-bold"
                           >
                             <option value="">Nenhum</option>
                             {Object.entries(patients).map(([id, name]) => (
@@ -183,18 +172,15 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
                 <div className="flex gap-4 pt-6">
                   <button 
                     type="button" 
-                    disabled={isLoading}
                     onClick={() => setIsAdding(false)} 
-                    className="flex-1 px-8 py-4 rounded-2xl text-text-secondary font-black uppercase tracking-widest text-[10px] hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 disabled:opacity-50"
+                    className="flex-1 px-8 py-4 rounded-2xl text-text-secondary font-black uppercase tracking-widest text-[10px] hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700"
                   >
                     Cancelar
                   </button>
                   <button 
                     type="submit" 
-                    disabled={isLoading}
-                    className="flex-[2] px-8 py-4 rounded-2xl bg-indigo-600 text-white font-black uppercase tracking-widest text-[10px] hover:bg-indigo-700 shadow-xl dark:shadow-none active:scale-95 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
+                    className="flex-[2] px-8 py-4 rounded-2xl bg-indigo-600 text-white font-black uppercase tracking-widest text-[10px] hover:bg-indigo-700 shadow-xl dark:shadow-none active:scale-95 transition-all flex items-center justify-center gap-2"
                   >
-                    {isLoading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                     Salvar Lançamento
                   </button>
                 </div>

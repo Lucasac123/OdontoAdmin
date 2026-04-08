@@ -5,6 +5,7 @@ import { Patient, Finance } from '../../types';
 import { Plus, Trash2, DollarSign, Calendar, CreditCard, Wallet, QrCode, ArrowRightLeft, Loader2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from '../ConfirmModal';
+import { useSync } from '../../context/SyncContext';
 
 const paymentMethodConfig = {
   money: { label: 'Dinheiro', icon: Wallet, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
@@ -18,7 +19,6 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
   const [payments, setPayments] = useState<Finance[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState({
     amount: '',
     date: new Date().toISOString().split('T')[0],
@@ -26,6 +26,7 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
     paymentMethod: 'pix' as Finance['paymentMethod']
   });
   const [paymentToDelete, setPaymentToDelete] = useState<string | null>(null);
+  const { addSyncTask } = useSync();
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -48,54 +49,50 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
     return () => unsubscribe();
   }, [patient.id]);
 
-  const handleAddPayment = async (e: React.FormEvent) => {
+  const handleAddPayment = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser || isSaving) return;
+    if (!auth.currentUser) return;
 
     const amount = parseFloat(formData.amount);
     if (isNaN(amount) || amount <= 0) return;
 
-    setIsSaving(true);
-    try {
-      await addDoc(collection(db, 'finances'), {
-        dentistId: auth.currentUser.uid,
-        patientId: patient.id,
-        amount,
-        date: formData.date,
-        description: formData.description,
-        type: 'income',
-        paymentMethod: formData.paymentMethod,
-        createdAt: new Date().toISOString()
-      });
-      setIsAdding(false);
-      setFormData({
-        amount: '',
-        date: new Date().toISOString().split('T')[0],
-        description: 'Pagamento de tratamento',
-        paymentMethod: 'pix'
-      });
-    } catch (error) {
+    const savePromise = addDoc(collection(db, 'finances'), {
+      dentistId: auth.currentUser.uid,
+      patientId: patient.id,
+      amount,
+      date: formData.date,
+      description: formData.description,
+      type: 'income',
+      paymentMethod: formData.paymentMethod,
+      createdAt: new Date().toISOString()
+    }).catch(error => {
       handleFirestoreError(error, OperationType.CREATE, 'finances');
-    } finally {
-      setIsSaving(false);
-    }
+    });
+
+    addSyncTask(savePromise);
+    setIsAdding(false);
+    setFormData({
+      amount: '',
+      date: new Date().toISOString().split('T')[0],
+      description: 'Pagamento de tratamento',
+      paymentMethod: 'pix'
+    });
   };
 
   const handleDelete = async (id: string) => {
     setPaymentToDelete(id);
   };
 
-  const confirmDelete = async () => {
-    if (!paymentToDelete || isDeleting) return;
-    setIsDeleting(true);
-    try {
-      await moveToTrash('finances', paymentToDelete);
-      setPaymentToDelete(null);
-    } catch (error) {
+  const confirmDelete = () => {
+    if (!paymentToDelete) return;
+    
+    const deletePromise = moveToTrash('finances', paymentToDelete).catch(error => {
+      console.error("Erro ao excluir pagamento:", error);
       handleFirestoreError(error, OperationType.DELETE, `finances/${paymentToDelete}`);
-    } finally {
-      setIsDeleting(false);
-    }
+    });
+    
+    addSyncTask(deletePromise);
+    setPaymentToDelete(null);
   };
 
   const totalPaid = payments.reduce((acc, p) => acc + p.amount, 0);
@@ -251,7 +248,6 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <button
                           onClick={() => handleDelete(payment.id)}
-                          disabled={isDeleting}
                           className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all disabled:opacity-50"
                           title="Excluir"
                         >
@@ -277,7 +273,6 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
 
       <ConfirmModal
         isOpen={!!paymentToDelete}
-        isLoading={isDeleting}
         title="Excluir Pagamento"
         message="Tem certeza que deseja excluir este registro de pagamento? Ele será movido para a lixeira."
         confirmLabel="Excluir"

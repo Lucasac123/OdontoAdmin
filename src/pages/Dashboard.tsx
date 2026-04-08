@@ -31,7 +31,6 @@ export const Dashboard: React.FC = () => {
   const [newNote, setNewNote] = useState('');
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<QuickNote | null>(null);
-  const [isDeletingNote, setIsDeletingNote] = useState(false);
   const [isQuickAccessModalOpen, setIsQuickAccessModalOpen] = useState(false);
   const [selectedQuickAccess, setSelectedQuickAccess] = useState<string[]>(() => {
     const saved = localStorage.getItem('quickAccessLinks');
@@ -131,17 +130,16 @@ export const Dashboard: React.FC = () => {
     setNoteToDelete(note);
   };
 
-  const confirmDeleteNote = async () => {
-    if (!noteToDelete || isDeletingNote) return;
-    setIsDeletingNote(true);
-    try {
-      await moveToTrash('quickNotes', noteToDelete.id, noteToDelete);
-      setNoteToDelete(null);
-    } catch (error) {
+  const confirmDeleteNote = () => {
+    if (!noteToDelete) return;
+    
+    const deletePromise = moveToTrash('quickNotes', noteToDelete.id, noteToDelete).catch(error => {
+      console.error("Erro ao excluir nota:", error);
       handleFirestoreError(error, OperationType.DELETE, `quickNotes/${noteToDelete.id}`);
-    } finally {
-      setIsDeletingNote(false);
-    }
+    });
+    
+    addSyncTask(deletePromise);
+    setNoteToDelete(null);
   };
 
   const currentMonth = new Date().toISOString().substring(0, 7);
@@ -193,10 +191,10 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-4xl font-bold text-text-primary tracking-tight">Dashboard</h1>
-          <p className="text-text-secondary mt-1 font-medium">Bem-vindo de volta! Aqui está o resumo da sua clínica.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Dashboard</h1>
+          <p className="text-sm text-text-secondary mt-1">Bem-vindo de volta! Aqui está o resumo da sua clínica.</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-surface border border-border-subtle rounded-2xl shadow-premium">
           <Calendar className="w-4 h-4 text-accent" />
@@ -707,7 +705,6 @@ export const Dashboard: React.FC = () => {
         onConfirm={confirmDeleteNote}
         onCancel={() => setNoteToDelete(null)}
         variant="danger"
-        isLoading={isDeletingNote}
       />
 
       <QuickAccessSettingsModal

@@ -5,6 +5,7 @@ import { CRMDeal, Patient } from '../../types';
 import { Plus, Edit2, Trash2, DollarSign, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { ConfirmModal } from '../ConfirmModal';
 import { motion } from 'motion/react';
+import { useSync } from '../../context/SyncContext';
 
 export const CRMTab = ({ patient }: { patient: Patient }) => {
   const [deals, setDeals] = useState<CRMDeal[]>([]);
@@ -12,6 +13,7 @@ export const CRMTab = ({ patient }: { patient: Patient }) => {
   const [editingDeal, setEditingDeal] = useState<CRMDeal | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [dealToDelete, setDealToDelete] = useState<string | null>(null);
+  const { addSyncTask } = useSync();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -58,32 +60,35 @@ export const CRMTab = ({ patient }: { patient: Patient }) => {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth.currentUser || !patient.id) return;
 
-    try {
-      const dealData = {
-        patientId: patient.id,
-        patientName: patient.name,
-        title: formData.title,
-        value: formData.value,
-        status: formData.status,
-        dentistId: auth.currentUser.uid,
-        updatedAt: new Date().toISOString(),
-        createdAt: editingDeal ? editingDeal.createdAt : new Date().toISOString()
-      };
+    const dealData = {
+      patientId: patient.id,
+      patientName: patient.name,
+      title: formData.title,
+      value: formData.value,
+      status: formData.status,
+      dentistId: auth.currentUser.uid,
+      updatedAt: new Date().toISOString(),
+      createdAt: editingDeal ? editingDeal.createdAt : new Date().toISOString()
+    };
 
-      if (editingDeal) {
-        await updateDoc(doc(db, 'crm_deals', editingDeal.id), dealData);
-      } else {
-        await addDoc(collection(db, 'crm_deals'), dealData);
-      }
-      setIsModalOpen(false);
-    } catch (error) {
+    let savePromise;
+    if (editingDeal) {
+      savePromise = updateDoc(doc(db, 'crm_deals', editingDeal.id), dealData);
+    } else {
+      savePromise = addDoc(collection(db, 'crm_deals'), dealData);
+    }
+    
+    savePromise.catch(error => {
       console.error('Error saving deal:', error);
       alert('Erro ao salvar orçamento.');
-    }
+    });
+
+    addSyncTask(savePromise);
+    setIsModalOpen(false);
   };
 
   const handleDeleteClick = (id: string) => {

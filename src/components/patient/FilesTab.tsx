@@ -5,12 +5,12 @@ import { Patient, FileRecord } from '../../types';
 import { Upload, FileImage, FileText, Trash2, Download, Eye, X, ZoomIn, ZoomOut, RotateCcw, Music, Clock, Calendar, Printer, Link as LinkIcon, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from '../ConfirmModal';
+import { useSync } from '../../context/SyncContext';
 
 export const FilesTab = ({ patient }: { patient: Patient }) => {
   const [files, setFiles] = useState<FileRecord[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<FileRecord | null>(null);
   const [zoom, setZoom] = useState(1);
   const [filterType, setFilterType] = useState<string>('all');
@@ -21,6 +21,7 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [linkName, setLinkName] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
+  const { addSyncTask } = useSync();
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -141,55 +142,51 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
     reader.readAsDataURL(file);
   };
 
-  const handleAddLink = async (e: React.FormEvent) => {
+  const handleAddLink = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!linkName || !linkUrl || !auth.currentUser || isSaving) return;
+    if (!linkName || !linkUrl || !auth.currentUser) return;
     
-    setIsSaving(true);
-    try {
-      const now = new Date();
-      let expiresAt: string | null = null;
-      if (expirationDays !== '0') {
-        const expirationDate = new Date(now);
-        expirationDate.setDate(now.getDate() + parseInt(expirationDays));
-        expiresAt = expirationDate.toISOString();
-      }
-
-      await addDoc(collection(db, 'files'), {
-        dentistId: auth.currentUser.uid,
-        patientId: patient.id,
-        name: linkName,
-        url: linkUrl,
-        type: uploadType,
-        uploadedAt: now.toISOString(),
-        isLink: true,
-        ...(expiresAt && { expiresAt })
-      });
-      setIsLinkModalOpen(false);
-      setLinkName('');
-      setLinkUrl('');
-    } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'files');
-    } finally {
-      setIsSaving(false);
+    const now = new Date();
+    let expiresAt: string | null = null;
+    if (expirationDays !== '0') {
+      const expirationDate = new Date(now);
+      expirationDate.setDate(now.getDate() + parseInt(expirationDays));
+      expiresAt = expirationDate.toISOString();
     }
+
+    const savePromise = addDoc(collection(db, 'files'), {
+      dentistId: auth.currentUser.uid,
+      patientId: patient.id,
+      name: linkName,
+      url: linkUrl,
+      type: uploadType,
+      uploadedAt: now.toISOString(),
+      isLink: true,
+      ...(expiresAt && { expiresAt })
+    }).catch(error => {
+      handleFirestoreError(error, OperationType.CREATE, 'files');
+    });
+
+    addSyncTask(savePromise);
+    setIsLinkModalOpen(false);
+    setLinkName('');
+    setLinkUrl('');
   };
 
   const handleDelete = async (file: FileRecord) => {
     setFileToDelete(file);
   };
 
-  const confirmDelete = async () => {
-    if (!fileToDelete || isDeleting) return;
-    setIsDeleting(true);
-    try {
-      await moveToTrash('files', fileToDelete.id, fileToDelete);
-      setFileToDelete(null);
-    } catch (error) {
+  const confirmDelete = () => {
+    if (!fileToDelete) return;
+    
+    const deletePromise = moveToTrash('files', fileToDelete.id, fileToDelete).catch(error => {
+      console.error("Erro ao excluir arquivo:", error);
       handleFirestoreError(error, OperationType.DELETE, `files/${fileToDelete.id}`);
-    } finally {
-      setIsDeleting(false);
-    }
+    });
+    
+    addSyncTask(deletePromise);
+    setFileToDelete(null);
   };
 
   const handlePrintFile = (file: FileRecord) => {
@@ -539,7 +536,6 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
         onConfirm={confirmDelete}
         onCancel={() => setFileToDelete(null)}
         variant="danger"
-        isLoading={isDeleting}
       />
 
       <AnimatePresence>
@@ -598,10 +594,8 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
                   </button>
                   <button
                     type="submit"
-                    disabled={isSaving}
-                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-2"
                   >
-                    {isSaving && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                     Salvar Link
                   </button>
                 </div>

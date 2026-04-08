@@ -5,6 +5,7 @@ import { Patient, ProcedureTemplate } from '../../types';
 import { Save, Loader2, Plus, Trash2, Printer, DollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CRMTab } from './CRMTab';
+import { useSync } from '../../context/SyncContext';
 
 interface Procedure {
   id: string;
@@ -27,6 +28,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
   const [endDate, setEndDate] = useState(patient.treatmentEndDate || '');
   const [hasChanges, setHasChanges] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const { addSyncTask } = useSync();
 
   useEffect(() => {
     if (patient.odontogram) {
@@ -59,25 +61,22 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
     return () => unsubscribe();
   }, []);
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      const currentOdontogram = patient.odontogram ? JSON.parse(patient.odontogram) : {};
-      currentOdontogram.treatmentPlan = procedures;
-      
-      await updateDoc(doc(db, 'patients', patient.id), {
-        odontogram: JSON.stringify(currentOdontogram),
-        treatmentStatus,
-        treatmentStartDate: startDate,
-        treatmentEndDate: endDate,
-        updatedAt: new Date().toISOString()
-      });
-      setHasChanges(false);
-    } catch (error) {
+  const handleSave = () => {
+    const currentOdontogram = patient.odontogram ? JSON.parse(patient.odontogram) : {};
+    currentOdontogram.treatmentPlan = procedures;
+    
+    const savePromise = updateDoc(doc(db, 'patients', patient.id), {
+      odontogram: JSON.stringify(currentOdontogram),
+      treatmentStatus,
+      treatmentStartDate: startDate,
+      treatmentEndDate: endDate,
+      updatedAt: new Date().toISOString()
+    }).catch(error => {
       handleFirestoreError(error, OperationType.UPDATE, `patients/${patient.id}`);
-    } finally {
-      setIsSaving(false);
-    }
+    });
+    
+    addSyncTask(savePromise);
+    setHasChanges(false);
   };
 
   const handleAddProcedure = (e: React.FormEvent) => {
@@ -226,8 +225,8 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                 disabled={isSaving}
                 className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg dark:shadow-none flex items-center gap-2 transition-all active:scale-95"
               >
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Salvar Agora
+                <Save className="w-4 h-4" />
+                <span className="truncate">Salvar Agora</span>
               </button>
             </div>
           </motion.div>

@@ -113,8 +113,8 @@ export const Trash = () => {
             <Trash2 className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight">Lixeira</h1>
-            <p className="text-xs sm:text-sm text-text-secondary font-medium">Gerencie itens excluídos recentemente</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Lixeira</h1>
+            <p className="text-sm text-text-secondary mt-1">Gerencie itens excluídos recentemente</p>
           </div>
         </div>
       </div>

@@ -9,6 +9,7 @@ import { Patient } from '../types';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { motion } from 'motion/react';
 import { GoogleGenAI, Type } from '@google/genai';
+import { useSync } from '../context/SyncContext';
 
 interface SplitCategory {
   id: string;
@@ -29,7 +30,6 @@ export const Financial: React.FC = () => {
     paymentMethod: 'pix' as Finance['paymentMethod']
   });
   const [financeToDelete, setFinanceToDelete] = useState<Finance | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isSavingFinance, setIsSavingFinance] = useState(false);
 
   // Dynamic percentage splits
@@ -45,6 +45,7 @@ export const Financial: React.FC = () => {
 
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().toISOString().substring(0, 7));
+  const { addSyncTask } = useSync();
 
   const [isScanning, setIsScanning] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -188,18 +189,17 @@ export const Financial: React.FC = () => {
     };
   }, []);
 
-  const handleSaveAssets = async () => {
+  const handleSaveAssets = () => {
     if (!auth.currentUser) return;
     const val = parseFloat(tempAssetsValue);
     if (isNaN(val)) return;
 
-    try {
-      const settingsQuery = query(collection(db, 'clinicSettings'), where('dentistId', '==', auth.currentUser.uid));
-      const snapshot = await getDocs(settingsQuery);
-      
+    const settingsQuery = query(collection(db, 'clinicSettings'), where('dentistId', '==', auth.currentUser.uid));
+    
+    const savePromise = getDocs(settingsQuery).then(async (snapshot) => {
       if (snapshot.empty) {
         await addDoc(collection(db, 'clinicSettings'), {
-          dentistId: auth.currentUser.uid,
+          dentistId: auth.currentUser!.uid,
           assetsValue: val,
           workHoursPerDay: 8,
           workDaysPerWeek: 5,
@@ -211,60 +211,58 @@ export const Financial: React.FC = () => {
           updatedAt: new Date().toISOString()
         });
       }
-      setIsEditingAssets(false);
-    } catch (error) {
+    }).catch(error => {
       console.error("Error saving assets:", error);
-    }
+    });
+
+    addSyncTask(savePromise);
+    setIsEditingAssets(false);
   };
 
-  const handleAdd = async (e: React.FormEvent) => {
+  const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser || !newFinance.description || !newFinance.amount || isSavingFinance) return;
+    if (!auth.currentUser || !newFinance.description || !newFinance.amount) return;
 
-    setIsSavingFinance(true);
-    try {
-      await addDoc(collection(db, 'finances'), {
-        dentistId: auth.currentUser.uid,
-        patientId: newFinance.type === 'income' ? (newFinance.patientId || null) : null,
-        description: newFinance.description,
-        amount: parseFloat(newFinance.amount),
-        type: newFinance.type,
-        paymentMethod: newFinance.type === 'income' ? newFinance.paymentMethod : null,
-        date: new Date(newFinance.date).toISOString(),
-        percentages: newFinance.type === 'income' ? JSON.stringify(splits) : null,
-        createdAt: new Date().toISOString()
-      });
-      setIsAdding(false);
-      setNewFinance({ 
-        description: '', 
-        amount: '', 
-        type: 'income', 
-        date: new Date().toISOString().split('T')[0],
-        patientId: '',
-        paymentMethod: 'pix'
-      });
-    } catch (error) {
+    const savePromise = addDoc(collection(db, 'finances'), {
+      dentistId: auth.currentUser.uid,
+      patientId: newFinance.type === 'income' ? (newFinance.patientId || null) : null,
+      description: newFinance.description,
+      amount: parseFloat(newFinance.amount),
+      type: newFinance.type,
+      paymentMethod: newFinance.type === 'income' ? newFinance.paymentMethod : null,
+      date: new Date(newFinance.date).toISOString(),
+      percentages: newFinance.type === 'income' ? JSON.stringify(splits) : null,
+      createdAt: new Date().toISOString()
+    }).catch(error => {
       handleFirestoreError(error, OperationType.CREATE, 'finances');
-    } finally {
-      setIsSavingFinance(false);
-    }
+    });
+
+    addSyncTask(savePromise);
+    setIsAdding(false);
+    setNewFinance({ 
+      description: '', 
+      amount: '', 
+      type: 'income', 
+      date: new Date().toISOString().split('T')[0],
+      patientId: '',
+      paymentMethod: 'pix'
+    });
   };
 
   const handleDelete = async (finance: Finance) => {
     setFinanceToDelete(finance);
   };
 
-  const confirmDelete = async () => {
-    if (!financeToDelete || isDeleting) return;
-    setIsDeleting(true);
-    try {
-      await moveToTrash('finances', financeToDelete.id, financeToDelete);
-      setFinanceToDelete(null);
-    } catch (error) {
+  const confirmDelete = () => {
+    if (!financeToDelete) return;
+    
+    const deletePromise = moveToTrash('finances', financeToDelete.id, financeToDelete).catch(error => {
+      console.error("Erro ao excluir lançamento:", error);
       handleFirestoreError(error, OperationType.DELETE, `finances/${financeToDelete.id}`);
-    } finally {
-      setIsDeleting(false);
-    }
+    });
+    
+    addSyncTask(deletePromise);
+    setFinanceToDelete(null);
   };
 
   const handlePrintTaxReceipt = (finance: Finance) => {
@@ -420,11 +418,11 @@ export const Financial: React.FC = () => {
   const companyValuation = totalAllTimeIncome + inventoryValue + assetsValue + inventoryAssetsValue;
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+    <div className="space-y-8 overflow-hidden">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-4xl font-bold text-text-primary tracking-tight mb-2">Financeiro</h1>
-          <p className="text-text-secondary text-sm sm:text-base font-medium">Gestão inteligente e transparente do seu consultório</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Financeiro</h1>
+          <p className="text-sm text-text-secondary mt-1">Gestão inteligente e transparente do seu consultório</p>
         </div>
         
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto flex-shrink-0">
@@ -437,7 +435,7 @@ export const Financial: React.FC = () => {
             />
           </div>
           
-          <div className="flex gap-3 w-full sm:w-auto">
+          <div className="flex flex-wrap gap-3 w-full sm:w-auto">
             <input 
               type="file" 
               accept="image/*" 
@@ -463,7 +461,6 @@ export const Financial: React.FC = () => {
               patients={Object.fromEntries(Object.entries(patients).map(([id, p]: [string, any]) => [id, p.name]))}
               splits={splits}
               handleAdd={handleAdd}
-              isLoading={isSavingFinance}
             />
           </div>
         </div>
@@ -843,7 +840,7 @@ export const Financial: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-surface rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 p-10 h-fit">
+        <div className="bg-surface rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 p-10 h-fit w-full overflow-hidden">
           <div className="flex items-center justify-between mb-10">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
@@ -863,7 +860,7 @@ export const Financial: React.FC = () => {
             </button>
           </div>
           
-          <div className="space-y-8">
+          <div className="space-y-8 w-full">
             {isAddingSplit && (
               <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -1003,7 +1000,6 @@ export const Financial: React.FC = () => {
         onConfirm={confirmDelete}
         onCancel={() => setFinanceToDelete(null)}
         variant="danger"
-        isLoading={isDeleting}
       />
     </div>
   );

@@ -5,6 +5,7 @@ import { Patient } from '../../types';
 import { Activity, Plus, Loader2, Trash2, Calendar, Clock, User, Printer } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from '../ConfirmModal';
+import { useSync } from '../../context/SyncContext';
 
 interface EvolutionNote {
   id: string;
@@ -21,9 +22,9 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
   const [notes, setNotes] = useState<EvolutionNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
+  const { addSyncTask } = useSync();
   
   const [newNote, setNewNote] = useState({
     content: '',
@@ -55,27 +56,24 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
     return () => unsubscribe();
   }, [patient.id]);
 
-  const handleAddNote = async (e: React.FormEvent) => {
+  const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newNote.content.trim() || !auth.currentUser || isSaving) return;
+    if (!newNote.content.trim() || !auth.currentUser) return;
 
-    setIsSaving(true);
-    try {
-      await addDoc(collection(db, 'clinical_evolutions'), {
-        patientId: patient.id,
-        dentistId: auth.currentUser.uid,
-        content: newNote.content,
-        procedure: newNote.procedure,
-        tooth: newNote.tooth,
-        createdAt: serverTimestamp(),
-        authorName: auth.currentUser.displayName || 'Dentista'
-      });
-      setNewNote({ content: '', procedure: '', tooth: '' });
-    } catch (error) {
+    const savePromise = addDoc(collection(db, 'clinical_evolutions'), {
+      patientId: patient.id,
+      dentistId: auth.currentUser.uid,
+      content: newNote.content,
+      procedure: newNote.procedure,
+      tooth: newNote.tooth,
+      createdAt: serverTimestamp(),
+      authorName: auth.currentUser.displayName || 'Dentista'
+    }).catch(error => {
       handleFirestoreError(error, OperationType.CREATE, 'clinical_evolutions');
-    } finally {
-      setIsSaving(false);
-    }
+    });
+
+    addSyncTask(savePromise);
+    setNewNote({ content: '', procedure: '', tooth: '' });
   };
 
   const handleDelete = (id: string) => {
@@ -83,18 +81,17 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
     setIsConfirmModalOpen(true);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!noteToDelete || isDeleting) return;
-    setIsDeleting(true);
-    try {
-      await moveToTrash('clinical_evolutions', noteToDelete);
-      setIsConfirmModalOpen(false);
-      setNoteToDelete(null);
-    } catch (error) {
+  const handleConfirmDelete = () => {
+    if (!noteToDelete) return;
+    
+    const deletePromise = moveToTrash('clinical_evolutions', noteToDelete).catch(error => {
+      console.error("Erro ao excluir evolução:", error);
       handleFirestoreError(error, OperationType.DELETE, `clinical_evolutions/${noteToDelete}`);
-    } finally {
-      setIsDeleting(false);
-    }
+    });
+    
+    addSyncTask(deletePromise);
+    setIsConfirmModalOpen(false);
+    setNoteToDelete(null);
   };
 
   const formatDate = (timestamp: any) => {
@@ -270,7 +267,6 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
                       {auth.currentUser?.uid === note.dentistId && (
                         <button
                           onClick={() => handleDelete(note.id)}
-                          disabled={isDeleting}
                           className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
                           title="Excluir evolução"
                         >
@@ -306,7 +302,6 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
       </div>
       <ConfirmModal
         isOpen={isConfirmModalOpen}
-        isLoading={isDeleting}
         onCancel={() => setIsConfirmModalOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Excluir Evolução"

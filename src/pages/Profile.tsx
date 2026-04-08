@@ -259,7 +259,7 @@ export const Profile: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 pb-20 sm:pb-6">
+    <div className="max-w-6xl mx-auto pb-20 sm:pb-6">
       <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
         {/* Left Column: Avatar & Summary */}
         <div className="w-full lg:w-1/3 space-y-6">
@@ -291,7 +291,7 @@ export const Profile: React.FC = () => {
               </div>
 
               <div className="mt-6">
-                <h1 className="text-xl sm:text-2xl font-black text-text-primary tracking-tight truncate px-2">{formData.name || 'Seu Nome'}</h1>
+                <h1 className="hidden md:block text-xl sm:text-2xl font-black text-text-primary tracking-tight truncate px-2">{formData.name || 'Seu Nome'}</h1>
                 <p className="text-xs sm:text-sm font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-1">
                   {formData.cro ? `CRO: ${formData.cro}` : 'Cirurgião Dentista'}
                 </p>

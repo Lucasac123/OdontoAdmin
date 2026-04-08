@@ -326,16 +326,16 @@ export const AIAssistant: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-2 h-full min-h-0 max-w-5xl mx-auto w-full">
-      <div className="flex flex-col gap-2 shrink-0">
+    <div className="flex flex-col gap-2 h-full min-h-0 w-full">
+      <div className="flex flex-col gap-2 mb-6 shrink-0">
         <div className="flex flex-row items-center justify-between w-full gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-lg dark:shadow-none shrink-0">
               <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black text-text-primary tracking-tight leading-tight">IA Assistente</h1>
-              <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest hidden sm:block">Google Gemini Intelligence</p>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-text-primary tracking-tight leading-tight truncate">IA Assistente</h1>
+              <p className="text-xs sm:text-sm text-text-secondary mt-1 truncate">Google Gemini Intelligence</p>
             </div>
           </div>
 
