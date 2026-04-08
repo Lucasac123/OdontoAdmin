@@ -553,15 +553,15 @@ export const Financial: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 premium-card p-8 !translate-y-0 hover:!shadow-premium">
-          <div className="flex items-center justify-between mb-10">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                <BarChartIcon className="w-6 h-6" />
+        <div className="lg:col-span-2 premium-card p-6 !translate-y-0 hover:!shadow-premium">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                <BarChartIcon className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-xl font-black text-text-primary tracking-tight">Fluxo de Caixa</h3>
-                <p className="text-xs text-text-secondary font-bold uppercase tracking-widest">Análise dos últimos 6 meses</p>
+                <h3 className="text-lg font-black text-text-primary tracking-tight">Fluxo de Caixa</h3>
+                <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest">Análise dos últimos 6 meses</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -575,10 +575,10 @@ export const Financial: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="h-[400px] w-full min-h-[400px] min-w-[400px]">
+          <div className="h-[300px] md:h-[400px] w-full min-h-[300px]">
             {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="rgba(0,0,0,0.05)" />
                   <XAxis 
                     dataKey="name" 
@@ -591,7 +591,7 @@ export const Financial: React.FC = () => {
                     axisLine={false} 
                     tickLine={false} 
                     tick={{ fill: '#71717a', fontSize: 10, fontWeight: 700 }}
-                    tickFormatter={(value) => `R$ ${value >= 1000 ? (value/1000).toFixed(0) + 'k' : value}`}
+                    tickFormatter={(value) => `${value >= 1000 ? (value/1000).toFixed(0) + 'k' : value}`}
                   />
                   <Tooltip 
                     cursor={{ fill: 'rgba(0,0,0,0.02)' }}
@@ -607,8 +607,8 @@ export const Financial: React.FC = () => {
                     itemStyle={{ padding: '4px 0' }}
                     formatter={(value: number) => [new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value), '']}
                   />
-                  <Bar dataKey="income" name="Receitas" fill="#10b981" radius={[8, 8, 0, 0]} barSize={32} activeBar={{ fill: '#059669' }} />
-                  <Bar dataKey="expense" name="Despesas" fill="#ef4444" radius={[8, 8, 0, 0]} barSize={32} activeBar={{ fill: '#dc2626' }} />
+                  <Bar dataKey="income" name="Receitas" fill="#10b981" radius={[4, 4, 0, 0]} barSize={24} activeBar={{ fill: '#059669' }} />
+                  <Bar dataKey="expense" name="Despesas" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={24} activeBar={{ fill: '#dc2626' }} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (

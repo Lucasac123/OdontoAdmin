@@ -606,36 +606,60 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="h-64 w-full min-h-[256px] min-w-[256px]">
             {patientStatusData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <PieChart role="img" aria-label="Gráfico de distribuição de pacientes por status">
-                  <Pie 
-                    data={patientStatusData} 
-                    dataKey="value" 
-                    nameKey="name" 
-                    cx="50%" 
-                    cy="50%" 
-                    innerRadius={60}
-                    outerRadius={80} 
-                    paddingAngle={5}
-                    stroke="none"
-                  >
-                    {patientStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'var(--card-bg)', 
-                      borderRadius: '16px', 
-                      border: '1px solid var(--border-subtle)', 
-                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                      color: 'var(--text-primary)'
-                    }}
-                    itemStyle={{ color: 'var(--text-primary)' }}
-                  />
-                  <Legend verticalAlign="bottom" height={36}/>
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                <div className="hidden md:block h-full">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                    <PieChart role="img" aria-label="Gráfico de distribuição de pacientes por status">
+                      <Pie 
+                        data={patientStatusData} 
+                        dataKey="value" 
+                        nameKey="name" 
+                        cx="50%" 
+                        cy="50%" 
+                        innerRadius={60}
+                        outerRadius={80} 
+                        paddingAngle={5}
+                        stroke="none"
+                      >
+                        {patientStatusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'var(--card-bg)', 
+                          borderRadius: '16px', 
+                          border: '1px solid var(--border-subtle)', 
+                          boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                          color: 'var(--text-primary)'
+                        }}
+                        itemStyle={{ color: 'var(--text-primary)' }}
+                      />
+                      <Legend verticalAlign="bottom" height={36}/>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="md:hidden h-full flex flex-col justify-center space-y-4">
+                  {patientStatusData.map((entry, index) => {
+                    const total = patientStatusData.reduce((acc, curr) => acc + curr.value, 0);
+                    const percentage = (entry.value / total) * 100;
+                    return (
+                      <div key={entry.name} className="space-y-1">
+                        <div className="flex justify-between text-xs font-bold text-text-primary">
+                          <span>{entry.name}</span>
+                          <span>{entry.value}</span>
+                        </div>
+                        <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-2">
+                          <div 
+                            className="h-2 rounded-full" 
+                            style={{ width: `${percentage}%`, backgroundColor: COLORS[index % COLORS.length] }} 
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             ) : (
               <div className="flex items-center justify-center h-full text-sm text-text-secondary">
                 Nenhum dado disponível
