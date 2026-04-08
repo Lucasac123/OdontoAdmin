@@ -177,16 +177,16 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
     setFileToDelete(file);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!fileToDelete) return;
     
-    const deletePromise = moveToTrash('files', fileToDelete.id, fileToDelete).catch(error => {
+    try {
+      await moveToTrash('files', fileToDelete.id, fileToDelete);
+      setFileToDelete(null);
+    } catch (error) {
       console.error("Erro ao excluir arquivo:", error);
       handleFirestoreError(error, OperationType.DELETE, `files/${fileToDelete.id}`);
-    });
-    
-    addSyncTask(deletePromise);
-    setFileToDelete(null);
+    }
   };
 
   const handlePrintFile = (file: FileRecord) => {

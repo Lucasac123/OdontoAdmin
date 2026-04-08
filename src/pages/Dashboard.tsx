@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../firebase';
+import { useSync } from '../context/SyncContext';
 import { Appointment, Finance, Patient, QuickNote, CRMDeal } from '../types';
-import { Users, Calendar, DollarSign, TrendingUp, Clock, BrainCircuit, Trash2, Plus, Briefcase, CheckCircle, XCircle } from 'lucide-react';
+import { Users, Calendar, DollarSign, TrendingUp, Clock, BrainCircuit, Trash2, Plus, Briefcase, CheckCircle, XCircle, StickyNote } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { ConfirmModal } from '../components/ConfirmModal';
@@ -36,6 +37,7 @@ export const Dashboard: React.FC = () => {
     const saved = localStorage.getItem('quickAccessLinks');
     return saved ? JSON.parse(saved) : ['patients', 'agenda', 'financial', 'ai'];
   });
+  const { addSyncTask } = useSync();
   const navigate = useNavigate();
 
   const handleSaveQuickAccess = (links: string[]) => {
@@ -130,16 +132,16 @@ export const Dashboard: React.FC = () => {
     setNoteToDelete(note);
   };
 
-  const confirmDeleteNote = () => {
+  const confirmDeleteNote = async () => {
     if (!noteToDelete) return;
     
-    const deletePromise = moveToTrash('quickNotes', noteToDelete.id, noteToDelete).catch(error => {
+    try {
+      await deleteDoc(doc(db, 'quickNotes', noteToDelete.id));
+      setNoteToDelete(null); // This closes the modal
+    } catch (error) {
       console.error("Erro ao excluir nota:", error);
       handleFirestoreError(error, OperationType.DELETE, `quickNotes/${noteToDelete.id}`);
-    });
-    
-    addSyncTask(deletePromise);
-    setNoteToDelete(null);
+    }
   };
 
   const currentMonth = new Date().toISOString().substring(0, 7);
@@ -540,7 +542,7 @@ export const Dashboard: React.FC = () => {
               <p className="text-xs text-text-secondary mt-1">Lembretes e anotações importantes</p>
             </div>
             <div className="w-10 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center">
-              <Plus className="w-5 h-5 text-indigo-600" />
+              <StickyNote className="w-5 h-5 text-indigo-600" />
             </div>
           </div>
           <form onSubmit={handleAddNote} className="mb-6">

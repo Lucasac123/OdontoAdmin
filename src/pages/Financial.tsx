@@ -253,7 +253,7 @@ export const Financial: React.FC = () => {
     setFinanceToDelete(finance);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!financeToDelete) return;
     
     const deletePromise = moveToTrash('finances', financeToDelete.id, financeToDelete).catch(error => {
@@ -262,6 +262,7 @@ export const Financial: React.FC = () => {
     });
     
     addSyncTask(deletePromise);
+    await deletePromise;
     setFinanceToDelete(null);
   };
 
@@ -1000,6 +1001,7 @@ export const Financial: React.FC = () => {
         onConfirm={confirmDelete}
         onCancel={() => setFinanceToDelete(null)}
         variant="danger"
+        isLoading={!!financeToDelete}
       />
     </div>
   );
