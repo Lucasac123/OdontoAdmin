@@ -106,7 +106,7 @@ export const Trash = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto flex flex-col h-full min-h-0 gap-6 sm:gap-8">
+    <div className="flex flex-col h-full min-h-0 gap-6 sm:gap-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-400">
