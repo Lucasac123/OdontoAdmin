@@ -1,18 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../firebase';
+import { useStorage } from '../context/StorageContext';
+import { db, OperationType, handleFirestoreError } from '../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { motion } from 'motion/react';
-import { User, Mail, Phone, Calendar, Award, Save, Loader2, Camera, Lock } from 'lucide-react';
+import { User, Mail, Phone, Calendar, Award, Save, Loader2, Camera, Lock, HardDrive, Download, Upload } from 'lucide-react';
 import { storage } from '../firebase';
+import { getDriveAccessToken } from '../services/googleDriveService';
+import { backupToDrive, restoreFromDrive } from '../services/backupService';
 
 export const Profile: React.FC = () => {
   const { user } = useAuth();
+  const { storageLocation, setStorageLocation } = useStorage();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [passwordSaving, setPasswordSaving] = useState(false);
+  const [isAuthenticatingDrive, setIsAuthenticatingDrive] = useState(false);
+  const [isBackingUp, setIsBackingUp] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -49,7 +56,7 @@ export const Profile: React.FC = () => {
           }));
         }
       } catch (error) {
-        console.error("Error fetching profile:", error);
+        handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
       } finally {
         setLoading(false);
       }
@@ -78,8 +85,7 @@ export const Profile: React.FC = () => {
       });
       alert('Perfil atualizado com sucesso!');
     } catch (error) {
-      console.error("Error updating profile:", error);
-      alert('Erro ao atualizar perfil. Tente novamente.');
+      handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
     } finally {
       setSaving(false);
     }
@@ -178,6 +184,72 @@ export const Profile: React.FC = () => {
     }
   };
 
+  const handleStorageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value as 'firebase' | 'drive';
+    
+    if (value === 'drive') {
+      setIsAuthenticatingDrive(true);
+      try {
+        const token = await getDriveAccessToken();
+        if (token) {
+          setStorageLocation('drive');
+          alert('Autenticado com sucesso no Google Drive!');
+        } else {
+          alert('Falha ao autenticar com o Google Drive. O armazenamento retornou para o Firebase.');
+          setStorageLocation('firebase');
+        }
+      } catch (error) {
+        console.error('Drive auth error:', error);
+        alert('Erro ao conectar com o Google Drive.');
+        setStorageLocation('firebase');
+      } finally {
+        setIsAuthenticatingDrive(false);
+      }
+    } else {
+      setStorageLocation('firebase');
+    }
+  };
+
+  const handleBackup = async () => {
+    if (!user) return;
+    setIsBackingUp(true);
+    try {
+      const success = await backupToDrive(user.uid);
+      if (success) {
+        alert('Backup realizado com sucesso no Google Drive!');
+      } else {
+        alert('Erro ao realizar backup. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('Backup error:', error);
+      alert('Erro ao realizar backup.');
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!user) return;
+    if (!window.confirm('Tem certeza que deseja restaurar os dados do Google Drive? Isso irá sobrescrever os dados atuais no Firebase.')) {
+      return;
+    }
+    setIsRestoring(true);
+    try {
+      const success = await restoreFromDrive(user.uid);
+      if (success) {
+        alert('Dados restaurados com sucesso do Google Drive!');
+        window.location.reload();
+      } else {
+        alert('Nenhum backup encontrado ou erro ao restaurar.');
+      }
+    } catch (error) {
+      console.error('Restore error:', error);
+      alert('Erro ao restaurar dados.');
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -187,7 +259,7 @@ export const Profile: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 pb-20 sm:pb-6">
+    <div className="max-w-6xl mx-auto pb-20 sm:pb-6">
       <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
         {/* Left Column: Avatar & Summary */}
         <div className="w-full lg:w-1/3 space-y-6">
@@ -219,7 +291,7 @@ export const Profile: React.FC = () => {
               </div>
 
               <div className="mt-6">
-                <h1 className="text-xl sm:text-2xl font-black text-text-primary tracking-tight truncate px-2">{formData.name || 'Seu Nome'}</h1>
+                <h1 className="hidden md:block text-xl sm:text-2xl font-black text-text-primary tracking-tight truncate px-2">{formData.name || 'Seu Nome'}</h1>
                 <p className="text-xs sm:text-sm font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-1">
                   {formData.cro ? `CRO: ${formData.cro}` : 'Cirurgião Dentista'}
                 </p>
@@ -424,6 +496,79 @@ export const Profile: React.FC = () => {
                 </>
               )}
             </form>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-surface rounded-[24px] sm:rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+          >
+            <div className="p-6 sm:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+              <h2 className="text-lg sm:text-xl font-black text-text-primary tracking-tight">Armazenamento de Dados</h2>
+              <HardDrive className="w-5 h-5 text-indigo-600" />
+            </div>
+
+            <div className="p-6 sm:p-8 space-y-6">
+              <div className="space-y-4">
+                <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Local de Armazenamento</label>
+                <div className="relative">
+                  <select
+                    value={storageLocation}
+                    onChange={handleStorageChange}
+                    disabled={isAuthenticatingDrive}
+                    className="w-full px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium appearance-none cursor-pointer disabled:opacity-50"
+                  >
+                    <option value="firebase">Firebase (Nuvem Padrão)</option>
+                    <option value="drive">Google Drive (Pasta Pessoal)</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                    {isAuthenticatingDrive ? (
+                      <Loader2 className="w-4 h-4 text-indigo-600 animate-spin" />
+                    ) : (
+                      <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                    )}
+                  </div>
+                </div>
+                {storageLocation === 'drive' && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="p-4 rounded-xl sm:rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 space-y-4"
+                  >
+                    <p className="text-xs sm:text-sm font-medium text-indigo-700 dark:text-indigo-300 leading-relaxed">
+                      Autenticado com sucesso! Seus dados do Assistente IA (histórico de chat) estão sendo salvos em uma pasta "DentalApp_Data" no seu Google Drive.
+                    </p>
+                    
+                    <div className="pt-4 border-t border-indigo-200 dark:border-indigo-800/50">
+                      <h3 className="text-sm font-bold text-indigo-900 dark:text-indigo-100 mb-3">Backup e Restauração</h3>
+                      <p className="text-xs text-indigo-700 dark:text-indigo-300 mb-4">
+                        Você pode fazer o backup de todos os dados do seu consultório para o Google Drive ou restaurá-los a partir de um backup existente.
+                      </p>
+                      
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <button
+                          onClick={handleBackup}
+                          disabled={isBackingUp || isRestoring}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
+                        >
+                          {isBackingUp ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                          Fazer Backup
+                        </button>
+                        <button
+                          onClick={handleRestore}
+                          disabled={isBackingUp || isRestoring}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
+                        >
+                          {isRestoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                          Restaurar Dados
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            </div>
           </motion.div>
         </div>
       </div>

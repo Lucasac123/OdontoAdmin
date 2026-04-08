@@ -5,6 +5,7 @@ import { Patient, FileRecord } from '../../types';
 import { Save, Loader2, Info, ChevronRight, AlertCircle, CheckCircle2, BrainCircuit, Activity, XCircle, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI } from '@google/genai';
+import { useSync } from '../../context/SyncContext';
 
 type ToothStatus = 'healthy' | 'caries' | 'restored' | 'extracted' | 'missing' | 'implant' | 'endo';
 
@@ -75,6 +76,7 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
   const [files, setFiles] = useState<FileRecord[]>([]);
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const { addSyncTask } = useSync();
 
   useEffect(() => {
     if (patient.odontogram) {
@@ -150,20 +152,18 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
     }
   }, [selectedTooth, files]);
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await updateDoc(doc(db, 'patients', patient.id), {
-        odontogram: JSON.stringify(teethState),
-        updatedAt: new Date().toISOString()
-      });
+  const handleSave = () => {
+    const savePromise = updateDoc(doc(db, 'patients', patient.id), {
+      odontogram: JSON.stringify(teethState),
+      updatedAt: new Date().toISOString()
+    }).then(() => {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-    } catch (error) {
+    }).catch(error => {
       handleFirestoreError(error, OperationType.UPDATE, `patients/${patient.id}`);
-    } finally {
-      setIsSaving(false);
-    }
+    });
+    
+    addSyncTask(savePromise);
   };
 
   const handleToothClick = (id: number) => {
@@ -276,10 +276,9 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
           
           <button 
             onClick={handleSave}
-            disabled={isSaving}
             className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-sm shadow-indigo-200 dark:shadow-none text-sm font-bold"
           >
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            <Save className="w-4 h-4" />
             <span className="hidden sm:inline">Salvar</span>
           </button>
         </div>

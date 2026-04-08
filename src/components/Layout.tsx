@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation, useOutlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Logo } from './Logo';
@@ -26,7 +26,10 @@ import {
   Megaphone,
   Calculator,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Database,
+  Cloud,
+  HardDrive
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -44,14 +47,17 @@ const SidebarContent = ({
   handleInstallPWA,
   isCollapsed,
   setIsCollapsed,
-  toggleCalculator
+  toggleCalculator,
+  isSearchOpen,
+  setIsSearchOpen
 }: any) => {
   const [showSettings, setShowSettings] = React.useState(false);
+  const { storageLocation, setStorageLocation } = useStorage();
 
   return (
-  <div className={`flex flex-col h-full bg-surface border-r border-border-subtle transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${isCollapsed ? 'w-20' : 'w-64'}`}>
-    <div className={`p-6 pb-4 flex items-center justify-between gap-2 ${isCollapsed ? 'flex-col px-2 items-center' : ''}`}>
-      <div className={`${isCollapsed ? '' : 'flex-1'}`}>
+  <div className={`flex flex-col h-full bg-surface border-r border-border-subtle transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${isCollapsed ? 'w-20' : 'w-full md:w-64'}`}>
+    <div className={`p-4 md:p-6 pb-4 flex items-center justify-between gap-2 ${isCollapsed ? 'flex-col px-2 items-center' : ''}`}>
+      <div className={`${isCollapsed ? '' : 'flex-1 min-w-0'}`}>
         {!isCollapsed ? (
           <Logo />
         ) : (
@@ -62,11 +68,16 @@ const SidebarContent = ({
       {/* Mobile Close Button */}
       <button 
         onClick={() => setIsMobileMenuOpen(false)}
-        className="md:hidden p-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl"
+        className="md:hidden p-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl shrink-0"
         aria-label="Fechar menu"
       >
         <X className="w-6 h-6" />
       </button>
+    </div>
+    
+    {/* Sidebar Search - Integrated */}
+    <div className={`px-4 mb-4 hidden md:block`}>
+       <GlobalSearch variant="sidebar" isCollapsed={isCollapsed} isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} />
     </div>
     
     <div className="px-4 mb-2">
@@ -89,7 +100,7 @@ const SidebarContent = ({
       </NavLink>
     </div>
 
-    <nav className="flex-1 px-4 space-y-2 mt-2 overflow-y-auto pb-4">
+    <nav className="flex-1 px-4 space-y-2 mt-2 overflow-y-auto hide-scrollbar pb-4">
       {navItems.map((item: any) => (
         <NavLink
           key={item.to}
@@ -185,14 +196,14 @@ const SidebarContent = ({
             )}
           </button>
           
-          {!isCollapsed && deferredPrompt && (
+          {deferredPrompt && (
             <button
               onClick={handleInstallPWA}
-              className="p-2 rounded-xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600/20 transition-all border border-indigo-500/20"
+              className={`p-3 rounded-xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600/20 transition-all border border-indigo-500/20 flex items-center justify-center ${isCollapsed ? 'w-10 h-10' : 'w-10 h-10 ml-auto'}`}
               title="Instalar App"
               aria-label="Instalar aplicativo"
             >
-              <Download className="w-5 h-5" />
+              <Download className="w-5 h-5 shrink-0" />
             </button>
           )}
           
@@ -233,9 +244,11 @@ export const Layout: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const outlet = useOutlet();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = React.useState(false);
+  const [isSearchOpen, setIsSearchOpen] = React.useState(false);
   const [deferredPrompt, setDeferredPrompt] = React.useState<any>(null);
 
   React.useEffect(() => {
@@ -294,36 +307,36 @@ export const Layout: React.FC = () => {
           isCollapsed={isCollapsed}
           setIsCollapsed={setIsCollapsed}
           toggleCalculator={() => setIsCalculatorOpen(!isCalculatorOpen)}
+          isSearchOpen={isSearchOpen}
+          setIsSearchOpen={setIsSearchOpen}
         />
+        
         {/* Floating Collapse Button - Increased touch area */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute right-0 translate-x-1/2 top-12 z-50 w-8 h-8 rounded-full bg-surface border border-border-subtle shadow-premium flex items-center justify-center text-text-secondary hover:text-indigo-600 transition-all hover:scale-110 active:scale-95 group"
+          disabled={isSearchOpen}
+          className={`absolute right-0 translate-x-1/2 top-12 z-50 w-8 h-16 rounded-[24px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-center text-zinc-900 dark:text-zinc-100 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all hover:scale-105 active:scale-95 group ${isSearchOpen ? 'opacity-50 cursor-not-allowed' : ''}`}
           title={isCollapsed ? "Expandir" : "Recolher"}
           aria-label={isCollapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
         >
           {isCollapsed ? (
-            <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+            <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" strokeWidth={3} />
           ) : (
-            <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+            <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-0.5" strokeWidth={3} />
           )}
         </button>
       </div>
 
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
-        {/* App Header */}
-        <header className="h-20 bg-surface border-b border-border-subtle z-40 flex items-center justify-between px-4 md:px-10 shrink-0">
-          <div className="md:hidden">
-            <Logo />
-          </div>
-          <div className="hidden md:block">
-            {/* Page title or breadcrumbs could go here */}
-          </div>
-          <div className="flex items-center gap-2 md:gap-4">
-            <GlobalSearch variant="header" />
+        {/* Mobile Header only */}
+        <header className="md:hidden h-20 bg-surface border-b border-border-subtle z-40 flex items-center justify-between px-4 shrink-0">
+          <Logo />
+          <div className="flex items-center gap-2">
+            <SyncIndicator variant="header" />
+            <GlobalSearch variant="header" isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} />
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-              className="md:hidden p-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+              className="p-2 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
               aria-label={isMobileMenuOpen ? "Fechar menu" : "Abrir menu"}
               aria-expanded={isMobileMenuOpen}
             >
@@ -361,6 +374,8 @@ export const Layout: React.FC = () => {
                     deferredPrompt={deferredPrompt}
                     handleInstallPWA={handleInstallPWA}
                     toggleCalculator={() => setIsCalculatorOpen(!isCalculatorOpen)}
+                    isSearchOpen={isSearchOpen}
+                    setIsSearchOpen={setIsSearchOpen}
                   />
                 </div>
               </motion.div>
@@ -371,13 +386,14 @@ export const Layout: React.FC = () => {
         {/* Main Content */}
         <CalculatorPopup isOpen={isCalculatorOpen} onClose={() => setIsCalculatorOpen(false)} />
         <main className="flex-1 overflow-y-auto relative bg-bg scroll-smooth">
+          <SyncIndicator variant="floating" />
           {firestoreError && (
             <div className="sticky top-0 z-30 bg-red-500 text-white px-4 py-2 text-sm text-center font-medium shadow-md">
               {firestoreError}
             </div>
           )}
-          <div className="pt-6 p-4 md:pt-10 md:p-8 max-w-7xl mx-auto min-h-full flex flex-col">
-            <AnimatePresence mode="popLayout">
+          <div className="pt-6 p-4 md:pt-10 md:p-8 w-full min-h-full flex flex-col">
+            <AnimatePresence mode="wait">
               <motion.div 
                 key={location.pathname}
                 initial={{ opacity: 0, y: 10 }}
@@ -386,7 +402,7 @@ export const Layout: React.FC = () => {
                 transition={{ duration: 0.2, ease: 'easeOut' }}
                 className="flex-1 flex flex-col"
               >
-                <Outlet />
+                {outlet}
               </motion.div>
             </AnimatePresence>
           </div>

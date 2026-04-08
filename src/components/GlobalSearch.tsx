@@ -1,22 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, User, Calendar, DollarSign } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { db } from '../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db, auth } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface GlobalSearchProps {
   variant?: 'sidebar' | 'header';
   isCollapsed?: boolean;
+  isOpen?: boolean;
+  setIsOpen?: (isOpen: boolean) => void;
 }
 
-export const GlobalSearch: React.FC<GlobalSearchProps> = ({ variant = 'sidebar', isCollapsed = false }) => {
-  const [isOpen, setIsOpen] = useState(false);
+export const GlobalSearch: React.FC<GlobalSearchProps> = ({ variant = 'sidebar', isCollapsed = false, isOpen: externalIsOpen, setIsOpen: externalSetIsOpen }) => {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const setIsOpen = externalSetIsOpen || setInternalIsOpen;
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [cachedData, setCachedData] = useState<{patients: any[], appointments: any[], finances: any[]}>({patients: [], appointments: [], finances: []});
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
 
   // Keyboard shortcut (Cmd+K / Ctrl+K)
   useEffect(() => {
@@ -31,58 +38,61 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ variant = 'sidebar',
   }, []);
 
   useEffect(() => {
-    if (isOpen && inputRef.current) {
-      setTimeout(() => inputRef.current?.focus(), 100);
+    if (isOpen) {
+      document.body.classList.add('search-open');
+      if (inputRef.current) {
+        setTimeout(() => inputRef.current?.focus(), 100);
+      }
+      
+      // Fetch data once when search opens
+      const fetchAllData = async () => {
+        if (!user) return;
+        setLoading(true);
+        try {
+          const uid = user.uid;
+          
+          // Fetch all data in parallel
+          const [pSnapshot, aSnapshot, fSnapshot] = await Promise.all([
+            getDocs(query(collection(db, 'patients'), where('dentistId', '==', uid))),
+            getDocs(query(collection(db, 'appointments'), where('dentistId', '==', uid))),
+            getDocs(query(collection(db, 'finances'), where('dentistId', '==', uid)))
+          ]);
+          
+          setCachedData({
+            patients: pSnapshot.docs.map(d => ({ id: d.id, type: 'patient', ...d.data() } as any)),
+            appointments: aSnapshot.docs.map(d => ({ id: d.id, type: 'appointment', ...d.data() } as any)),
+            finances: fSnapshot.docs.map(d => ({ id: d.id, type: 'finance', ...d.data() } as any))
+          });
+        } catch (error) {
+          console.error("Error fetching search data:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchAllData();
     } else {
+      document.body.classList.remove('search-open');
       setSearchTerm('');
       setResults([]);
+      setCachedData({patients: [], appointments: [], finances: []});
     }
-  }, [isOpen]);
+  }, [isOpen, user]);
 
   useEffect(() => {
-    const searchData = async () => {
-      if (!searchTerm.trim() || !auth.currentUser) {
-        setResults([]);
-        return;
-      }
+    if (!searchTerm.trim()) {
+      setResults([]);
+      return;
+    }
 
-      setLoading(true);
-      const term = searchTerm.toLowerCase();
-      const uid = auth.currentUser.uid;
+    const term = searchTerm.toLowerCase();
+    
+    const matchedPatients = cachedData.patients.filter(p => p.name?.toLowerCase().includes(term));
+    const matchedAppointments = cachedData.appointments.filter(a => a.patientName?.toLowerCase().includes(term) || a.notes?.toLowerCase().includes(term));
+    const matchedFinances = cachedData.finances.filter(f => f.description?.toLowerCase().includes(term) || f.category?.toLowerCase().includes(term));
 
-      try {
-        // Fetch patients
-        const pQuery = query(collection(db, 'patients'), where('dentistId', '==', uid));
-        const pSnapshot = await getDocs(pQuery);
-        const patients = pSnapshot.docs
-          .map(d => ({ id: d.id, type: 'patient', ...d.data() } as any))
-          .filter(p => p.name.toLowerCase().includes(term));
-
-        // Fetch appointments
-        const aQuery = query(collection(db, 'appointments'), where('dentistId', '==', uid));
-        const aSnapshot = await getDocs(aQuery);
-        const appointments = aSnapshot.docs
-          .map(d => ({ id: d.id, type: 'appointment', ...d.data() } as any))
-          .filter(a => a.patientName.toLowerCase().includes(term) || (a.notes && a.notes.toLowerCase().includes(term)));
-
-        // Fetch finances
-        const fQuery = query(collection(db, 'finances'), where('dentistId', '==', uid));
-        const fSnapshot = await getDocs(fQuery);
-        const finances = fSnapshot.docs
-          .map(d => ({ id: d.id, type: 'finance', ...d.data() } as any))
-          .filter(f => f.description.toLowerCase().includes(term) || f.category.toLowerCase().includes(term));
-
-        setResults([...patients, ...appointments, ...finances]);
-      } catch (error) {
-        console.error("Search error", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const debounce = setTimeout(searchData, 300);
-    return () => clearTimeout(debounce);
-  }, [searchTerm]);
+    setResults([...matchedPatients, ...matchedAppointments, ...matchedFinances]);
+  }, [searchTerm, cachedData]);
 
   const handleSelect = (item: any) => {
     setIsOpen(false);
@@ -114,7 +124,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ variant = 'sidebar',
           aria-label="Buscar"
         >
           <Search className="w-4 h-4 md:w-5 md:h-5" />
-          <span className="hidden sm:inline text-sm font-medium">Buscar...</span>
+          <span className="hidden sm:inline text-base font-medium">Buscar...</span>
         </button>
       )}
 
@@ -126,13 +136,13 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ variant = 'sidebar',
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[110]"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: -20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: -20 }}
-              className="fixed top-20 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-xl bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-[70] overflow-hidden flex flex-col max-h-[80vh]"
+              className="search-modal fixed top-20 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-xl bg-surface border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-[120] overflow-hidden flex flex-col max-h-[80vh]"
             >
               <div className="flex items-center px-4 border-b border-zinc-200 dark:border-zinc-800">
                 <Search className="w-5 h-5 text-zinc-400" />

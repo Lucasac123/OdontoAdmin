@@ -8,6 +8,7 @@ import { ptBR } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'motion/react';
 import { NotificationSettings } from '../types';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { useSync } from '../context/SyncContext';
 
 export const Agenda: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -19,6 +20,7 @@ export const Agenda: React.FC = () => {
   const [isSending, setIsSending] = useState(false);
   const [notifSettings, setNotifSettings] = useState<NotificationSettings | null>(null);
   const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
+  const { addSyncTask } = useSync();
   
   const [newAppt, setNewAppt] = useState({
     patientId: '',
@@ -75,27 +77,30 @@ export const Agenda: React.FC = () => {
     };
   }, []);
 
-  const handleSaveSettings = async (e: React.FormEvent) => {
+  const handleSaveSettings = (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth.currentUser || !notifSettings) return;
 
-    try {
-      const { id, ...data } = notifSettings as any;
-      if (id) {
-        await updateDoc(doc(db, 'notificationSettings', id), {
-          ...data,
-          updatedAt: new Date().toISOString()
-        });
-      } else {
-        await addDoc(collection(db, 'notificationSettings'), {
-          ...data,
-          updatedAt: new Date().toISOString()
-        });
-      }
-      setIsSettingsOpen(false);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, 'notificationSettings');
+    const { id, ...data } = notifSettings as any;
+    let savePromise;
+    if (id) {
+      savePromise = updateDoc(doc(db, 'notificationSettings', id), {
+        ...data,
+        updatedAt: new Date().toISOString()
+      });
+    } else {
+      savePromise = addDoc(collection(db, 'notificationSettings'), {
+        ...data,
+        updatedAt: new Date().toISOString()
+      });
     }
+
+    savePromise.catch(error => {
+      handleFirestoreError(error, OperationType.UPDATE, 'notificationSettings');
+    });
+
+    addSyncTask(savePromise);
+    setIsSettingsOpen(false);
   };
 
   const handleSendReminders = async () => {
@@ -141,7 +146,7 @@ export const Agenda: React.FC = () => {
     }
   };
 
-  const handleAdd = async (e: React.FormEvent) => {
+  const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth.currentUser || !newAppt.patientId || !newAppt.responsibleDentistId) return;
 
@@ -165,45 +170,46 @@ export const Agenda: React.FC = () => {
       return;
     }
 
-    try {
-      await addDoc(collection(db, 'appointments'), {
-        dentistId: auth.currentUser.uid,
-        responsibleDentistId: newAppt.responsibleDentistId,
-        patientId: newAppt.patientId,
-        patientName: patient?.name || 'Desconhecido',
-        date: apptDate.toISOString(),
-        duration: newAppt.duration,
-        notes: newAppt.notes,
-        status: 'scheduled',
-        createdAt: new Date().toISOString()
-      });
-      setIsAdding(false);
-      setNewAppt({ patientId: '', responsibleDentistId: '', time: '09:00', duration: 30, notes: '' });
-    } catch (error) {
+    const savePromise = addDoc(collection(db, 'appointments'), {
+      dentistId: auth.currentUser.uid,
+      responsibleDentistId: newAppt.responsibleDentistId,
+      patientId: newAppt.patientId,
+      patientName: patient?.name || 'Desconhecido',
+      date: apptDate.toISOString(),
+      duration: newAppt.duration,
+      notes: newAppt.notes,
+      status: 'scheduled',
+      createdAt: new Date().toISOString()
+    }).catch(error => {
       handleFirestoreError(error, OperationType.CREATE, 'appointments');
-    }
+    });
+
+    addSyncTask(savePromise);
+    setIsAdding(false);
+    setNewAppt({ patientId: '', responsibleDentistId: '', time: '09:00', duration: 30, notes: '' });
   };
 
-  const handleStatusChange = async (id: string, status: 'scheduled' | 'completed' | 'cancelled') => {
-    try {
-      await updateDoc(doc(db, 'appointments', id), { status });
-    } catch (error) {
+  const handleStatusChange = (id: string, status: 'scheduled' | 'completed' | 'cancelled') => {
+    const savePromise = updateDoc(doc(db, 'appointments', id), { status }).catch(error => {
       handleFirestoreError(error, OperationType.UPDATE, `appointments/${id}`);
-    }
+    });
+    addSyncTask(savePromise);
   };
 
   const handleDelete = async (appointment: Appointment) => {
     setAppointmentToDelete(appointment);
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (!appointmentToDelete) return;
-    try {
-      await moveToTrash('appointments', appointmentToDelete.id, appointmentToDelete);
-      setAppointmentToDelete(null);
-    } catch (error) {
+    
+    const deletePromise = moveToTrash('appointments', appointmentToDelete.id, appointmentToDelete).catch(error => {
+      console.error("Erro ao excluir agendamento:", error);
       handleFirestoreError(error, OperationType.DELETE, `appointments/${appointmentToDelete.id}`);
-    }
+    });
+    
+    addSyncTask(deletePromise);
+    setAppointmentToDelete(null);
   };
 
   const generateGoogleCalendarLink = (app: Appointment) => {
@@ -231,10 +237,10 @@ export const Agenda: React.FC = () => {
 
   return (
     <div className="space-y-6 h-full flex flex-col">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 shrink-0">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Agenda</h1>
-          <p className="text-xs sm:text-sm text-text-secondary">Gerencie seus atendimentos e sincronize com o Google Agenda.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Agenda</h1>
+          <p className="text-sm text-text-secondary mt-1">Gerencie seus atendimentos e sincronize com o Google Agenda.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <button

@@ -24,10 +24,16 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Build Web App
+        env:
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
         run: npm run build
 
       - name: Generate Android Icons from Logo
         run: |
+          # Remove default adaptive icons so Android uses our generated PNGs
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          rm -f android/app/src/main/res/drawable-v24/ic_launcher_foreground.xml
+          
           pip install cairosvg Pillow --quiet
           python3 - <<'EOF'
           import cairosvg
@@ -77,11 +83,17 @@ jobs:
           with open('android/app/release.keystore', 'wb') as f:
               f.write(base64.b64decode(keystore_b64))
 
+      - name: Restore Gradle Wrapper JAR
+        working-directory: ./android/gradle/wrapper
+        run: |
+          rm -f gradle-wrapper.jar
+          wget -q https://raw.githubusercontent.com/gradle/gradle/master/gradle/wrapper/gradle-wrapper.jar
+
       - name: Build APK
         working-directory: ./android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug \
+          ./gradlew assembleDebug --stacktrace --info \
             -PRELEASE_STORE_FILE=release.keystore \
             -PRELEASE_STORE_PASSWORD="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
             -PRELEASE_KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}" \

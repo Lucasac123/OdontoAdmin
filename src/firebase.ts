@@ -12,7 +12,7 @@ import {
   getDocFromCache,
   getDocFromServer,
   Firestore,
-  persistentLocalCache
+  memoryLocalCache
 } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import configFromJson from '../firebase-applet-config.json';
@@ -42,10 +42,11 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firestore with settings to maximize connectivity in restricted environments
 export const db: Firestore = initializeFirestore(app, {
-  localCache: persistentLocalCache()
+  localCache: memoryLocalCache()
 }, firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)' 
   ? firebaseConfig.firestoreDatabaseId 
   : undefined);
+
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
@@ -118,8 +119,10 @@ export async function moveToTrash(collectionName: string, docId: string, data?: 
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errorMessage,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
@@ -136,6 +139,15 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   };
+  
   console.error('Firestore Error: ', JSON.stringify(errInfo));
+  
+  // If it's an offline error, we don't want to crash the app by throwing an unhandled promise rejection
+  if (errorMessage.includes('offline') || errorMessage.includes('unavailable')) {
+    console.warn('Firestore is offline or unavailable. Some features may not work.');
+    // We can optionally alert the user here, but throwing will cause unhandled rejections
+    return;
+  }
+  
   throw new Error(JSON.stringify(errInfo));
 }

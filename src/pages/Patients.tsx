@@ -6,6 +6,7 @@ import { Plus, Search, Trash2, Edit, ChevronRight, UserCircle } from 'lucide-rea
 import { useNavigate } from 'react-router-dom';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { motion, AnimatePresence } from 'motion/react';
+import { useSync } from '../context/SyncContext';
 
 export const Patients: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -20,8 +21,8 @@ export const Patients: React.FC = () => {
   });
   const [error, setError] = useState<string | null>(null);
   const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { addSyncTask } = useSync();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -63,41 +64,38 @@ export const Patients: React.FC = () => {
     };
   }, []);
 
-  const handleAddPatient = async (e: React.FormEvent) => {
+  const handleAddPatient = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSaving) return;
-    setIsSaving(true);
     setError(null);
 
-    if (!auth.currentUser) {
-      setIsSaving(false);
-      return;
-    }
+    if (!auth.currentUser) return;
 
     const trimmedName = newPatient.name.trim();
 
     if (!trimmedName) {
       setError('O nome do paciente é obrigatório.');
-      setIsSaving(false);
       return;
     }
 
-    try {
-      await addDoc(collection(db, 'patients'), {
-        dentistId: auth.currentUser.uid,
-        name: trimmedName,
-        source: newPatient.source.trim() || null,
-        status: newPatient.status,
-        responsibleDentistId: newPatient.responsibleDentistId || null,
-        createdAt: new Date().toISOString()
-      });
-      setNewPatient({ name: '', source: '', status: 'Ativo', responsibleDentistId: '' });
-      setIsAdding(false);
-    } catch (error) {
+    const patientData = {
+      dentistId: auth.currentUser.uid,
+      name: trimmedName,
+      source: newPatient.source.trim() || null,
+      status: newPatient.status,
+      responsibleDentistId: newPatient.responsibleDentistId || null,
+      createdAt: new Date().toISOString()
+    };
+
+    // Executa a adição em background para não travar a UI (Optimistic Update)
+    const savePromise = addDoc(collection(db, 'patients'), patientData).catch(error => {
+      console.error("Erro ao sincronizar paciente em background:", error);
+      setError('Erro ao salvar paciente. Tente novamente.');
       handleFirestoreError(error, OperationType.CREATE, 'patients');
-    } finally {
-      setIsSaving(false);
-    }
+    });
+    
+    addSyncTask(savePromise);
+    setNewPatient({ name: '', source: '', status: 'Ativo', responsibleDentistId: '' });
+    setIsAdding(false);
   };
 
   const handleDelete = async (e: React.MouseEvent, patient: Patient) => {
@@ -105,17 +103,16 @@ export const Patients: React.FC = () => {
     setPatientToDelete(patient);
   };
 
-  const confirmDelete = async () => {
-    if (!patientToDelete || isDeleting) return;
-    setIsDeleting(true);
-    try {
-      await moveToTrash('patients', patientToDelete.id, patientToDelete);
-      setPatientToDelete(null);
-    } catch (error) {
+  const confirmDelete = () => {
+    if (!patientToDelete) return;
+    
+    const deletePromise = moveToTrash('patients', patientToDelete.id, patientToDelete).catch(error => {
+      console.error("Erro ao excluir paciente:", error);
       handleFirestoreError(error, OperationType.DELETE, `patients/${patientToDelete.id}`);
-    } finally {
-      setIsDeleting(false);
-    }
+    });
+    
+    addSyncTask(deletePromise);
+    setPatientToDelete(null);
   };
 
   const filteredPatients = patients.filter(p => 
@@ -124,10 +121,10 @@ export const Patients: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary tracking-tight">Pacientes</h1>
-          <p className="text-text-secondary mt-1">Gerencie o cadastro e histórico de seus pacientes</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Pacientes</h1>
+          <p className="text-sm text-text-secondary mt-1">Gerencie o cadastro e histórico de seus pacientes</p>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
           <div className="relative w-full sm:w-80 group">
@@ -142,7 +139,7 @@ export const Patients: React.FC = () => {
           </div>
           <button
             onClick={() => setIsAdding(true)}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-accent text-white px-6 py-3 rounded-2xl hover:bg-accent-hover active:scale-[0.98] transition-all shadow-lg shadow-accent/20 font-black uppercase text-[10px] tracking-widest shrink-0"
+            className="w-full sm:w-auto max-w-full flex items-center justify-center gap-2 bg-accent text-white px-6 py-3 rounded-2xl hover:bg-accent-hover active:scale-[0.98] transition-all shadow-lg shadow-accent/20 font-black uppercase text-[10px] tracking-widest shrink-0"
           >
             <Plus className="w-5 h-5" />
             Novo Paciente
@@ -246,17 +243,9 @@ export const Patients: React.FC = () => {
                 </button>
                 <button 
                   type="submit" 
-                  disabled={isSaving}
-                  className="bg-indigo-600 text-white px-8 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg dark:shadow-none font-medium disabled:opacity-50 flex items-center gap-2"
+                  className="bg-indigo-600 text-white px-8 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg dark:shadow-none font-medium flex items-center gap-2"
                 >
-                  {isSaving ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Cadastrando...
-                    </>
-                  ) : (
-                    'Cadastrar Paciente'
-                  )}
+                  Cadastrar Paciente
                 </button>
               </div>
             </form>
@@ -354,7 +343,6 @@ export const Patients: React.FC = () => {
         onConfirm={confirmDelete}
         onCancel={() => setPatientToDelete(null)}
         variant="danger"
-        isLoading={isDeleting}
       />
     </div>
   );

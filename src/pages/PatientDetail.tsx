@@ -100,7 +100,7 @@ export const PatientDetail: React.FC = () => {
           <ArrowLeft className="w-6 h-6" />
         </button>
         <div>
-          <h1 className="text-3xl font-bold text-text-primary">{patient.name}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">{patient.name}</h1>
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-1">
             <p className="text-sm text-text-secondary">
               Cadastrado em {new Date(patient.createdAt).toLocaleDateString()}
@@ -115,15 +115,15 @@ export const PatientDetail: React.FC = () => {
       </div>
 
       <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-        <div className="flex overflow-x-auto border-b border-zinc-200 dark:border-zinc-800 no-scrollbar scroll-smooth">
-          <div className="flex min-w-full">
+        <div className="border-b border-zinc-200 dark:border-zinc-800">
+          <div className="flex overflow-x-auto no-scrollbar scroll-smooth md:justify-center">
             {tabs.map((tab) => (
               <motion.button
                 key={tab.id}
                 whileHover={{ backgroundColor: 'rgba(0,0,0,0.02)' }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handleTabChange(tab.id)}
-                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors relative flex-shrink-0 ${
+                className={`flex items-center gap-2 px-4 py-3 md:px-6 md:py-4 text-sm font-medium whitespace-nowrap transition-colors relative flex-shrink-0 ${
                   activeTab === tab.id 
                     ? 'text-indigo-600 dark:text-indigo-400' 
                     : 'text-text-secondary hover:text-text-primary hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
@@ -143,7 +143,7 @@ export const PatientDetail: React.FC = () => {
         </div>
         
         <div className="p-4 md:p-6 min-h-[400px]">
-          <AnimatePresence mode="popLayout" custom={direction}>
+          <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={activeTab}
               custom={direction}

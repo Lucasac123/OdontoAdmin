@@ -128,12 +128,11 @@ const Marketing = () => {
   const filteredPatients = getFilteredPatients();
 
   return (
-    <div className="p-4 md:p-8 min-h-screen bg-bg">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Marketing e Relacionamento</h1>
-            <p className="text-text-secondary mt-1">Comunique-se com seus pacientes e crie campanhas personalizadas.</p>
+            <p className="text-sm text-text-secondary mt-1">Comunique-se com seus pacientes e crie campanhas personalizadas.</p>
           </div>
         </div>
 
@@ -309,7 +308,6 @@ const Marketing = () => {
           </div>
         </div>
       </div>
-    </div>
   );
 };
 

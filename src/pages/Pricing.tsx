@@ -250,10 +250,10 @@ export const Pricing: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary">Precificação</h1>
-          <p className="text-text-secondary mt-1">Calcule sua hora clínica e precifique seus procedimentos</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Precificação</h1>
+          <p className="text-sm text-text-secondary mt-1">Calcule sua hora clínica e precifique seus procedimentos</p>
         </div>
       </div>
 

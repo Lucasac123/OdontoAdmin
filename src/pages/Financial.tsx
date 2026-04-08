@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, updateDoc, getDocs } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../firebase';
 import { Finance } from '../types';
-import { Plus, Trash2, DollarSign, TrendingUp, TrendingDown, PieChart, Edit2, Check, X, BarChart as BarChartIcon, User, Camera, Loader2, FileText, AlertTriangle, Building } from 'lucide-react';
+import { Plus, Trash2, DollarSign, TrendingUp, TrendingDown, PieChart, Edit2, Check, X, BarChart as BarChartIcon, User, Camera, Loader2, FileText, AlertTriangle, Building, Zap, Calendar } from 'lucide-react';
 import { AddFinanceForm } from '../components/patient/AddFinanceForm';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Patient } from '../types';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { motion } from 'motion/react';
 import { GoogleGenAI, Type } from '@google/genai';
+import { useSync } from '../context/SyncContext';
 
 interface SplitCategory {
   id: string;
@@ -29,7 +30,6 @@ export const Financial: React.FC = () => {
     paymentMethod: 'pix' as Finance['paymentMethod']
   });
   const [financeToDelete, setFinanceToDelete] = useState<Finance | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isSavingFinance, setIsSavingFinance] = useState(false);
 
   // Dynamic percentage splits
@@ -45,6 +45,8 @@ export const Financial: React.FC = () => {
 
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().toISOString().substring(0, 7));
+  const [valuationMode, setValuationMode] = useState<'monthly' | 'yearly'>('monthly');
+  const { addSyncTask } = useSync();
 
   const [isScanning, setIsScanning] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -118,8 +120,11 @@ export const Financial: React.FC = () => {
   const [inventoryValue, setInventoryValue] = useState(0);
   const [inventoryAssetsValue, setInventoryAssetsValue] = useState(0);
   const [assetsValue, setAssetsValue] = useState(0);
+  const [valuationStartDate, setValuationStartDate] = useState<string | null>(null);
   const [isEditingAssets, setIsEditingAssets] = useState(false);
+  const [isEditingValuationDate, setIsEditingValuationDate] = useState(false);
   const [tempAssetsValue, setTempAssetsValue] = useState('');
+  const [tempValuationDate, setTempValuationDate] = useState('');
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -177,6 +182,7 @@ export const Financial: React.FC = () => {
       if (!snapshot.empty) {
         const data = snapshot.docs[0].data();
         setAssetsValue(data.assetsValue || 0);
+        setValuationStartDate(data.valuationStartDate || null);
       }
     });
 
@@ -188,18 +194,17 @@ export const Financial: React.FC = () => {
     };
   }, []);
 
-  const handleSaveAssets = async () => {
+  const handleSaveAssets = () => {
     if (!auth.currentUser) return;
     const val = parseFloat(tempAssetsValue);
     if (isNaN(val)) return;
 
-    try {
-      const settingsQuery = query(collection(db, 'clinicSettings'), where('dentistId', '==', auth.currentUser.uid));
-      const snapshot = await getDocs(settingsQuery);
-      
+    const settingsQuery = query(collection(db, 'clinicSettings'), where('dentistId', '==', auth.currentUser.uid));
+    
+    const savePromise = getDocs(settingsQuery).then(async (snapshot) => {
       if (snapshot.empty) {
         await addDoc(collection(db, 'clinicSettings'), {
-          dentistId: auth.currentUser.uid,
+          dentistId: auth.currentUser!.uid,
           assetsValue: val,
           workHoursPerDay: 8,
           workDaysPerWeek: 5,
@@ -211,60 +216,84 @@ export const Financial: React.FC = () => {
           updatedAt: new Date().toISOString()
         });
       }
-      setIsEditingAssets(false);
-    } catch (error) {
+    }).catch(error => {
       console.error("Error saving assets:", error);
-    }
+    });
+
+    addSyncTask(savePromise);
+    setIsEditingAssets(false);
   };
 
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!auth.currentUser || !newFinance.description || !newFinance.amount || isSavingFinance) return;
+  const handleSaveValuationDate = () => {
+    if (!auth.currentUser) return;
+    
+    const settingsQuery = query(collection(db, 'clinicSettings'), where('dentistId', '==', auth.currentUser.uid));
+    
+    const savePromise = getDocs(settingsQuery).then(async (snapshot) => {
+      if (snapshot.empty) {
+        await addDoc(collection(db, 'clinicSettings'), {
+          dentistId: auth.currentUser!.uid,
+          valuationStartDate: tempValuationDate,
+          updatedAt: new Date().toISOString()
+        });
+      } else {
+        await updateDoc(doc(db, 'clinicSettings', snapshot.docs[0].id), {
+          valuationStartDate: tempValuationDate,
+          updatedAt: new Date().toISOString()
+        });
+      }
+    }).catch(error => {
+      console.error("Error saving valuation start date:", error);
+    });
 
-    setIsSavingFinance(true);
-    try {
-      await addDoc(collection(db, 'finances'), {
-        dentistId: auth.currentUser.uid,
-        patientId: newFinance.type === 'income' ? (newFinance.patientId || null) : null,
-        description: newFinance.description,
-        amount: parseFloat(newFinance.amount),
-        type: newFinance.type,
-        paymentMethod: newFinance.type === 'income' ? newFinance.paymentMethod : null,
-        date: new Date(newFinance.date).toISOString(),
-        percentages: newFinance.type === 'income' ? JSON.stringify(splits) : null,
-        createdAt: new Date().toISOString()
-      });
-      setIsAdding(false);
-      setNewFinance({ 
-        description: '', 
-        amount: '', 
-        type: 'income', 
-        date: new Date().toISOString().split('T')[0],
-        patientId: '',
-        paymentMethod: 'pix'
-      });
-    } catch (error) {
+    addSyncTask(savePromise);
+    setIsEditingValuationDate(false);
+  };
+
+  const handleAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!auth.currentUser || !newFinance.description || !newFinance.amount) return;
+
+    const savePromise = addDoc(collection(db, 'finances'), {
+      dentistId: auth.currentUser.uid,
+      patientId: newFinance.type === 'income' ? (newFinance.patientId || null) : null,
+      description: newFinance.description,
+      amount: parseFloat(newFinance.amount),
+      type: newFinance.type,
+      paymentMethod: newFinance.type === 'income' ? newFinance.paymentMethod : null,
+      date: new Date(newFinance.date).toISOString(),
+      percentages: newFinance.type === 'income' ? JSON.stringify(splits) : null,
+      createdAt: new Date().toISOString()
+    }).catch(error => {
       handleFirestoreError(error, OperationType.CREATE, 'finances');
-    } finally {
-      setIsSavingFinance(false);
-    }
+    });
+
+    addSyncTask(savePromise);
+    setIsAdding(false);
+    setNewFinance({ 
+      description: '', 
+      amount: '', 
+      type: 'income', 
+      date: new Date().toISOString().split('T')[0],
+      patientId: '',
+      paymentMethod: 'pix'
+    });
   };
 
   const handleDelete = async (finance: Finance) => {
     setFinanceToDelete(finance);
   };
 
-  const confirmDelete = async () => {
-    if (!financeToDelete || isDeleting) return;
-    setIsDeleting(true);
-    try {
-      await moveToTrash('finances', financeToDelete.id, financeToDelete);
-      setFinanceToDelete(null);
-    } catch (error) {
+  const confirmDelete = () => {
+    if (!financeToDelete) return;
+    
+    const deletePromise = moveToTrash('finances', financeToDelete.id, financeToDelete).catch(error => {
+      console.error("Erro ao excluir lançamento:", error);
       handleFirestoreError(error, OperationType.DELETE, `finances/${financeToDelete.id}`);
-    } finally {
-      setIsDeleting(false);
-    }
+    });
+    
+    addSyncTask(deletePromise);
+    setFinanceToDelete(null);
   };
 
   const handlePrintTaxReceipt = (finance: Finance) => {
@@ -405,6 +434,12 @@ export const Financial: React.FC = () => {
     setEditSplitData({ name: split.name, percentage: split.percentage });
   };
 
+  const adjustTo100 = (id: string) => {
+    const currentTotal = splits.reduce((acc, curr) => acc + curr.percentage, 0);
+    const diff = 100 - currentTotal;
+    setSplits(splits.map(s => s.id === id ? { ...s, percentage: Math.max(0, s.percentage + diff) } : s));
+  };
+
   const saveEditSplit = () => {
     if (editingSplitId && editSplitData.name && editSplitData.percentage !== '' && editSplitData.percentage >= 0) {
       setSplits(splits.map(s => s.id === editingSplitId ? { 
@@ -417,14 +452,23 @@ export const Financial: React.FC = () => {
   };
 
   const totalAllTimeIncome = finances.filter(f => f.type === 'income').reduce((acc, curr) => acc + curr.amount, 0);
-  const companyValuation = totalAllTimeIncome + inventoryValue + assetsValue + inventoryAssetsValue;
+  
+  const firstFinanceDate = valuationStartDate ? new Date(valuationStartDate + '-01T12:00:00Z') : (finances.length > 0 ? new Date(finances[finances.length - 1].date) : new Date());
+  const monthsSinceStart = Math.max(1, (new Date().getFullYear() - firstFinanceDate.getFullYear()) * 12 + (new Date().getMonth() - firstFinanceDate.getMonth()) + 1);
+  const yearsSinceStart = Math.max(1, new Date().getFullYear() - firstFinanceDate.getFullYear() + 1);
+
+  const averageMonthlyIncome = totalAllTimeIncome / monthsSinceStart;
+  const averageYearlyIncome = totalAllTimeIncome / yearsSinceStart;
+
+  const currentAverageIncome = valuationMode === 'monthly' ? averageMonthlyIncome : averageYearlyIncome;
+  const companyValuation = currentAverageIncome + inventoryValue + assetsValue + inventoryAssetsValue;
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+    <div className="space-y-8 overflow-hidden">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-4xl font-bold text-text-primary tracking-tight mb-2">Financeiro</h1>
-          <p className="text-text-secondary text-sm sm:text-base font-medium">Gestão inteligente e transparente do seu consultório</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Financeiro</h1>
+          <p className="text-sm text-text-secondary mt-1">Gestão inteligente e transparente do seu consultório</p>
         </div>
         
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto flex-shrink-0">
@@ -437,7 +481,7 @@ export const Financial: React.FC = () => {
             />
           </div>
           
-          <div className="flex gap-3 w-full sm:w-auto">
+          <div className="flex flex-wrap gap-3 w-full sm:w-auto">
             <input 
               type="file" 
               accept="image/*" 
@@ -463,7 +507,6 @@ export const Financial: React.FC = () => {
               patients={Object.fromEntries(Object.entries(patients).map(([id, p]: [string, any]) => [id, p.name]))}
               splits={splits}
               handleAdd={handleAdd}
-              isLoading={isSavingFinance}
             />
           </div>
         </div>
@@ -556,15 +599,15 @@ export const Financial: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 premium-card p-8 !translate-y-0 hover:!shadow-premium">
-          <div className="flex items-center justify-between mb-10">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                <BarChartIcon className="w-6 h-6" />
+        <div className="lg:col-span-2 premium-card p-6 !translate-y-0 hover:!shadow-premium">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                <BarChartIcon className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-xl font-black text-text-primary tracking-tight">Fluxo de Caixa</h3>
-                <p className="text-xs text-text-secondary font-bold uppercase tracking-widest">Análise dos últimos 6 meses</p>
+                <h3 className="text-lg font-black text-text-primary tracking-tight">Fluxo de Caixa</h3>
+                <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest">Análise dos últimos 6 meses</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -578,10 +621,10 @@ export const Financial: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="h-[400px] w-full min-h-[400px] min-w-[400px]">
+          <div className="h-[300px] md:h-[400px] w-full min-h-[300px]">
             {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="rgba(0,0,0,0.05)" />
                   <XAxis 
                     dataKey="name" 
@@ -594,7 +637,7 @@ export const Financial: React.FC = () => {
                     axisLine={false} 
                     tickLine={false} 
                     tick={{ fill: '#71717a', fontSize: 10, fontWeight: 700 }}
-                    tickFormatter={(value) => `R$ ${value >= 1000 ? (value/1000).toFixed(0) + 'k' : value}`}
+                    tickFormatter={(value) => `${value >= 1000 ? (value/1000).toFixed(0) + 'k' : value}`}
                   />
                   <Tooltip 
                     cursor={{ fill: 'rgba(0,0,0,0.02)' }}
@@ -610,8 +653,8 @@ export const Financial: React.FC = () => {
                     itemStyle={{ padding: '4px 0' }}
                     formatter={(value: number) => [new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value), '']}
                   />
-                  <Bar dataKey="income" name="Receitas" fill="#10b981" radius={[8, 8, 0, 0]} barSize={32} activeBar={{ fill: '#059669' }} />
-                  <Bar dataKey="expense" name="Despesas" fill="#ef4444" radius={[8, 8, 0, 0]} barSize={32} activeBar={{ fill: '#dc2626' }} />
+                  <Bar dataKey="income" name="Receitas" fill="#10b981" radius={[4, 4, 0, 0]} barSize={24} activeBar={{ fill: '#059669' }} />
+                  <Bar dataKey="expense" name="Despesas" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={24} activeBar={{ fill: '#dc2626' }} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -623,13 +666,47 @@ export const Financial: React.FC = () => {
         </div>
 
         <div className="premium-card p-8 !translate-y-0 hover:!shadow-premium flex flex-col h-full border-indigo-500/10">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-              <Building className="w-6 h-6" />
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                <Building className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-text-primary tracking-tight">Avaliação do Consultório</h3>
+                <p className="text-xs text-text-secondary font-bold uppercase tracking-widest">Valor estimado</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-black text-text-primary tracking-tight">Valuation</h3>
-              <p className="text-xs text-text-secondary font-bold uppercase tracking-widest">Valor da Clínica</p>
+            <div className="flex items-center gap-2">
+              {isEditingValuationDate ? (
+                <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
+                  <input
+                    type="month"
+                    value={tempValuationDate}
+                    onChange={e => setTempValuationDate(e.target.value)}
+                    className="bg-transparent border-none text-[10px] font-black uppercase outline-none text-text-primary"
+                  />
+                  <button onClick={handleSaveValuationDate} className="p-1 text-emerald-600 hover:bg-emerald-500/10 rounded">
+                    <Check className="w-3 h-3" />
+                  </button>
+                  <button onClick={() => setIsEditingValuationDate(false)} className="p-1 text-text-secondary hover:bg-zinc-500/10 rounded">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { setTempValuationDate(valuationStartDate || new Date().toISOString().substring(0, 7)); setIsEditingValuationDate(true); }}
+                  className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-text-secondary hover:text-indigo-600 transition-colors"
+                  title="Configurar data de início para média"
+                >
+                  <Calendar className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                onClick={() => setValuationMode(valuationMode === 'monthly' ? 'yearly' : 'monthly')}
+                className="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-[10px] font-black uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
+              >
+                {valuationMode === 'monthly' ? 'Mensal' : 'Anual'}
+              </button>
             </div>
           </div>
           
@@ -642,6 +719,10 @@ export const Financial: React.FC = () => {
               <div className="flex justify-between items-center p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                 <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">Rendimentos (Total)</span>
                 <span className="font-black text-text-primary">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalAllTimeIncome)}</span>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">Média ({valuationMode === 'monthly' ? 'Mensal' : 'Anual'})</span>
+                <span className="font-black text-text-primary">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentAverageIncome)}</span>
               </div>
               <div className="flex justify-between items-center p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                 <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">Estoque de Consumo</span>
@@ -843,14 +924,14 @@ export const Financial: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-surface rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 p-10 h-fit">
+        <div className="bg-surface rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 p-10 h-fit w-full overflow-hidden">
           <div className="flex items-center justify-between mb-10">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                 <PieChart className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-xl font-black text-text-primary tracking-tight">Revenue Split</h3>
+                <h3 className="text-xl font-black text-text-primary tracking-tight">Divisão de ganhos</h3>
                 <p className="text-xs text-text-secondary font-bold uppercase tracking-widest">Distribuição automática</p>
               </div>
             </div>
@@ -863,7 +944,7 @@ export const Financial: React.FC = () => {
             </button>
           </div>
           
-          <div className="space-y-8">
+          <div className="space-y-8 w-full">
             {isAddingSplit && (
               <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -955,7 +1036,16 @@ export const Financial: React.FC = () => {
                           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((totalIncome * split.percentage) / 100)}
                         </p>
                       </div>
-                      <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-xl">{split.percentage}%</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-xl">{split.percentage}%</span>
+                        <button 
+                          onClick={() => adjustTo100(split.id)}
+                          className="p-1.5 text-text-secondary hover:text-indigo-600 hover:bg-indigo-500/10 rounded-lg transition-all active:scale-90 border border-zinc-200 dark:border-zinc-800"
+                          title="Ajustar para completar 100%"
+                        >
+                          <Zap className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                     <div className="relative h-3 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden shadow-inner">
                       <motion.div 
@@ -1003,7 +1093,6 @@ export const Financial: React.FC = () => {
         onConfirm={confirmDelete}
         onCancel={() => setFinanceToDelete(null)}
         variant="danger"
-        isLoading={isDeleting}
       />
     </div>
   );

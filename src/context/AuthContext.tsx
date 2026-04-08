@@ -30,7 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (Capacitor.isNativePlatform()) {
       GoogleAuth.initialize({
         clientId: '531539311792-07banoj8gike53of1ra4u4cin42cdt20.apps.googleusercontent.com',
-        scopes: ['profile', 'email'],
+        scopes: ['profile', 'email', 'https://www.googleapis.com/auth/drive.file'],
         grantOfflineAccess: true,
       });
     }
@@ -99,6 +99,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (Capacitor.isNativePlatform()) {
         console.log("Using Capacitor Native Google Auth");
         const googleUser = await GoogleAuth.signIn();
+        if (googleUser.authentication.accessToken) {
+          sessionStorage.setItem('gdrive_access_token', googleUser.authentication.accessToken);
+        }
         const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
         result = await signInWithCredential(auth, credential);
       } else {

@@ -5,6 +5,7 @@ import { Dentist } from '../types';
 import { Plus, Trash2, Edit2, Search, UserCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { useSync } from '../context/SyncContext';
 
 export const Dentists: React.FC = () => {
   const [dentists, setDentists] = useState<Dentist[]>([]);
@@ -13,7 +14,7 @@ export const Dentists: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dentistToDelete, setDentistToDelete] = useState<Dentist | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { addSyncTask } = useSync();
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -40,31 +41,31 @@ export const Dentists: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser || isSaving) return;
-    setIsSaving(true);
+    if (!auth.currentUser) return;
 
-    try {
-      if (editingId) {
-        await updateDoc(doc(db, 'dentists', editingId), {
-          ...formData
-        });
-        setEditingId(null);
-      } else {
-        await addDoc(collection(db, 'dentists'), {
-          ...formData,
-          dentistId: auth.currentUser.uid,
-          createdAt: new Date().toISOString()
-        });
-      }
-      setIsAdding(false);
-      setFormData({ name: '', cro: '', specialty: '', phone: '', email: '' });
-    } catch (error) {
-      handleFirestoreError(error, editingId ? OperationType.UPDATE : OperationType.CREATE, 'dentists');
-    } finally {
-      setIsSaving(false);
+    let savePromise;
+    if (editingId) {
+      savePromise = updateDoc(doc(db, 'dentists', editingId), {
+        ...formData
+      });
+      setEditingId(null);
+    } else {
+      savePromise = addDoc(collection(db, 'dentists'), {
+        ...formData,
+        dentistId: auth.currentUser.uid,
+        createdAt: new Date().toISOString()
+      });
     }
+
+    savePromise.catch(error => {
+      handleFirestoreError(error, editingId ? OperationType.UPDATE : OperationType.CREATE, 'dentists');
+    });
+
+    addSyncTask(savePromise);
+    setIsAdding(false);
+    setFormData({ name: '', cro: '', specialty: '', phone: '', email: '' });
   };
 
   const handleEdit = (dentist: Dentist) => {
@@ -79,21 +80,18 @@ export const Dentists: React.FC = () => {
     setIsAdding(true);
   };
 
-  const handleDelete = async () => {
-    if (!dentistToDelete || !auth.currentUser || isDeleting) return;
-    setIsDeleting(true);
+  const handleDelete = () => {
+    if (!dentistToDelete || !auth.currentUser) return;
 
-    try {
-      await moveToTrash('dentists', dentistToDelete.id, dentistToDelete);
-      setDentistToDelete(null);
-      setDeleteError(null);
-    } catch (error) {
+    const deletePromise = moveToTrash('dentists', dentistToDelete.id, dentistToDelete).catch(error => {
       const errMessage = error instanceof Error ? error.message : 'Erro ao excluir profissional. Verifique suas permissões.';
       setDeleteError(errMessage);
       console.error(error);
-    } finally {
-      setIsDeleting(false);
-    }
+    });
+    
+    addSyncTask(deletePromise);
+    setDentistToDelete(null);
+    setDeleteError(null);
   };
 
   const filteredDentists = dentists.filter(d => 
@@ -103,11 +101,11 @@ export const Dentists: React.FC = () => {
   );
 
   return (
-    <div className="p-4 md:p-8 space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 max-w-7xl mx-auto">
+    <div className="space-y-6 w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 w-full">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Dentistas</h1>
-          <p className="text-text-secondary mt-1">Gerencie os profissionais da clínica.</p>
+          <p className="text-sm text-text-secondary mt-1">Gerencie os profissionais da clínica.</p>
         </div>
         <button
           onClick={() => {
@@ -128,7 +126,7 @@ export const Dentists: React.FC = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-surface p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm max-w-7xl mx-auto"
+            className="bg-surface p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm w-full"
           >
             <h2 className="text-lg font-bold text-text-primary mb-6">
               {editingId ? 'Editar Dentista' : 'Novo Dentista'}
@@ -188,26 +186,17 @@ export const Dentists: React.FC = () => {
               <div className="flex items-end gap-3 lg:col-span-3 pt-2">
                 <button
                   type="submit"
-                  disabled={isSaving}
-                  className="flex-1 sm:flex-none bg-indigo-600 text-white px-8 py-2.5 rounded-xl hover:bg-indigo-700 transition-all font-bold shadow-lg dark:shadow-none dark:shadow-none active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 sm:flex-none bg-indigo-600 text-white px-8 py-2.5 rounded-xl hover:bg-indigo-700 transition-all font-bold shadow-lg dark:shadow-none active:scale-95 flex items-center justify-center gap-2"
                 >
-                  {isSaving ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      {editingId ? 'Salvando...' : 'Cadastrando...'}
-                    </>
-                  ) : (
-                    editingId ? 'Salvar Alterações' : 'Cadastrar'
-                  )}
+                  {editingId ? 'Salvar Alterações' : 'Cadastrar'}
                 </button>
                 <button
                   type="button"
-                  disabled={isSaving}
                   onClick={() => {
                     setIsAdding(false);
                     setEditingId(null);
                   }}
-                  className="flex-1 sm:flex-none px-8 py-2.5 rounded-xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all font-bold disabled:opacity-50"
+                  className="flex-1 sm:flex-none px-8 py-2.5 rounded-xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all font-bold"
                 >
                   Cancelar
                 </button>
@@ -217,7 +206,7 @@ export const Dentists: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <div className="bg-surface rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden max-w-7xl mx-auto">
+      <div className="bg-surface rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden w-full">
         <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/30">
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-400" />
@@ -353,7 +342,6 @@ export const Dentists: React.FC = () => {
 
       <ConfirmModal
         isOpen={!!dentistToDelete}
-        isLoading={isDeleting}
         onCancel={() => setDentistToDelete(null)}
         onConfirm={handleDelete}
         title="Excluir Dentista"

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../firebase';
+import { useSync } from '../context/SyncContext';
 import { Appointment, Finance, Patient, QuickNote, CRMDeal } from '../types';
-import { Users, Calendar, DollarSign, TrendingUp, Clock, BrainCircuit, Trash2, Plus, Briefcase, CheckCircle, XCircle } from 'lucide-react';
+import { Users, Calendar, DollarSign, TrendingUp, Clock, BrainCircuit, Trash2, Plus, Briefcase, CheckCircle, XCircle, StickyNote } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { ConfirmModal } from '../components/ConfirmModal';
@@ -31,12 +32,12 @@ export const Dashboard: React.FC = () => {
   const [newNote, setNewNote] = useState('');
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<QuickNote | null>(null);
-  const [isDeletingNote, setIsDeletingNote] = useState(false);
   const [isQuickAccessModalOpen, setIsQuickAccessModalOpen] = useState(false);
   const [selectedQuickAccess, setSelectedQuickAccess] = useState<string[]>(() => {
     const saved = localStorage.getItem('quickAccessLinks');
     return saved ? JSON.parse(saved) : ['patients', 'agenda', 'financial', 'ai'];
   });
+  const { addSyncTask } = useSync();
   const navigate = useNavigate();
 
   const handleSaveQuickAccess = (links: string[]) => {
@@ -132,15 +133,14 @@ export const Dashboard: React.FC = () => {
   };
 
   const confirmDeleteNote = async () => {
-    if (!noteToDelete || isDeletingNote) return;
-    setIsDeletingNote(true);
+    if (!noteToDelete) return;
+    
     try {
-      await moveToTrash('quickNotes', noteToDelete.id, noteToDelete);
-      setNoteToDelete(null);
+      await deleteDoc(doc(db, 'quickNotes', noteToDelete.id));
+      setNoteToDelete(null); // This closes the modal
     } catch (error) {
+      console.error("Erro ao excluir nota:", error);
       handleFirestoreError(error, OperationType.DELETE, `quickNotes/${noteToDelete.id}`);
-    } finally {
-      setIsDeletingNote(false);
     }
   };
 
@@ -193,10 +193,10 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-4xl font-bold text-text-primary tracking-tight">Dashboard</h1>
-          <p className="text-text-secondary mt-1 font-medium">Bem-vindo de volta! Aqui está o resumo da sua clínica.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Dashboard</h1>
+          <p className="text-sm text-text-secondary mt-1">Bem-vindo de volta! Aqui está o resumo da sua clínica.</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-surface border border-border-subtle rounded-2xl shadow-premium">
           <Calendar className="w-4 h-4 text-accent" />
@@ -542,7 +542,7 @@ export const Dashboard: React.FC = () => {
               <p className="text-xs text-text-secondary mt-1">Lembretes e anotações importantes</p>
             </div>
             <div className="w-10 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center">
-              <Plus className="w-5 h-5 text-indigo-600" />
+              <StickyNote className="w-5 h-5 text-indigo-600" />
             </div>
           </div>
           <form onSubmit={handleAddNote} className="mb-6">
@@ -608,36 +608,60 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="h-64 w-full min-h-[256px] min-w-[256px]">
             {patientStatusData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <PieChart role="img" aria-label="Gráfico de distribuição de pacientes por status">
-                  <Pie 
-                    data={patientStatusData} 
-                    dataKey="value" 
-                    nameKey="name" 
-                    cx="50%" 
-                    cy="50%" 
-                    innerRadius={60}
-                    outerRadius={80} 
-                    paddingAngle={5}
-                    stroke="none"
-                  >
-                    {patientStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'var(--card-bg)', 
-                      borderRadius: '16px', 
-                      border: '1px solid var(--border-subtle)', 
-                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                      color: 'var(--text-primary)'
-                    }}
-                    itemStyle={{ color: 'var(--text-primary)' }}
-                  />
-                  <Legend verticalAlign="bottom" height={36}/>
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                <div className="hidden md:block h-full">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                    <PieChart role="img" aria-label="Gráfico de distribuição de pacientes por status">
+                      <Pie 
+                        data={patientStatusData} 
+                        dataKey="value" 
+                        nameKey="name" 
+                        cx="50%" 
+                        cy="50%" 
+                        innerRadius={60}
+                        outerRadius={80} 
+                        paddingAngle={5}
+                        stroke="none"
+                      >
+                        {patientStatusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'var(--card-bg)', 
+                          borderRadius: '16px', 
+                          border: '1px solid var(--border-subtle)', 
+                          boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                          color: 'var(--text-primary)'
+                        }}
+                        itemStyle={{ color: 'var(--text-primary)' }}
+                      />
+                      <Legend verticalAlign="bottom" height={36}/>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="md:hidden h-full flex flex-col justify-center space-y-4">
+                  {patientStatusData.map((entry, index) => {
+                    const total = patientStatusData.reduce((acc, curr) => acc + curr.value, 0);
+                    const percentage = (entry.value / total) * 100;
+                    return (
+                      <div key={entry.name} className="space-y-1">
+                        <div className="flex justify-between text-xs font-bold text-text-primary">
+                          <span>{entry.name}</span>
+                          <span>{entry.value}</span>
+                        </div>
+                        <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-2">
+                          <div 
+                            className="h-2 rounded-full" 
+                            style={{ width: `${percentage}%`, backgroundColor: COLORS[index % COLORS.length] }} 
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             ) : (
               <div className="flex items-center justify-center h-full text-sm text-text-secondary">
                 Nenhum dado disponível
@@ -707,7 +731,6 @@ export const Dashboard: React.FC = () => {
         onConfirm={confirmDeleteNote}
         onCancel={() => setNoteToDelete(null)}
         variant="danger"
-        isLoading={isDeletingNote}
       />
 
       <QuickAccessSettingsModal

@@ -5,6 +5,7 @@ import { LabJob, Patient } from '../../types';
 import { Plus, Edit2, Trash2, CheckCircle, Clock, Truck, FileText, Loader2 } from 'lucide-react';
 import { ConfirmModal } from '../ConfirmModal';
 import { motion } from 'motion/react';
+import { useSync } from '../../context/SyncContext';
 
 export const LabJobsTab = ({ patient }: { patient: Patient }) => {
   const [jobs, setJobs] = useState<LabJob[]>([]);
@@ -13,7 +14,7 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
   const [editingJob, setEditingJob] = useState<LabJob | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { addSyncTask } = useSync();
 
   const [formData, setFormData] = useState({
     labName: '',
@@ -69,38 +70,38 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser || !patient.id || isSaving) return;
+    if (!auth.currentUser || !patient.id) return;
 
-    setIsSaving(true);
-    try {
-      const jobData = {
-        patientId: patient.id,
-        patientName: patient.name,
-        labName: formData.labName,
-        prosthesisType: formData.prosthesisType,
-        sendDate: formData.sendDate,
-        expectedDate: formData.expectedDate,
-        status: formData.status,
-        cost: formData.cost,
-        dentistId: auth.currentUser.uid,
-        updatedAt: new Date().toISOString(),
-        createdAt: editingJob ? editingJob.createdAt : new Date().toISOString()
-      };
+    const jobData = {
+      patientId: patient.id,
+      patientName: patient.name,
+      labName: formData.labName,
+      prosthesisType: formData.prosthesisType,
+      sendDate: formData.sendDate,
+      expectedDate: formData.expectedDate,
+      status: formData.status,
+      cost: formData.cost,
+      dentistId: auth.currentUser.uid,
+      updatedAt: new Date().toISOString(),
+      createdAt: editingJob ? editingJob.createdAt : new Date().toISOString()
+    };
 
-      if (editingJob) {
-        await updateDoc(doc(db, 'lab_jobs', editingJob.id), jobData);
-      } else {
-        await addDoc(collection(db, 'lab_jobs'), jobData);
-      }
-      setIsModalOpen(false);
-    } catch (error) {
+    let savePromise;
+    if (editingJob) {
+      savePromise = updateDoc(doc(db, 'lab_jobs', editingJob.id), jobData);
+    } else {
+      savePromise = addDoc(collection(db, 'lab_jobs'), jobData);
+    }
+    
+    savePromise.catch(error => {
       console.error('Error saving lab job:', error);
       alert('Erro ao salvar trabalho laboratoriais.');
-    } finally {
-      setIsSaving(false);
-    }
+    });
+
+    addSyncTask(savePromise);
+    setIsModalOpen(false);
   };
 
   const handleDeleteClick = (id: string) => {
@@ -108,18 +109,17 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
     setIsConfirmModalOpen(true);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!jobToDelete || isDeleting) return;
-    setIsDeleting(true);
-    try {
-      await moveToTrash('lab_jobs', jobToDelete);
-      setIsConfirmModalOpen(false);
-      setJobToDelete(null);
-    } catch (error) {
+  const handleConfirmDelete = () => {
+    if (!jobToDelete) return;
+    
+    const deletePromise = moveToTrash('lab_jobs', jobToDelete).catch(error => {
+      console.error("Erro ao excluir trabalho:", error);
       handleFirestoreError(error, OperationType.DELETE, `lab_jobs/${jobToDelete}`);
-    } finally {
-      setIsDeleting(false);
-    }
+    });
+    
+    addSyncTask(deletePromise);
+    setIsConfirmModalOpen(false);
+    setJobToDelete(null);
   };
 
   const handleStatusChange = async (jobId: string, newStatus: LabJob['status']) => {
@@ -338,11 +338,9 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSaving}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium flex items-center gap-2"
                 >
-                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {isSaving ? 'Salvando...' : 'Salvar'}
+                  Salvar
                 </button>
               </div>
             </form>
@@ -352,7 +350,6 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
 
       <ConfirmModal
         isOpen={isConfirmModalOpen}
-        isLoading={isDeleting}
         onCancel={() => setIsConfirmModalOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Excluir Trabalho"

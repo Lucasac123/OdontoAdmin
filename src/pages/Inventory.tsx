@@ -5,6 +5,7 @@ import { InventoryItem } from '../types';
 import { Plus, Edit2, Trash2, AlertTriangle } from 'lucide-react';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { motion, AnimatePresence } from 'motion/react';
+import { useSync } from '../context/SyncContext';
 
 const Inventory = () => {
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -14,7 +15,7 @@ const Inventory = () => {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'consumo' | 'patrimonio'>('consumo');
   const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { addSyncTask } = useSync();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -69,30 +70,30 @@ const Inventory = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser || isSaving) return;
-    setIsSaving(true);
+    if (!auth.currentUser) return;
 
-    try {
-      const itemData = {
-        ...formData,
-        dentistId: auth.currentUser.uid,
-        updatedAt: new Date().toISOString()
-      };
+    const itemData = {
+      ...formData,
+      dentistId: auth.currentUser.uid,
+      updatedAt: new Date().toISOString()
+    };
 
-      if (editingItem) {
-        await updateDoc(doc(db, 'inventory', editingItem.id), itemData);
-      } else {
-        await addDoc(collection(db, 'inventory'), itemData);
-      }
-      setIsModalOpen(false);
-    } catch (error) {
+    let savePromise;
+    if (editingItem) {
+      savePromise = updateDoc(doc(db, 'inventory', editingItem.id), itemData);
+    } else {
+      savePromise = addDoc(collection(db, 'inventory'), itemData);
+    }
+    
+    savePromise.catch(error => {
       console.error('Error saving inventory item:', error);
       alert('Erro ao salvar item.');
-    } finally {
-      setIsSaving(false);
-    }
+    });
+
+    addSyncTask(savePromise);
+    setIsModalOpen(false);
   };
 
   const handleDeleteClick = (id: string) => {
@@ -100,21 +101,19 @@ const Inventory = () => {
     setIsConfirmModalOpen(true);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!itemToDelete || isDeleting) return;
+  const handleConfirmDelete = () => {
+    if (!itemToDelete) return;
     const item = items.find(i => i.id === itemToDelete);
     if (!item) return;
 
-    setIsDeleting(true);
-    try {
-      await moveToTrash('inventory', itemToDelete, item);
-      setIsConfirmModalOpen(false);
-      setItemToDelete(null);
-    } catch (error) {
+    const deletePromise = moveToTrash('inventory', itemToDelete, item).catch(error => {
+      console.error("Erro ao excluir item do estoque:", error);
       handleFirestoreError(error, OperationType.DELETE, `inventory/${itemToDelete}`);
-    } finally {
-      setIsDeleting(false);
-    }
+    });
+    
+    addSyncTask(deletePromise);
+    setIsConfirmModalOpen(false);
+    setItemToDelete(null);
   };
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -125,10 +124,10 @@ const Inventory = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Controle de Estoque</h1>
-          <p className="text-text-secondary text-sm mt-1">Gerencie seus materiais e patrimônio</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Controle de Estoque</h1>
+          <p className="text-sm text-text-secondary mt-1">Gerencie seus materiais e patrimônio</p>
         </div>
         <button
           onClick={() => handleOpenModal()}
@@ -485,25 +484,16 @@ const Inventory = () => {
                 <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-zinc-100 dark:border-zinc-800">
                   <button
                     type="button"
-                    disabled={isSaving}
                     onClick={() => setIsModalOpen(false)}
-                    className="w-full sm:w-auto px-8 py-3 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-2xl transition-all font-bold text-sm disabled:opacity-50"
+                    className="w-full sm:w-auto px-8 py-3 text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-2xl transition-all font-bold text-sm"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    disabled={isSaving}
-                    className="w-full sm:w-auto px-8 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all font-bold text-sm shadow-lg dark:shadow-none active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto px-8 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all font-bold text-sm shadow-lg dark:shadow-none active:scale-95 flex items-center justify-center gap-2"
                   >
-                    {isSaving ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Salvando...
-                      </>
-                    ) : (
-                      'Salvar Item'
-                    )}
+                    Salvar Item
                   </button>
                 </div>
               </form>
@@ -515,7 +505,6 @@ const Inventory = () => {
 
       <ConfirmModal
         isOpen={isConfirmModalOpen}
-        isLoading={isDeleting}
         onCancel={() => setIsConfirmModalOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Excluir Item"

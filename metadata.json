@@ -1,5 +1,7 @@
-{
-  "name": "OdontoAdmin",
-  "description": "Aplicativo PWA de administração de consultório odontológico com IA Gemini.",
-  "requestFramePermissions": []
-}
+[
+  {
+    "name": "OdontoAdmin",
+    "description": "Gestão inteligente para o seu consultório odontológico.",
+    "requestFramePermissions": []
+  }
+]

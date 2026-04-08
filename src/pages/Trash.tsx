@@ -106,15 +106,15 @@ export const Trash = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto flex flex-col h-full min-h-0 gap-6 sm:gap-8">
+    <div className="flex flex-col h-full min-h-0 gap-6 sm:gap-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-400">
             <Trash2 className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight">Lixeira</h1>
-            <p className="text-xs sm:text-sm text-text-secondary font-medium">Gerencie itens excluídos recentemente</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">Lixeira</h1>
+            <p className="text-sm text-text-secondary mt-1">Gerencie itens excluídos recentemente</p>
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../../firebase';
 import { Patient } from '../../types';
 import { Save, Loader2, Printer } from 'lucide-react';
+import { useSync } from '../../context/SyncContext';
 
 export const AnamnesisTab = ({ patient }: { patient: Patient }) => {
   const [formData, setFormData] = useState({
@@ -26,6 +27,7 @@ export const AnamnesisTab = ({ patient }: { patient: Patient }) => {
     notes: ''
   });
   const [isSaving, setIsSaving] = useState(false);
+  const { addSyncTask } = useSync();
 
   useEffect(() => {
     if (patient.anamnesis) {
@@ -37,18 +39,15 @@ export const AnamnesisTab = ({ patient }: { patient: Patient }) => {
     }
   }, [patient.anamnesis]);
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await updateDoc(doc(db, 'patients', patient.id), {
-        anamnesis: JSON.stringify(formData),
-        updatedAt: new Date().toISOString()
-      });
-    } catch (error) {
+  const handleSave = () => {
+    const savePromise = updateDoc(doc(db, 'patients', patient.id), {
+      anamnesis: JSON.stringify(formData),
+      updatedAt: new Date().toISOString()
+    }).catch(error => {
       handleFirestoreError(error, OperationType.UPDATE, `patients/${patient.id}`);
-    } finally {
-      setIsSaving(false);
-    }
+    });
+    
+    addSyncTask(savePromise);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -207,8 +206,8 @@ export const AnamnesisTab = ({ patient }: { patient: Patient }) => {
             disabled={isSaving}
             className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors text-sm"
           >
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Salvar Anamnese
+            <Save className="w-4 h-4" />
+            <span className="truncate">Salvar Anamnese</span>
           </button>
         </div>
       </div>

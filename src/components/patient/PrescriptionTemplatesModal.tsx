@@ -3,6 +3,7 @@ import { X, Search, Plus, Save, Trash2, Edit2, FileText, Upload, Loader2 } from 
 import { motion, AnimatePresence } from 'motion/react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../../firebase';
+import { useSync } from '../../context/SyncContext';
 import { DocumentTemplate } from '../../types';
 import { GoogleGenAI } from '@google/genai';
 import { DOCUMENT_TEMPLATES } from '../../data/clinicalData';
@@ -26,11 +27,11 @@ export const PrescriptionTemplatesModal: React.FC<PrescriptionTemplatesModalProp
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [saveTitle, setSaveTitle] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [templateToDelete, setTemplateToDelete] = useState<string | null>(null);
+  const { addSyncTask } = useSync();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -77,16 +78,15 @@ export const PrescriptionTemplatesModal: React.FC<PrescriptionTemplatesModalProp
   };
 
   const handleConfirmDelete = async () => {
-    if (!templateToDelete || isDeleting) return;
-    setIsDeleting(true);
+    if (!templateToDelete) return;
+    
     try {
       await moveToTrash('documentTemplates', templateToDelete);
       setIsConfirmModalOpen(false);
       setTemplateToDelete(null);
     } catch (error) {
+      console.error("Erro ao excluir modelo:", error);
       handleFirestoreError(error, OperationType.DELETE, `documentTemplates/${templateToDelete}`);
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -262,7 +262,6 @@ export const PrescriptionTemplatesModal: React.FC<PrescriptionTemplatesModalProp
         isOpen={isConfirmModalOpen}
         onCancel={() => setIsConfirmModalOpen(false)}
         onConfirm={handleConfirmDelete}
-        isLoading={isDeleting}
         title="Excluir Modelo"
         message="Tem certeza que deseja excluir este modelo de documento? Ele será movido para a lixeira."
       />

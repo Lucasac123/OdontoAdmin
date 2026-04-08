@@ -3,6 +3,8 @@ import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { StorageProvider } from './context/StorageContext';
+import { SyncProvider } from './context/SyncContext';
 import { Layout } from './components/Layout';
 import { LoadingScreen } from './components/LoadingScreen';
 
