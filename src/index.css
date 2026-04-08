@@ -67,6 +67,10 @@
   selection-color: white;
 }
 
+html {
+  font-size: 14px;
+}
+
 body {
   background-color: var(--bg);
   color: var(--text-primary);
