@@ -377,19 +377,21 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
                   </div>
                   
                   {/* AI Analysis Section */}
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between px-1">
-                      <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-                        <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
-                          <Sparkles className="w-4 h-4" />
+                  <div className="flex flex-col gap-3 mt-2">
+                    <div className="flex items-center justify-between px-2 py-1">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200 dark:shadow-none">
+                          <Sparkles className="w-4.5 h-4.5" />
                         </div>
-                        <h4 className="font-bold text-sm tracking-tight">Análise Inteligente</h4>
+                        <div>
+                          <h4 className="font-bold text-sm text-text-primary tracking-tight">Análise Inteligente</h4>
+                          <p className="text-[10px] text-text-secondary font-medium uppercase tracking-wider">Powered by Gemini</p>
+                        </div>
                       </div>
                       {aiAnalysis && !isAnalyzing && (
                         <button
                           onClick={copyAnalysisToNotes}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all active:scale-95"
-                          title="Copiar para observações"
+                          className="flex items-center gap-2 px-3.5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all active:scale-95 shadow-sm"
                         >
                           <Wand2 className="w-3.5 h-3.5" />
                           <span>Aplicar</span>
@@ -397,36 +399,49 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
                       )}
                     </div>
 
-                    <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-                      <div className="p-4">
+                    <div className="bg-gradient-to-br from-zinc-50 to-white dark:from-zinc-900/50 dark:to-zinc-900/30 rounded-3xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-inner">
+                      <div className="p-5">
                         {isAnalyzing ? (
-                          <div className="flex flex-col items-center justify-center py-6 text-center space-y-3">
+                          <div className="flex flex-col items-center justify-center py-8 text-center space-y-4">
                             <div className="relative">
-                              <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400" />
-                              <Sparkles className="w-3 h-3 text-indigo-400 absolute -top-1 -right-1 animate-pulse" />
+                              <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-full animate-pulse" />
+                              <Loader2 className="w-10 h-10 animate-spin text-indigo-600 dark:text-indigo-400 relative z-10" />
+                              <Sparkles className="w-4 h-4 text-indigo-400 absolute -top-1 -right-1 animate-bounce" />
                             </div>
-                            <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Processando imagens...</p>
+                            <div className="space-y-1">
+                              <p className="text-xs font-black text-text-primary uppercase tracking-[0.2em]">Processando</p>
+                              <p className="text-[10px] text-text-secondary font-medium">Analisando padrões clínicos...</p>
+                            </div>
                           </div>
                         ) : aiAnalysis ? (
-                          <div className="prose dark:prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-p:text-zinc-600 dark:prose-p:text-zinc-400 prose-strong:text-indigo-600 dark:prose-strong:text-indigo-400">
+                          <div className="prose dark:prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-p:text-zinc-600 dark:prose-p:text-zinc-400 prose-strong:text-indigo-600 dark:prose-strong:text-indigo-400 prose-headings:text-text-primary prose-headings:font-bold">
                             <Markdown>{aiAnalysis}</Markdown>
                           </div>
                         ) : files.length > 0 ? (
-                          <div className="flex flex-col items-center justify-center py-6 text-center space-y-4">
-                            <BrainCircuit className="w-8 h-8 text-zinc-400 mb-1" />
-                            <button
-                              onClick={() => selectedTooth && analyzeTooth(selectedTooth)}
-                              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-md active:scale-95"
-                            >
-                              <Sparkles className="w-3.5 h-3.5" />
-                              Analisar dente com IA
-                            </button>
-                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Clique para iniciar análise</p>
+                          <div className="flex flex-col items-center justify-center py-8 text-center space-y-5">
+                            <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                              <BrainCircuit className="w-8 h-8" />
+                            </div>
+                            <div className="space-y-4">
+                              <div className="space-y-1">
+                                <p className="text-sm font-bold text-text-primary">Pronto para Analisar</p>
+                                <p className="text-[10px] text-text-secondary font-medium uppercase tracking-wider">Imagens detectadas no prontuário</p>
+                              </div>
+                              <button
+                                onClick={() => selectedTooth && analyzeTooth(selectedTooth)}
+                                className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none active:scale-95"
+                              >
+                                <Sparkles className="w-4 h-4" />
+                                Iniciar Análise
+                              </button>
+                            </div>
                           </div>
                         ) : (
-                          <div className="flex flex-col items-center justify-center py-6 text-center space-y-2 opacity-50">
-                            <ImageIcon className="w-8 h-8 text-zinc-400 mb-2" />
-                            <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Sem imagens para análise</p>
+                          <div className="flex flex-col items-center justify-center py-8 text-center space-y-3 opacity-60">
+                            <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400">
+                              <ImageIcon className="w-6 h-6" />
+                            </div>
+                            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Sem imagens para análise</p>
                           </div>
                         )}
                       </div>

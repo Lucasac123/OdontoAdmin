@@ -180,9 +180,9 @@ export const Patients: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleAddPatient} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">Nome Completo</label>
+            <form onSubmit={handleAddPatient} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider ml-1">Nome Completo</label>
                 <input
                   type="text"
                   disabled={isSaving}
@@ -192,15 +192,15 @@ export const Patients: React.FC = () => {
                     if (error) setError(null);
                   }}
                   placeholder="Ex: João Silva"
-                  className={`w-full bg-zinc-50 dark:bg-zinc-900 border ${error?.includes('nome') ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-800'} rounded-2xl px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50`}
+                  className={`w-full bg-zinc-50 dark:bg-zinc-900 border ${error?.includes('nome') ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-800'} rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50`}
                   autoFocus
                 />
-                {error?.includes('nome') && <p className="text-[10px] text-red-500 ml-1">{error}</p>}
+                {error?.includes('nome') && <p className="text-[9px] text-red-500 ml-1">{error}</p>}
               </div>
 
-              <div className="space-y-1.5 lg:col-span-1">
-                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">Celular / WhatsApp</label>
-                <div className="flex gap-2">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider ml-1">Celular / WhatsApp</label>
+                <div className="flex gap-1.5">
                   <select
                     disabled={isSaving}
                     value={newPatient.countryCode}
@@ -212,7 +212,7 @@ export const Patients: React.FC = () => {
                         phone: formatPhoneNumber(newPatient.phone, newCountryCode)
                       });
                     }}
-                    className="w-24 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-2 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50 text-sm overflow-hidden text-ellipsis"
+                    className="w-16 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-1.5 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50 text-xs overflow-hidden text-ellipsis"
                   >
                     {countries.map(c => (
                       <option key={`${c.name}-${c.code}`} value={c.code}>
@@ -229,32 +229,32 @@ export const Patients: React.FC = () => {
                       setNewPatient({...newPatient, phone: formatted});
                       if (error?.includes('celular')) setError(null);
                     }}
-                    placeholder={newPatient.countryCode === '+55' ? '(11) 99999-9999' : 'Número de celular'}
-                    className={`flex-1 bg-zinc-50 dark:bg-zinc-900 border ${error?.includes('celular') ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-800'} rounded-2xl px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50`}
+                    placeholder={newPatient.countryCode === '+55' ? '(11) 99999-9999' : 'Celular'}
+                    className={`flex-1 min-w-0 bg-zinc-50 dark:bg-zinc-900 border ${error?.includes('celular') ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-800'} rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50`}
                   />
                 </div>
-                {error?.includes('celular') && <p className="text-[10px] text-red-500 ml-1">{error}</p>}
+                {error?.includes('celular') && <p className="text-[9px] text-red-500 ml-1">{error}</p>}
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">Procedência</label>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider ml-1">Procedência</label>
                 <input
                   type="text"
                   disabled={isSaving}
                   value={newPatient.source}
                   onChange={(e) => setNewPatient({...newPatient, source: e.target.value})}
-                  placeholder="Ex: Indicação, Instagram"
-                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50"
+                  placeholder="Ex: Instagram"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">Status Inicial</label>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider ml-1">Status Inicial</label>
                 <select
                   disabled={isSaving}
                   value={newPatient.status}
                   onChange={(e) => setNewPatient({...newPatient, status: e.target.value as any})}
-                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer disabled:opacity-50"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer disabled:opacity-50"
                 >
                   <option value="Ativo">Ativo</option>
                   <option value="Inativo">Inativo</option>
@@ -262,22 +262,22 @@ export const Patients: React.FC = () => {
                 </select>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">Dentista Responsável</label>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider ml-1">Dentista Responsável</label>
                 <select
                   disabled={isSaving}
                   value={newPatient.responsibleDentistId}
                   onChange={(e) => setNewPatient({...newPatient, responsibleDentistId: e.target.value})}
-                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer disabled:opacity-50"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer disabled:opacity-50"
                 >
-                  <option value="">Sem filiação específica</option>
+                  <option value="">Sem filiação</option>
                   {dentists.map(d => (
                     <option key={d.id} value={d.id}>{d.name}</option>
                   ))}
                 </select>
               </div>
 
-              <div className="md:col-span-2 lg:col-span-4 flex justify-end gap-3 mt-2">
+              <div className="md:col-span-2 lg:col-span-5 flex justify-end gap-3 mt-2">
                 <button 
                   type="button" 
                   disabled={isSaving}

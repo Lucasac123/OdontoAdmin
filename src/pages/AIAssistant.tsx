@@ -615,22 +615,22 @@ export const AIAssistant: React.FC = () => {
   return (
     <div className="flex flex-col gap-2 h-full min-h-0 w-full">
       <div className="flex flex-col gap-2 mb-6 shrink-0">
-        <div className="flex flex-row items-center justify-between w-full gap-4">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-4">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-lg dark:shadow-none shrink-0">
               <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="min-w-0">
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-text-primary tracking-tight leading-tight truncate">IA Assistente</h1>
-              <p className="text-xs sm:text-sm text-text-secondary mt-1 truncate">Google Gemini Intelligence</p>
+              <p className="text-[10px] sm:text-sm text-text-secondary mt-0.5 sm:mt-1 truncate">Google Gemini Intelligence</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0 justify-end">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 justify-end w-full sm:w-auto">
             {activeTab === 'chat' && chatMessages.length > 0 && (
               <button
                 onClick={() => setShowClearConfirm(true)}
-                className="flex items-center justify-center p-2 sm:px-3 sm:py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:border-red-500 hover:text-red-600 transition-all shadow-sm active:scale-95 text-text-secondary"
+                className="flex-1 sm:flex-none flex items-center justify-center p-2 sm:px-3 sm:py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:border-red-500 hover:text-red-600 transition-all shadow-sm active:scale-95 text-text-secondary"
                 title="Apagar Histórico e Iniciar Novo Chat"
               >
                 <Trash2 className="w-4 h-4 sm:mr-2" />
@@ -638,20 +638,22 @@ export const AIAssistant: React.FC = () => {
               </button>
             )}
 
-            <div className="relative">
+            <div className="relative flex-1 sm:flex-none">
               <button 
                 onClick={() => setIsModelMenuOpen(!isModelMenuOpen)}
-                className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:border-indigo-500 transition-all shadow-sm active:scale-95"
+                className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:border-indigo-500 transition-all shadow-sm active:scale-95"
               >
-              <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
-                <BrainCircuit className="w-4 h-4" />
-              </div>
-              <div className="flex flex-col items-start leading-none pr-1">
-                <span className="text-[9px] font-black uppercase tracking-widest text-text-secondary mb-0.5">Modelo</span>
-                <span className="text-xs font-bold text-text-primary">{currentModel.name}</span>
-              </div>
-              <ChevronDown className={`w-3.5 h-3.5 text-text-secondary transition-transform duration-200 ${isModelMenuOpen ? 'rotate-180' : ''}`} />
-            </button>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                    <BrainCircuit className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col items-start leading-none pr-1">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-text-secondary mb-0.5">Modelo</span>
+                    <span className="text-xs font-bold text-text-primary">{currentModel.name}</span>
+                  </div>
+                </div>
+                <ChevronDown className={`w-3.5 h-3.5 text-text-secondary transition-transform duration-200 ${isModelMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
 
             <AnimatePresence>
               {isModelMenuOpen && (
@@ -715,38 +717,38 @@ export const AIAssistant: React.FC = () => {
         </div>
       </div>
         
-      <div className="grid grid-cols-3 bg-zinc-100 dark:bg-zinc-800/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 hide-scrollbar shrink-0 w-full">
+      <div className="grid grid-cols-3 bg-zinc-100 dark:bg-zinc-800/50 p-1 rounded-2xl border border-zinc-200 dark:border-zinc-800 hide-scrollbar shrink-0 w-full">
           <button
             onClick={() => setActiveTab('chat')}
-            className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-[0.2em] transition-all w-full ${
+            className={`flex items-center justify-center gap-2 px-2 sm:px-5 py-2.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] transition-all w-full ${
               activeTab === 'chat' 
                 ? 'bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm' 
                 : 'text-text-secondary hover:text-text-primary'
             }`}
           >
-            <MessageSquare className="w-4 h-4" />
+            <MessageSquare className="w-4 h-4 shrink-0" />
             <span className="hidden sm:inline">Chat</span>
           </button>
           <button
             onClick={() => setActiveTab('search')}
-            className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-[0.2em] transition-all w-full ${
+            className={`flex items-center justify-center gap-2 px-2 sm:px-5 py-2.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] transition-all w-full ${
               activeTab === 'search' 
                 ? 'bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm' 
                 : 'text-text-secondary hover:text-text-primary'
             }`}
           >
-            <Search className="w-4 h-4" />
+            <Search className="w-4 h-4 shrink-0" />
             <span className="hidden sm:inline">Pesquisa</span>
           </button>
           <button
             onClick={() => setActiveTab('analyze')}
-            className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-[0.2em] transition-all w-full ${
+            className={`flex items-center justify-center gap-2 px-2 sm:px-5 py-2.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] transition-all w-full ${
               activeTab === 'analyze' 
                 ? 'bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm' 
                 : 'text-text-secondary hover:text-text-primary'
             }`}
           >
-            <ImageIcon className="w-4 h-4" />
+            <ImageIcon className="w-4 h-4 shrink-0" />
             <span className="hidden sm:inline">Análise</span>
           </button>
         </div>
@@ -898,9 +900,9 @@ export const AIAssistant: React.FC = () => {
               )}
             </div>
             
-            <div className="p-4 sm:p-6 bg-surface border-t border-zinc-200 dark:border-zinc-800 shrink-0">
+            <div className="p-3 sm:p-6 bg-surface border-t border-zinc-200 dark:border-zinc-800 shrink-0">
               <div className="max-w-3xl mx-auto relative">
-                <form onSubmit={handleChatSubmit} className="relative flex items-end gap-2 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-2 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all shadow-sm">
+                <form onSubmit={handleChatSubmit} className="relative flex items-end gap-1.5 sm:gap-2 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-1.5 sm:p-2 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all shadow-sm">
                   <textarea
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
@@ -911,7 +913,7 @@ export const AIAssistant: React.FC = () => {
                       }
                     }}
                     placeholder="Envie uma mensagem para a IA..."
-                    className="w-full bg-transparent border-none resize-none max-h-32 min-h-[44px] py-3 px-4 text-sm text-text-primary focus:outline-none focus:ring-0 placeholder:text-zinc-400"
+                    className="w-full bg-transparent border-none resize-none max-h-32 min-h-[44px] py-3 px-2 sm:px-4 text-sm text-text-primary focus:outline-none focus:ring-0 placeholder:text-zinc-400"
                     rows={1}
                     disabled={isChatLoading}
                   />
@@ -943,13 +945,13 @@ export const AIAssistant: React.FC = () => {
               </div>
 
               <form onSubmit={handleSearchSubmit} className="relative group">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-zinc-400 group-focus-within:text-indigo-500 transition-colors" />
+                <Search className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-5 h-5 sm:w-6 sm:h-6 text-zinc-400 group-focus-within:text-indigo-500 transition-colors" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="O que você deseja pesquisar?"
-                  className="w-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-full pl-16 pr-6 py-5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm text-lg font-medium"
+                  className="w-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-full pl-12 sm:pl-16 pr-6 py-4 sm:py-5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm text-base sm:text-lg font-medium"
                   disabled={isSearchLoading}
                 />
               </form>
@@ -1015,7 +1017,7 @@ export const AIAssistant: React.FC = () => {
         )}
 
         {activeTab === 'analyze' && (
-          <div className="h-full flex flex-col lg:flex-row p-6 sm:p-8 gap-8 overflow-y-auto">
+          <div className="h-full flex flex-col lg:flex-row p-4 sm:p-8 gap-8 overflow-y-auto">
             <div className="w-full lg:w-1/3 flex flex-col gap-6">
               <div className="w-full">
                 <label className="text-xs font-black text-text-secondary uppercase tracking-[0.2em] ml-2 block mb-3">Especialidade / Foco da IA</label>
@@ -1023,7 +1025,7 @@ export const AIAssistant: React.FC = () => {
                   <select
                     value={selectedPreset}
                     onChange={(e) => setSelectedPreset(e.target.value)}
-                    className="w-full appearance-none bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800 rounded-2xl py-3 pl-12 pr-10 text-sm font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                    className="w-full appearance-none bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800 rounded-2xl py-3 pl-10 sm:pl-12 pr-10 text-xs sm:text-sm font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                   >
                     {PRESETS.map(p => (
                       <option key={p.id} value={p.id}>{p.name}</option>
