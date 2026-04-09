@@ -221,7 +221,6 @@ export const AIAssistant: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'chat' | 'search' | 'analyze'>('chat');
   const [selectedModel, setSelectedModel] = useState('gemini-3-flash-preview');
   const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
 
   const MODELS = [
     { id: 'gemini-3.1-pro-preview', name: 'Pro 3.1', fullName: 'Gemini 3.1 Pro (Preview)', description: 'O mais inteligente: raciocínio avançado e análise complexa' },
@@ -320,15 +319,6 @@ export const AIAssistant: React.FC = () => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editValue, setEditValue] = useState('');
 
-  useEffect(() => {
-    if (cooldown > 0) {
-      const timer = setInterval(() => {
-        setCooldown(prev => Math.max(0, prev - 1));
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [cooldown]);
-
   const formatAIError = (error: any) => {
     console.error('AI Error:', error);
     
@@ -340,7 +330,6 @@ export const AIAssistant: React.FC = () => {
       const code = errorObj.code || errorObj.error?.code;
       
       if (code === 429) {
-        setCooldown(60);
         return "Limite de uso atingido. O plano gratuito do Gemini possui limites de requisições por minuto. Tente aguardar um momento ou trocar para um modelo mais leve (como o Lite) no topo da tela.";
       }
       if (code === 503 || code === 500) {
@@ -635,17 +624,6 @@ export const AIAssistant: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3 shrink-0 justify-end">
-            {cooldown > 0 && (
-              <motion.div 
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl text-amber-600 dark:text-amber-400"
-              >
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span className="text-[10px] font-black tabular-nums">{cooldown}s</span>
-              </motion.div>
-            )}
-
             {activeTab === 'chat' && chatMessages.length > 0 && (
               <button
                 onClick={() => setShowClearConfirm(true)}
@@ -929,14 +907,14 @@ export const AIAssistant: React.FC = () => {
                         handleChatSubmit(e);
                       }
                     }}
-                    placeholder={cooldown > 0 ? `Aguarde ${cooldown}s para nova mensagem...` : "Envie uma mensagem para a IA..."}
+                    placeholder="Envie uma mensagem para a IA..."
                     className="w-full bg-transparent border-none resize-none max-h-32 min-h-[44px] py-3 px-4 text-sm text-text-primary focus:outline-none focus:ring-0 placeholder:text-zinc-400"
                     rows={1}
-                    disabled={isChatLoading || cooldown > 0}
+                    disabled={isChatLoading}
                   />
                   <button 
                     type="submit" 
-                    disabled={isChatLoading || !chatInput.trim() || cooldown > 0}
+                    disabled={isChatLoading || !chatInput.trim()}
                     className="w-11 h-11 shrink-0 flex items-center justify-center bg-indigo-600 text-white rounded-2xl disabled:opacity-50 hover:bg-indigo-700 transition-all shadow-md active:scale-95"
                   >
                     <Send className="w-5 h-5" />
@@ -969,7 +947,7 @@ export const AIAssistant: React.FC = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="O que você deseja pesquisar?"
                   className="w-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-full pl-16 pr-6 py-5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm text-lg font-medium"
-                  disabled={isSearchLoading || cooldown > 0}
+                  disabled={isSearchLoading}
                 />
               </form>
 
@@ -1119,7 +1097,7 @@ export const AIAssistant: React.FC = () => {
 
               <button
                 onClick={handleAnalyzeSubmit}
-                disabled={(!analyzeImage && !pdfData && !stlGeometry) || isAnalyzeLoading || cooldown > 0}
+                disabled={(!analyzeImage && !pdfData && !stlGeometry) || isAnalyzeLoading}
                 className="w-full bg-indigo-600 text-white py-4 rounded-[20px] font-black uppercase tracking-[0.2em] text-xs hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-3 transition-all shadow-lg dark:shadow-none active:scale-95"
               >
                 {isAnalyzeLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
