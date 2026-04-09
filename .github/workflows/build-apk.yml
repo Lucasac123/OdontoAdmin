@@ -11,6 +11,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -130,6 +133,14 @@ jobs:
             -PRELEASE_STORE_PASSWORD="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
             -PRELEASE_KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}" \
             -PRELEASE_KEY_PASSWORD="${{ secrets.ANDROID_KEY_PASSWORD }}"
+
+      - name: Manifest Merger Error Report
+        working-directory: ./android
+        if: failure()
+        run: |
+          echo "Checking for manifest merger logs..."
+          find . -name "manifest-merger-debug-report.txt" -exec cat {} + || echo "No manifest report found."
+          ./gradlew :app:processDebugManifest --stacktrace || echo "Final manifest check failed."
 
       - name: EXTRAINDO SHA-1 PARA O FIREBASE
         run: |
