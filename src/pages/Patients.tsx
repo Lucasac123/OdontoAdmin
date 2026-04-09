@@ -20,8 +20,7 @@ export const Patients: React.FC = () => {
     source: '',
     status: 'Ativo' as const,
     responsibleDentistId: '',
-    phone: '',
-    countryCode: '+55'
+    phone: ''
   });
   const [error, setError] = useState<string | null>(null);
   const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
@@ -75,22 +74,16 @@ export const Patients: React.FC = () => {
     if (!auth.currentUser) return;
 
     const trimmedName = newPatient.name.trim();
-    const trimmedPhone = newPatient.phone.replace(/\D/g, '');
 
     if (!trimmedName) {
       setError('O nome do paciente é obrigatório.');
       return;
     }
 
-    if (!trimmedPhone) {
-      setError('O celular do paciente é obrigatório para notificações.');
-      return;
-    }
-
     const patientData = {
       dentistId: auth.currentUser.uid,
       name: trimmedName,
-      phone: `${newPatient.countryCode}${trimmedPhone}`,
+      phone: newPatient.phone.trim() || null,
       source: newPatient.source.trim() || null,
       status: newPatient.status,
       responsibleDentistId: newPatient.responsibleDentistId || null,
@@ -105,7 +98,7 @@ export const Patients: React.FC = () => {
     });
     
     addSyncTask(savePromise);
-    setNewPatient({ name: '', source: '', status: 'Ativo', responsibleDentistId: '', phone: '', countryCode: '+55' });
+    setNewPatient({ name: '', source: '', status: 'Ativo', responsibleDentistId: '', phone: '' });
     setIsAdding(false);
   };
 
@@ -171,7 +164,7 @@ export const Patients: React.FC = () => {
               <button 
                 onClick={() => {
                   setIsAdding(false);
-                  setNewPatient({ name: '', source: '', status: 'Ativo', responsibleDentistId: '', phone: '', countryCode: '+55' });
+                  setNewPatient({ name: '', source: '', status: 'Ativo', responsibleDentistId: '', phone: '' });
                   setError(null);
                 }}
                 className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 text-text-secondary hover:text-red-500 transition-all"
@@ -200,39 +193,17 @@ export const Patients: React.FC = () => {
 
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider ml-1">Celular / WhatsApp</label>
-                <div className="flex gap-1.5">
-                  <select
-                    disabled={isSaving}
-                    value={newPatient.countryCode}
-                    onChange={(e) => {
-                      const newCountryCode = e.target.value;
-                      setNewPatient({
-                        ...newPatient, 
-                        countryCode: newCountryCode,
-                        phone: formatPhoneNumber(newPatient.phone, newCountryCode)
-                      });
-                    }}
-                    className="w-16 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-1.5 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50 text-xs overflow-hidden text-ellipsis"
-                  >
-                    {countries.map(c => (
-                      <option key={`${c.name}-${c.code}`} value={c.code}>
-                        {c.flag} {c.code}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="tel"
-                    disabled={isSaving}
-                    value={newPatient.phone}
-                    onChange={(e) => {
-                      const formatted = formatPhoneNumber(e.target.value, newPatient.countryCode);
-                      setNewPatient({...newPatient, phone: formatted});
-                      if (error?.includes('celular')) setError(null);
-                    }}
-                    placeholder={newPatient.countryCode === '+55' ? '(11) 99999-9999' : 'Celular'}
-                    className={`flex-1 min-w-0 bg-zinc-50 dark:bg-zinc-900 border ${error?.includes('celular') ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-800'} rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50`}
-                  />
-                </div>
+                <input
+                  type="tel"
+                  disabled={isSaving}
+                  value={newPatient.phone}
+                  onChange={(e) => {
+                    setNewPatient({...newPatient, phone: e.target.value});
+                    if (error?.includes('celular')) setError(null);
+                  }}
+                  placeholder="Ex: +5511999999999"
+                  className={`w-full bg-zinc-50 dark:bg-zinc-900 border ${error?.includes('celular') ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-800'} rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50`}
+                />
                 {error?.includes('celular') && <p className="text-[9px] text-red-500 ml-1">{error}</p>}
               </div>
 
@@ -283,7 +254,7 @@ export const Patients: React.FC = () => {
                   disabled={isSaving}
                   onClick={() => {
                     setIsAdding(false);
-                    setNewPatient({ name: '', source: '', status: 'Ativo', responsibleDentistId: '', phone: '', countryCode: '+55' });
+                    setNewPatient({ name: '', source: '', status: 'Ativo', responsibleDentistId: '', phone: '' });
                     setError(null);
                   }} 
                   className="px-6 py-2.5 rounded-2xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors font-medium disabled:opacity-50"
