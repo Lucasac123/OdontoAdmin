@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../firebase';
 import { Appointment, Patient, Dentist } from '../types';
@@ -18,7 +18,14 @@ export const Agenda: React.FC = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [notifSettings, setNotifSettings] = useState<NotificationSettings | null>(null);
+  const [notifSettings, setNotifSettings] = useState<NotificationSettings>({
+    dentistId: auth.currentUser?.uid || '',
+    enabled: true,
+    type: 'sms',
+    hoursBefore: 24,
+    messageTemplate: 'Olá {paciente}, confirmamos sua consulta com o(a) Dr(a) {dentista} para {data} às {hora}.',
+    updatedAt: new Date().toISOString()
+  });
   const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
   const { addSyncTask } = useSync();
   
@@ -277,11 +284,11 @@ export const Agenda: React.FC = () => {
 
   // Generate week days
   const startDate = startOfWeek(selectedDate, { weekStartsOn: 0 });
-  const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(startDate, i));
+  const weekDays = useMemo(() => Array.from({ length: 7 }).map((_, i) => addDays(startDate, i)), [startDate]);
 
-  const dayAppointments = appointments
+  const dayAppointments = useMemo(() => appointments
     .filter(a => isSameDay(parseISO(a.date), selectedDate))
-    .sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
+    .sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime()), [appointments, selectedDate]);
 
   return (
     <div className="space-y-6 h-full flex flex-col">
@@ -503,7 +510,7 @@ export const Agenda: React.FC = () => {
         </div>
       </div>
       <AnimatePresence>
-        {isSettingsOpen && notifSettings && (
+        {isSettingsOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}

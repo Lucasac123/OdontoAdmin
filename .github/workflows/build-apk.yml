@@ -34,13 +34,21 @@ jobs:
           rm -rf android/app/src/main/res/mipmap-anydpi-v26
           rm -f android/app/src/main/res/drawable-v24/ic_launcher_foreground.xml
           
+          # Install dependencies for cairosvg on Ubuntu
+          sudo apt-get update && sudo apt-get install -y libcairo2-dev libffi-dev libxml2-dev libxslt-dev
           pip install cairosvg Pillow --quiet
+          
           python3 - <<'EOF'
           import cairosvg
           from PIL import Image
           import io, os
+          import sys
 
           svg_path = "public/logo.svg"
+          if not os.path.exists(svg_path):
+              print(f"⚠️ Error: {svg_path} not found! Skipping icon generation.")
+              sys.exit(0) # Don't fail the build here, use defaults
+
           sizes = {
             "mipmap-mdpi": 48,
             "mipmap-hdpi": 72,
@@ -50,14 +58,17 @@ jobs:
           }
           base = "android/app/src/main/res"
           for folder, size in sizes.items():
-            png_data = cairosvg.svg2png(url=svg_path, output_width=size, output_height=size)
-            img = Image.open(io.BytesIO(png_data)).convert("RGBA")
-            out_dir = os.path.join(base, folder)
-            os.makedirs(out_dir, exist_ok=True)
-            img.save(os.path.join(out_dir, "ic_launcher.png"))
-            img.save(os.path.join(out_dir, "ic_launcher_round.png"))
-            print(f"  ✅ {folder}: {size}x{size}")
-          print("Icons generated!")
+            try:
+                png_data = cairosvg.svg2png(url=svg_path, output_width=size, output_height=size)
+                img = Image.open(io.BytesIO(png_data)).convert("RGBA")
+                out_dir = os.path.join(base, folder)
+                os.makedirs(out_dir, exist_ok=True)
+                img.save(os.path.join(out_dir, "ic_launcher.png"))
+                img.save(os.path.join(out_dir, "ic_launcher_round.png"))
+                print(f"  ✅ {folder}: {size}x{size}")
+            except Exception as e:
+                print(f"  ❌ Error generating {folder}: {e}")
+          print("Icons generation process finished.")
           EOF
 
       - name: Capacitor Sync
@@ -113,7 +124,7 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew clean assembleDebug --stacktrace --info \
-            -PRELEASE_STORE_FILE=release.keystore \
+            -PRELEASE_STORE_FILE=app/release.keystore \
             -PRELEASE_STORE_PASSWORD="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
             -PRELEASE_KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}" \
             -PRELEASE_KEY_PASSWORD="${{ secrets.ANDROID_KEY_PASSWORD }}"
