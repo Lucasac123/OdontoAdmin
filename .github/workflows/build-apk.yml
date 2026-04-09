@@ -7,9 +7,6 @@ on:
       - master
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -104,25 +101,31 @@ jobs:
           find . -name "*.gradle" -type f -exec sed -i 's/maven\s*{\s*url\s*["\x27]https:\/\/jcenter.bintray.com["\x27]\s*}/mavenCentral()/g' {} +
           
           # Fix namespace for AGP 8+ in plugins if missing
-          # This is a bit complex but helps with legacy plugins
           for f in $(find node_modules -name "build.gradle"); do
             if ! grep -q "namespace" "$f"; then
-              # Try to extract package name from AndroidManifest.xml
               manifest=$(dirname "$f")/src/main/AndroidManifest.xml
               if [ -f "$manifest" ]; then
-                pkg=$(grep -oP 'package="\K[^"]+' "$manifest")
+                # Extract package name using a more robust approach
+                pkg=$(grep -oP 'package="\K[^"]+' "$manifest" || echo "")
                 if [ -n "$pkg" ]; then
+                  echo "Found package $pkg for $f. Patching namespace..."
                   sed -i "/android {/a \    namespace \"$pkg\"" "$f"
                 fi
               fi
             fi
           done
 
+      - name: Manifest Merger Report (Debug)
+        working-directory: ./android
+        if: always()
+        run: |
+          ./gradlew :app:processDebugManifest --stacktrace || echo "Manifest merger failed, check logs above."
+
       - name: Build APK
         working-directory: ./android
         run: |
           chmod +x gradlew
-          ./gradlew clean assembleDebug --stacktrace --info \
+          ./gradlew assembleDebug --stacktrace --info \
             -PRELEASE_STORE_FILE=app/release.keystore \
             -PRELEASE_STORE_PASSWORD="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
             -PRELEASE_KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}" \

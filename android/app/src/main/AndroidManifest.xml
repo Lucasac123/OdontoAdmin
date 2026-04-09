@@ -31,10 +31,12 @@
             android:name="com.odontoadmin.app.GenericFileProvider"
             android:authorities="${applicationId}.fileprovider"
             android:exported="false"
-            android:grantUriPermissions="true">
+            android:grantUriPermissions="true"
+            tools:node="replace">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths"></meta-data>
+                android:resource="@xml/file_paths"
+                tools:node="replace"></meta-data>
         </provider>
     </application>
 
