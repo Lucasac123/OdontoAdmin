@@ -349,7 +349,8 @@ export const AIAssistant: React.FC = () => {
       return "O serviço está temporariamente sobrecarregado. Tente novamente em instantes.";
     }
 
-    return "Desculpe, ocorreu um erro ao processar sua solicitação. Verifique sua conexão ou tente novamente mais tarde.";
+    // DEBUG: expose the technical error to the user for diagnosis
+    return `Erro Técnico: ${message}. Verifique sua conexão ou a validade da sua API Key.`;
   };
 
   const handleChatSubmit = async (e: React.FormEvent) => {
@@ -374,7 +375,8 @@ export const AIAssistant: React.FC = () => {
         ]
       });
       
-      const text = response.text;
+      // Handle both .text property and .text() method for different SDK versions
+      const text = typeof response.text === 'function' ? (response.text as any)() : response.text;
       setChatMessages(prev => [...prev, { role: 'model', text: text || 'Desculpe, não consegui gerar uma resposta.' }]);
     } catch (error) {
       const errorMessage = formatAIError(error);
@@ -415,7 +417,8 @@ export const AIAssistant: React.FC = () => {
         }
       });
       
-      const text = response.text;
+      // Handle both .text property and .text() method
+      const text = typeof response.text === 'function' ? (response.text as any)() : response.text;
       setSearchResult(text || 'Nenhum resultado encontrado.');
       
       // Grounding metadata
@@ -594,7 +597,8 @@ export const AIAssistant: React.FC = () => {
         ]
       });
       
-      const text = response.text;
+      // Handle both .text property and .text() method
+      const text = typeof response.text === 'function' ? (response.text as any)() : response.text;
       setAnalyzeResult(text || 'Não foi possível analisar a imagem.');
     } catch (error) {
       const errorMessage = formatAIError(error);

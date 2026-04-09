@@ -138,7 +138,9 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
           }
         ]
       });
-      setAiAnalysis(response.text || 'Nenhuma análise disponível.');
+      // Handle both .text property and .text() method
+      const text = typeof response.text === 'function' ? (response.text as any)() : response.text;
+      setAiAnalysis(text || 'Nenhuma análise disponível.');
     } catch (error) {
       console.error('AI analysis error', error);
       setAiAnalysis('Erro ao analisar imagens.');
