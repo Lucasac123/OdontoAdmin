@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../firebase';
 import { Appointment, Patient, Dentist } from '../types';
-import { Calendar as CalendarIcon, Clock, Plus, Trash2, CheckCircle, XCircle, ExternalLink, Settings, Bell, Send, AlertCircle, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Plus, Trash2, CheckCircle, XCircle, ExternalLink, Settings, Bell, Send, AlertCircle, Loader2, MessageCircle } from 'lucide-react';
 import { format, startOfWeek, addDays, isSameDay, parseISO, isAfter, subHours } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'motion/react';
@@ -129,15 +129,16 @@ export const Agenda: React.FC = () => {
         }
         if (notifSettings.type === 'whatsapp' || notifSettings.type === 'all') {
           console.log(`[WHATSAPP] Enviando para ${patient.phone}: ${message}`);
-          // For a real integration without API, we could use:
-          // window.open(`https://wa.me/${patient.phone?.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`);
+          if (patient.phone) {
+            window.open(`https://wa.me/55${patient.phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
+          }
         }
         
         // Simulate API call delay
         await new Promise(resolve => setTimeout(resolve, 500));
       }
       
-      alert(`${upcoming.length} lembretes enviados com sucesso!`);
+      alert(`${upcoming.length} lembretes processados!\n\nNota: Para WhatsApp, as abas foram abertas. Para envio automático de SMS/Email, é necessária integração com uma API (ex: Twilio, SendGrid).`);
     } catch (error) {
       console.error(error);
       alert('Erro ao enviar lembretes.');
@@ -225,6 +226,21 @@ export const Agenda: React.FC = () => {
     const details = encodeURIComponent(`Paciente: ${app.patientName}\nObservações: ${app.notes || 'Nenhuma'}`);
     
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dates}&details=${details}`;
+  };
+
+  const getWhatsAppLink = (app: Appointment) => {
+    const patient = patients.find(p => p.id === app.patientId);
+    if (!patient || !patient.phone) return null;
+    
+    const date = parseISO(app.date);
+    const message = notifSettings?.messageTemplate
+      ? notifSettings.messageTemplate
+          .replace('{paciente}', patient.name)
+          .replace('{data}', format(date, 'dd/MM/yyyy'))
+          .replace('{hora}', format(date, 'HH:mm'))
+      : `Olá ${patient.name}, lembrete da sua consulta no dia ${format(date, 'dd/MM/yyyy')} às ${format(date, 'HH:mm')}.`;
+      
+    return `https://wa.me/55${patient.phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
   };
 
   // Generate week days
@@ -412,6 +428,18 @@ export const Agenda: React.FC = () => {
                       <div className="flex items-center gap-2 self-end sm:self-auto">
                         {app.status === 'scheduled' && (
                           <>
+                            {getWhatsAppLink(app) && (
+                              <a 
+                                href={getWhatsAppLink(app)!} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg flex items-center gap-2 text-sm font-medium"
+                                title="Enviar lembrete pelo WhatsApp"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                                WhatsApp
+                              </a>
+                            )}
                             <a 
                               href={generateGoogleCalendarLink(app)} 
                               target="_blank" 
