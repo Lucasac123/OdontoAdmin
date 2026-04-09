@@ -85,9 +85,10 @@ jobs:
 
       - name: Patch Legacy Plugins (jcenter fix)
         run: |
-          find node_modules -name "build.gradle" -exec sed -i 's/jcenter()/mavenCentral()/g' {} +
-          # Also patch any jcenter in the android folder just in case
-          find android -name "build.gradle" -exec sed -i 's/jcenter()/mavenCentral()/g' {} +
+          # Patch all build.gradle files in node_modules and android
+          find . -name "build.gradle" -type f -exec sed -i 's/jcenter\s*( *)/mavenCentral()/g' {} +
+          # Also check settings.gradle just in case
+          find . -name "settings.gradle" -type f -exec sed -i 's/jcenter\s*( *)/mavenCentral()/g' {} +
 
       - name: Generate Gradle Wrapper
         working-directory: ./android
