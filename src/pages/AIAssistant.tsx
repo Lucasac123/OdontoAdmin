@@ -734,7 +734,7 @@ export const AIAssistant: React.FC = () => {
         </div>
       </div>
         
-      <div className="grid grid-cols-3 bg-zinc-100 dark:bg-zinc-800/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 no-scrollbar shrink-0 w-full">
+      <div className="grid grid-cols-3 bg-zinc-100 dark:bg-zinc-800/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 hide-scrollbar shrink-0 w-full">
           <button
             onClick={() => setActiveTab('chat')}
             className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-[0.2em] transition-all w-full ${

@@ -310,7 +310,7 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
       </AnimatePresence>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-        <div className="xl:col-span-3 bg-surface p-6 sm:p-10 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-x-auto no-scrollbar">
+        <div className="xl:col-span-3 bg-surface p-6 sm:p-10 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-x-auto hide-scrollbar">
           <div className="min-w-[700px] lg:min-w-0">
             {odontogramMode === 'adult' ? renderArch(adultTeeth) : renderArch(pediatricTeeth)}
           </div>

@@ -116,7 +116,7 @@ export const PatientDetail: React.FC = () => {
 
       <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
         <div className="border-b border-zinc-200 dark:border-zinc-800">
-          <div className="flex overflow-x-auto no-scrollbar scroll-smooth md:justify-center">
+          <div className="flex overflow-x-auto hide-scrollbar scroll-smooth md:justify-center">
             {tabs.map((tab) => (
               <motion.button
                 key={tab.id}

@@ -344,7 +344,7 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar">
         {[
           { id: 'all', label: 'Todos' },
           { id: 'intraoral', label: 'Intraoral' },
