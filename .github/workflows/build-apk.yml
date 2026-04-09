@@ -121,6 +121,7 @@ jobs:
       - name: Build APK
         working-directory: ./android
         run: |
+          chmod +x gradlew
           ./gradlew assembleDebug --stacktrace --info \
             -PRELEASE_STORE_FILE=release.keystore \
             -PRELEASE_STORE_PASSWORD="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
