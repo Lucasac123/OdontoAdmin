@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSync } from '../context/SyncContext';
+import { countries } from '../utils/countryCodes';
+import { formatPhoneNumber, cleanPhoneNumber } from '../utils/phoneUtils';
 
 export const Patients: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -202,23 +204,32 @@ export const Patients: React.FC = () => {
                   <select
                     disabled={isSaving}
                     value={newPatient.countryCode}
-                    onChange={(e) => setNewPatient({...newPatient, countryCode: e.target.value})}
-                    className="w-24 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-2 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50 text-sm"
+                    onChange={(e) => {
+                      const newCountryCode = e.target.value;
+                      setNewPatient({
+                        ...newPatient, 
+                        countryCode: newCountryCode,
+                        phone: formatPhoneNumber(newPatient.phone, newCountryCode)
+                      });
+                    }}
+                    className="w-24 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-2 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50 text-sm overflow-hidden text-ellipsis"
                   >
-                    <option value="+55">+55 🇧🇷</option>
-                    <option value="+351">+351 🇵🇹</option>
-                    <option value="+1">+1 🇺🇸</option>
-                    <option value="+34">+34 🇪🇸</option>
+                    {countries.map(c => (
+                      <option key={`${c.name}-${c.code}`} value={c.code}>
+                        {c.flag} {c.code}
+                      </option>
+                    ))}
                   </select>
                   <input
                     type="tel"
                     disabled={isSaving}
                     value={newPatient.phone}
                     onChange={(e) => {
-                      setNewPatient({...newPatient, phone: e.target.value});
+                      const formatted = formatPhoneNumber(e.target.value, newPatient.countryCode);
+                      setNewPatient({...newPatient, phone: formatted});
                       if (error?.includes('celular')) setError(null);
                     }}
-                    placeholder="11999999999"
+                    placeholder={newPatient.countryCode === '+55' ? '(11) 99999-9999' : 'Número de celular'}
                     className={`flex-1 bg-zinc-50 dark:bg-zinc-900 border ${error?.includes('celular') ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-800'} rounded-2xl px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50`}
                   />
                 </div>
