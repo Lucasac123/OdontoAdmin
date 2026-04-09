@@ -67,7 +67,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '21'
+          java-version: '17'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -86,10 +86,12 @@ jobs:
       - name: Patch Legacy Plugins (jcenter fix)
         run: |
           find node_modules -name "build.gradle" -exec sed -i 's/jcenter()/mavenCentral()/g' {} +
+          # Also patch any jcenter in the android folder just in case
+          find android -name "build.gradle" -exec sed -i 's/jcenter()/mavenCentral()/g' {} +
 
       - name: Generate Gradle Wrapper
         working-directory: ./android
-        run: gradle wrapper --gradle-version 8.10
+        run: gradle wrapper --gradle-version 8.5
 
       - name: Build APK
         working-directory: ./android
