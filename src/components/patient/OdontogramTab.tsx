@@ -127,7 +127,7 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
       }));
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-1.5-flash',
         contents: [
           {
             role: 'user',
@@ -147,11 +147,12 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
     }
   };
 
+  // Analysis is now triggered manually by the user
   useEffect(() => {
     if (selectedTooth) {
-      analyzeTooth(selectedTooth);
+      setAiAnalysis(null);
     }
-  }, [selectedTooth, files]);
+  }, [selectedTooth]);
 
   const handleSave = () => {
     const savePromise = updateDoc(doc(db, 'patients', patient.id), {
@@ -409,9 +410,16 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
                             <Markdown>{aiAnalysis}</Markdown>
                           </div>
                         ) : files.length > 0 ? (
-                          <div className="flex flex-col items-center justify-center py-6 text-center space-y-2 opacity-50">
-                            <BrainCircuit className="w-8 h-8 text-zinc-400 mb-2" />
-                            <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Clique no dente para analisar</p>
+                          <div className="flex flex-col items-center justify-center py-6 text-center space-y-4">
+                            <BrainCircuit className="w-8 h-8 text-zinc-400 mb-1" />
+                            <button
+                              onClick={() => selectedTooth && analyzeTooth(selectedTooth)}
+                              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-md active:scale-95"
+                            >
+                              <Sparkles className="w-3.5 h-3.5" />
+                              Analisar dente com IA
+                            </button>
+                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Clique para iniciar análise</p>
                           </div>
                         ) : (
                           <div className="flex flex-col items-center justify-center py-6 text-center space-y-2 opacity-50">

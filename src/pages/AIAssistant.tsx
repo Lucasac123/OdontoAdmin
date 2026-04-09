@@ -223,10 +223,10 @@ export const AIAssistant: React.FC = () => {
   const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
 
   const MODELS = [
-    { id: 'gemini-3.1-pro-preview', name: 'Pro 3.1', fullName: 'Gemini 3.1 Pro (Preview)', description: 'O mais inteligente: raciocínio avançado e análise complexa' },
-    { id: 'gemini-3-flash-preview', name: 'Flash 3.0', fullName: 'Gemini 3.0 Flash (Preview)', description: 'Equilíbrio ideal: rápido, inteligente e versátil' },
-    { id: 'gemini-3.1-flash-lite-preview', name: 'Lite 3.1', fullName: 'Gemini 3.1 Flash-Lite', description: 'Ultra-velocidade: otimizado para respostas instantâneas' },
-    { id: 'gemini-2.0-flash', name: 'Flash 2.0', fullName: 'Gemini 2.0 Flash', description: 'Versão estável da geração anterior' },
+    { id: 'gemini-2.0-flash', name: '2.0 Flash', fullName: 'Gemini 2.0 Flash', description: 'O mais novo e rápido: excelente para quase todas as tarefas' },
+    { id: 'gemini-1.5-pro', name: '1.5 Pro', fullName: 'Gemini 1.5 Pro', description: 'Inteligência superior: ideal para diagnósticos complexos e longos documentos' },
+    { id: 'gemini-1.5-flash', name: '1.5 Flash', fullName: 'Gemini 1.5 Flash', description: 'Equilíbrio ideal: rápido e eficiente para uso diário' },
+    { id: 'gemini-1.5-flash-8b', name: '8B Lite', fullName: 'Gemini 1.5 Flash-8B', description: 'Ultra-velocidade: otimizado para respostas simples e imediatas' },
   ];
   
   const currentModel = MODELS.find(m => m.id === selectedModel) || MODELS[0];
@@ -411,7 +411,7 @@ export const AIAssistant: React.FC = () => {
         model: selectedModel,
         contents: searchQuery,
         config: {
-          tools: [{ googleSearch: {} }]
+          tools: [{ googleSearch: {} } as any]
         }
       });
       
