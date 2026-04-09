@@ -112,7 +112,7 @@ jobs:
         working-directory: ./android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace --info \
+          ./gradlew clean assembleDebug --stacktrace --info \
             -PRELEASE_STORE_FILE=release.keystore \
             -PRELEASE_STORE_PASSWORD="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
             -PRELEASE_KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}" \
@@ -121,7 +121,7 @@ jobs:
       - name: EXTRAINDO SHA-1 PARA O FIREBASE
         run: |
           echo "COPIE E COLE O SEGUINTE CÓDIGO NO SEU FIREBASE CONSOLE:"
-          keytool -list -v -keystore android/app/release.keystore -alias "${{ secrets.ANDROID_KEY_ALIAS }}" -storepass "${{ secrets.ANDROID_KEY_PASSWORD }}" -keypass "${{ secrets.ANDROID_KEY_PASSWORD }}" | grep "SHA1:"
+          keytool -list -v -keystore android/app/release.keystore -alias "${{ secrets.ANDROID_KEY_ALIAS }}" -storepass "${{ secrets.ANDROID_KEY_PASSWORD }}" -keypass "${{ secrets.ANDROID_KEY_PASSWORD }}" | grep "SHA1:" || echo "Não foi possível extrair o SHA1 automaticamente. Verifique os logs acima."
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
