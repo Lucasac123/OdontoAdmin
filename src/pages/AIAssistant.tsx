@@ -224,9 +224,9 @@ export const AIAssistant: React.FC = () => {
 
   const MODELS = [
     { id: 'gemini-2.0-flash', name: '2.0 Flash', fullName: 'Gemini 2.0 Flash', description: 'O mais novo e rápido: excelente para quase todas as tarefas' },
-    { id: 'gemini-2.0-flash-thinking-preview', name: 'Thinking', fullName: 'Gemini 2.0 Flash-Thinking', description: 'Raciocínio avançado: ideal para diagnósticos complexos e lógica profunda' },
-    { id: 'gemini-1.5-pro', name: '1.5 Pro', fullName: 'Gemini 1.5 Pro', description: 'Inteligência superior: ideal para análise de longos documentos' },
-    { id: 'gemini-1.5-flash', name: '1.5 Flash', fullName: 'Gemini 1.5 Flash', description: 'Equilíbrio ideal: rápido e eficiente para uso diário' },
+    { id: 'gemini-2.0-flash-thinking-preview-01-21', name: 'Thinking', fullName: 'Gemini 2.0 Flash-Thinking', description: 'Raciocínio avançado: ideal para diagnósticos complexos e lógica profunda' },
+    { id: 'gemini-1.5-pro-latest', name: '1.5 Pro', fullName: 'Gemini 1.5 Pro', description: 'Inteligência superior: ideal para análise de longos documentos' },
+    { id: 'gemini-1.5-flash-latest', name: '1.5 Flash', fullName: 'Gemini 1.5 Flash', description: 'Equilíbrio ideal: rápido e eficiente para uso diário' },
   ];
   
   const currentModel = MODELS.find(m => m.id === selectedModel) || MODELS[0];
@@ -343,14 +343,13 @@ export const AIAssistant: React.FC = () => {
     }
 
     if (message.includes('quota') || message.includes('429')) {
-      return "Limite de uso atingido. Por favor, aguarde um momento e tente novamente.";
+      return "Limite de uso atingido. O plano gratuito do Gemini possui limites de requisições por minuto. Tente aguardar um momento ou trocar para um modelo mais leve (como o 1.5 Flash) no topo da tela.";
     }
     if (message.includes('503') || message.includes('unavailable')) {
       return "O serviço está temporariamente sobrecarregado. Tente novamente em instantes.";
     }
 
-    // DEBUG: expose the technical error to the user for diagnosis
-    return `Erro Técnico: ${message}. Verifique sua conexão ou a validade da sua API Key.`;
+    return "Desculpe, ocorreu um erro ao processar sua solicitação. Verifique sua conexão ou tente novamente mais tarde.";
   };
 
   const handleChatSubmit = async (e: React.FormEvent) => {
