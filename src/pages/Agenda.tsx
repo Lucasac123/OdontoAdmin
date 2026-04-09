@@ -123,7 +123,8 @@ export const Agenda: React.FC = () => {
         if (!patient) continue;
 
         const date = parseISO(app.date);
-        const dentistName = auth.currentUser?.displayName || 'seu dentista';
+        const dentist = dentists.find(d => d.id === app.responsibleDentistId);
+        const dentistName = dentist ? dentist.name : (auth.currentUser?.displayName || 'seu dentista');
         const message = notifSettings.messageTemplate
           .replace('{paciente}', patient.name)
           .replace('{data}', format(date, 'dd/MM/yyyy'))
