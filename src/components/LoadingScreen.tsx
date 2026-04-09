@@ -33,18 +33,19 @@ export const LoadingScreen = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950">
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{
-          duration: 0.5,
-          repeat: Infinity,
-          repeatType: "reverse",
-          ease: "easeInOut"
-        }}
-        className="relative flex items-center justify-center w-24 h-24"
-      >
-        <div className="absolute inset-0 bg-indigo-500/20 blur-3xl rounded-full" />
+      <div className="relative flex items-center justify-center w-24 h-24">
+        {/* Pulsing Background */}
+        <motion.div
+          animate={{ scale: [0.8, 1.1, 0.8], opacity: [0.3, 0.6, 0.3] }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          className="absolute inset-0 bg-indigo-500/30 blur-2xl rounded-full"
+        />
+        
+        {/* Alternating Icons */}
         <AnimatePresence mode="wait">
           <motion.div
             key={iconIndex}
@@ -52,12 +53,12 @@ export const LoadingScreen = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5 }}
             transition={{ duration: 0.3 }}
-            className="absolute z-10"
+            className="absolute z-10 flex items-center justify-center"
           >
-            <CurrentIcon className="w-16 h-16 text-indigo-600 dark:text-indigo-400" />
+            <CurrentIcon className="w-16 h-16 text-indigo-600 dark:text-indigo-400 drop-shadow-sm" />
           </motion.div>
         </AnimatePresence>
-      </motion.div>
+      </div>
       
       <motion.div
         initial={{ opacity: 0, y: 10 }}
