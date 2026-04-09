@@ -224,18 +224,13 @@ export const AIAssistant: React.FC = () => {
 
   const MODELS = [
     { id: 'gemini-2.0-flash', name: '2.0 Flash', fullName: 'Gemini 2.0 Flash', description: 'O mais novo e rápido: excelente para quase todas as tarefas' },
-    { id: 'gemini-2.0-flash-thinking-preview-01-21', name: 'Thinking', fullName: 'Gemini 2.0 Flash-Thinking', description: 'Raciocínio avançado: ideal para diagnósticos complexos e lógica profunda' },
-    { id: 'gemini-1.5-pro-latest', name: '1.5 Pro', fullName: 'Gemini 1.5 Pro', description: 'Inteligência superior: ideal para análise de longos documentos' },
+    { id: 'gemini-2.0-flash-thinking-exp-01-21', name: 'Thinking', fullName: 'Gemini 2.0 Flash-Thinking (Exp)', description: 'Raciocínio avançado: ideal para diagnósticos complexos e lógica profunda' },
+    { id: 'gemini-2.0-pro-exp-02-05', name: '2.0 Pro', fullName: 'Gemini 2.0 Pro (Exp)', description: 'Inteligência superior: o modelo mais avançado para análises críticas' },
     { id: 'gemini-1.5-flash-latest', name: '1.5 Flash', fullName: 'Gemini 1.5 Flash', description: 'Equilíbrio ideal: rápido e eficiente para uso diário' },
   ];
   
   const currentModel = MODELS.find(m => m.id === selectedModel) || MODELS[0];
   
-  // API Status
-  const [isApiConnecting, setIsApiConnecting] = useState(false);
-  const [apiStatus, setApiStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [apiErrorDetails, setApiErrorDetails] = useState<string | null>(null);
-
   // Chat State
   const [chatMessages, setChatMessages] = useState<{role: 'user' | 'model', text: string, isError?: boolean}[]>([]);
   const [chatInput, setChatInput] = useState('');
@@ -383,7 +378,6 @@ export const AIAssistant: React.FC = () => {
       // Handle both .text property and .text() method for different SDK versions
       const text = typeof response.text === 'function' ? (response.text as any)() : response.text;
       setChatMessages(prev => [...prev, { role: 'model', text: text || 'Desculpe, não consegui gerar uma resposta.' }]);
-      setApiStatus('success');
     } catch (error) {
       const errorMessage = formatAIError(error);
       setChatMessages(prev => [...prev, { role: 'model', text: errorMessage, isError: true }]);
@@ -426,7 +420,6 @@ export const AIAssistant: React.FC = () => {
       // Handle both .text property and .text() method
       const text = typeof response.text === 'function' ? (response.text as any)() : response.text;
       setSearchResult(text || 'Nenhum resultado encontrado.');
-      setApiStatus('success');
       
       // Grounding metadata
       const grounding = (response as any).candidates?.[0]?.groundingMetadata;
@@ -607,7 +600,6 @@ export const AIAssistant: React.FC = () => {
       // Handle both .text property and .text() method
       const text = typeof response.text === 'function' ? (response.text as any)() : response.text;
       setAnalyzeResult(text || 'Não foi possível analisar a imagem.');
-      setApiStatus('success');
     } catch (error) {
       const errorMessage = formatAIError(error);
       setAnalyzeResult(errorMessage);
@@ -630,16 +622,7 @@ export const AIAssistant: React.FC = () => {
               <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
-              Assistente IA
-              <div className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-tighter ${
-                !genAI ? 'bg-red-500/20 text-red-500 border border-red-500/30' : 
-                apiStatus === 'success' ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30' :
-                'bg-amber-500/20 text-amber-500 border border-amber-500/30'
-              }`}>
-                {!genAI ? 'Chave Ausente' : apiStatus === 'success' ? 'Conectado' : 'Aguardando'}
-              </div>
-            </h1>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-text-primary tracking-tight leading-tight truncate">IA Assistente</h1>
               <p className="text-xs sm:text-sm text-text-secondary mt-1 truncate">Google Gemini Intelligence</p>
             </div>
           </div>
