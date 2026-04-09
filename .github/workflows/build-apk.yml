@@ -97,6 +97,18 @@ jobs:
           with open('android/app/release.keystore', 'wb') as f:
               f.write(base64.b64decode(keystore_b64))
 
+      - name: Repair Gradle Wrapper (if corrupt)
+        working-directory: ./android
+        run: |
+          echo "Validating gradle-wrapper.jar..."
+          if ! java -jar gradle/wrapper/gradle-wrapper.jar --version > /dev/null 2>&1; then
+            echo "❌ gradle-wrapper.jar is corrupt! Downloading a fresh copy for Gradle 8.5..."
+            curl -L https://github.com/gradle/gradle/raw/v8.5.0/gradle/wrapper/gradle-wrapper.jar -o gradle/wrapper/gradle-wrapper.jar
+            echo "✅ Fresh gradle-wrapper.jar downloaded."
+          else
+            echo "✅ gradle-wrapper.jar is valid."
+          fi
+
       - name: Patch Legacy Plugins (jcenter fix)
         run: |
           # Patch all build.gradle and settings.gradle files
