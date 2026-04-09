@@ -56,28 +56,32 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <Suspense fallback={<LoadingScreen />}>
-            <Routes>
-              <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-              <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                <Route index element={<Dashboard />} />
-                <Route path="dentists" element={<Dentists />} />
-                <Route path="patients" element={<Patients />} />
-                <Route path="patients/:id" element={<PatientDetail />} />
-                <Route path="agenda" element={<Agenda />} />
-                <Route path="financial" element={<Financial />} />
-                <Route path="pricing" element={<Pricing />} />
-                <Route path="inventory" element={<Inventory />} />
-                <Route path="laboratory" element={<Laboratory />} />
-                <Route path="marketing" element={<Marketing />} />
-                <Route path="ai-assistant" element={<AIAssistant />} />
-                <Route path="trash" element={<Trash />} />
-                <Route path="profile" element={<Profile />} />
-              </Route>
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
+        <StorageProvider>
+          <SyncProvider>
+            <BrowserRouter>
+              <Suspense fallback={<LoadingScreen />}>
+                <Routes>
+                  <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+                  <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                    <Route index element={<Dashboard />} />
+                    <Route path="dentists" element={<Dentists />} />
+                    <Route path="patients" element={<Patients />} />
+                    <Route path="patients/:id" element={<PatientDetail />} />
+                    <Route path="agenda" element={<Agenda />} />
+                    <Route path="financial" element={<Financial />} />
+                    <Route path="pricing" element={<Pricing />} />
+                    <Route path="inventory" element={<Inventory />} />
+                    <Route path="laboratory" element={<Laboratory />} />
+                    <Route path="marketing" element={<Marketing />} />
+                    <Route path="ai-assistant" element={<AIAssistant />} />
+                    <Route path="trash" element={<Trash />} />
+                    <Route path="profile" element={<Profile />} />
+                  </Route>
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </SyncProvider>
+        </StorageProvider>
       </AuthProvider>
     </ThemeProvider>
   );

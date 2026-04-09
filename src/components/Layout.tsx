@@ -2,9 +2,11 @@ import React from 'react';
 import { Outlet, NavLink, useNavigate, useLocation, useOutlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useStorage } from '../context/StorageContext';
 import { Logo } from './Logo';
 import { GlobalSearch } from './GlobalSearch';
 import { ErrorBoundary } from './ErrorBoundary';
+import { SyncIndicator } from './SyncIndicator';
 import { 
   LayoutDashboard, 
   User,

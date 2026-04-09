@@ -41,29 +41,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (currentUser) {
         try {
-          // We only check if the user exists to clear any firestore errors,
-          // but we don't create the document here to avoid race conditions with signUpWithEmail
           const userRef = doc(db, 'users', currentUser.uid);
-          console.log("Attempting to fetch user document for UID:", currentUser.uid);
-          console.log("Firestore instance:", db);
-          console.log("Auth currentUser:", auth.currentUser);
           // Small delay to allow auth token to propagate
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise(resolve => setTimeout(resolve, 300));
           
           const fetchUserDoc = async (retries = 3, delay = 1000): Promise<any> => {
             try {
-              // Try cache first
               try {
                 const cachedSnap = await getDocFromCache(userRef);
                 if (cachedSnap.exists()) return cachedSnap;
               } catch (e) {
                 // Ignore cache miss
               }
-              // If not in cache, try server
               return await getDoc(userRef);
             } catch (error: any) {
               if (retries > 0 && error.code === 'unavailable') {
-                console.warn(`Firestore unavailable, retrying in ${delay}ms... (${retries} retries left)`);
                 await new Promise(resolve => setTimeout(resolve, delay));
                 return fetchUserDoc(retries - 1, delay * 2);
               }
@@ -71,16 +63,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           };
 
-          const userSnap = await fetchUserDoc();
-          console.log("User document exists:", userSnap.exists());
-          setFirestoreError(null); // Clear error if successful
+          await fetchUserDoc();
+          setFirestoreError(null);
         } catch (error: any) {
           if (error.code === 'unavailable') {
-            console.warn("Firestore unavailable, but continuing as it might be transient or offline.");
+            console.warn("Firestore unavailable, continuing anyway.");
           } else {
-            console.error("Firestore user sync error:", error);
-            console.error("Error code:", error.code);
-            console.error("Error message:", error.message);
+            console.error("Firestore user sync error:", error.code, error.message);
             setFirestoreError(error.message);
           }
         }
