@@ -63,7 +63,7 @@ export const Agenda: React.FC = () => {
           enabled: true,
           type: 'sms',
           hoursBefore: 24,
-          messageTemplate: 'Olá {paciente}, confirmamos sua consulta para {data} às {hora}.',
+          messageTemplate: 'Olá {paciente}, confirmamos sua consulta com o(a) Dr(a) {dentista} para {data} às {hora}.',
           updatedAt: new Date().toISOString()
         });
       }
@@ -109,39 +109,69 @@ export const Agenda: React.FC = () => {
 
     try {
       const upcoming = dayAppointments.filter(app => app.status === 'scheduled');
+      let successCount = 0;
       
       for (const app of upcoming) {
         const patient = patients.find(p => p.id === app.patientId);
         if (!patient) continue;
 
         const date = parseISO(app.date);
+        const dentistName = auth.currentUser?.displayName || 'seu dentista';
         const message = notifSettings.messageTemplate
           .replace('{paciente}', patient.name)
           .replace('{data}', format(date, 'dd/MM/yyyy'))
-          .replace('{hora}', format(date, 'HH:mm'));
+          .replace('{hora}', format(date, 'HH:mm'))
+          .replace('{dentista}', dentistName);
 
-        // Simulation of API calls
-        if (notifSettings.type === 'sms' || notifSettings.type === 'both' || notifSettings.type === 'all') {
-          console.log(`[SMS] Enviando para ${patient.phone}: ${message}`);
-        }
-        if (notifSettings.type === 'email' || notifSettings.type === 'both' || notifSettings.type === 'all') {
-          console.log(`[EMAIL] Enviando para ${patient.email}: ${message}`);
-        }
+        // Se for WhatsApp, abre a aba diretamente (mais rápido e gratuito)
         if (notifSettings.type === 'whatsapp' || notifSettings.type === 'all') {
-          console.log(`[WHATSAPP] Enviando para ${patient.phone}: ${message}`);
           if (patient.phone) {
-            window.open(`https://wa.me/55${patient.phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
+            window.open(`https://api.whatsapp.com/send?phone=55${patient.phone.replace(/\D/g, '')}&text=${encodeURIComponent(message)}`, '_blank');
           }
         }
+
+        // Se for Email ou SMS, tenta usar o Brevo
+        if (notifSettings.type === 'email' || notifSettings.type === 'sms' || notifSettings.type === 'both' || notifSettings.type === 'all') {
+          try {
+            const response = await fetch('/api/send-reminder', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                type: notifSettings.type === 'all' ? 'both' : notifSettings.type, // Não envia whatsapp via Brevo se já abriu aba
+                patient: {
+                  name: patient.name,
+                  email: patient.email,
+                  phone: patient.phone
+                },
+                message,
+                date: format(date, 'dd/MM/yyyy'),
+                time: format(date, 'HH:mm')
+              })
+            });
+
+            if (response.ok) {
+              successCount++;
+            } else {
+              console.error(`Falha ao enviar para ${patient.name}`);
+            }
+          } catch (e) {
+            console.error("Erro na API do Brevo", e);
+          }
+        } else {
+          // Se for só WhatsApp, conta como sucesso ao abrir a aba
+          successCount++;
+        }
         
-        // Simulate API call delay
+        // Pequeno delay para não travar o navegador ao abrir muitas abas
         await new Promise(resolve => setTimeout(resolve, 500));
       }
       
-      alert(`${upcoming.length} lembretes processados!\n\nNota: Para WhatsApp, as abas foram abertas. Para envio automático de SMS/Email, é necessária integração com uma API (ex: Twilio, SendGrid).`);
+      alert(`${successCount} de ${upcoming.length} lembretes processados!\n\nNota: As abas do WhatsApp Web foram abertas. E-mails/SMS foram enviados via Brevo (se configurado).`);
     } catch (error) {
       console.error(error);
-      alert('Erro ao enviar lembretes.');
+      alert('Erro ao processar lembretes.');
     } finally {
       setIsSending(false);
     }
@@ -233,14 +263,16 @@ export const Agenda: React.FC = () => {
     if (!patient || !patient.phone) return null;
     
     const date = parseISO(app.date);
+    const dentistName = auth.currentUser?.displayName || 'seu dentista';
     const message = notifSettings?.messageTemplate
       ? notifSettings.messageTemplate
           .replace('{paciente}', patient.name)
           .replace('{data}', format(date, 'dd/MM/yyyy'))
           .replace('{hora}', format(date, 'HH:mm'))
-      : `Olá ${patient.name}, lembrete da sua consulta no dia ${format(date, 'dd/MM/yyyy')} às ${format(date, 'HH:mm')}.`;
+          .replace('{dentista}', dentistName)
+      : `Olá ${patient.name}, lembrete da sua consulta com o(a) Dr(a) ${dentistName} no dia ${format(date, 'dd/MM/yyyy')} às ${format(date, 'HH:mm')}.`;
       
-    return `https://wa.me/55${patient.phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+    return `https://api.whatsapp.com/send?phone=55${patient.phone.replace(/\D/g, '')}&text=${encodeURIComponent(message)}`;
   };
 
   // Generate week days
@@ -538,17 +570,10 @@ export const Agenda: React.FC = () => {
                     className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-32"
                   />
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {['{paciente}', '{data}', '{hora}'].map(tag => (
+                    {['{paciente}', '{data}', '{hora}', '{dentista}'].map(tag => (
                       <span key={tag} className="text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-md text-text-secondary">{tag}</span>
                     ))}
                   </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-3 bg-indigo-50 dark:bg-indigo-500/5 rounded-2xl border border-indigo-100 dark:border-indigo-500/10">
-                  <AlertCircle className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
-                  <p className="text-xs text-indigo-800 dark:text-indigo-400 leading-relaxed">
-                    Os lembretes serão enviados manualmente através do botão na agenda diária. Em breve teremos envio automático 24h por dia.
-                  </p>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4">

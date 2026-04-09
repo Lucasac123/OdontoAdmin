@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port=3000 --host=0.0.0.0",
+    "dev": "tsx server.ts",
+    "start": "node server.ts",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
@@ -24,6 +25,7 @@
     "clsx": "^2.1.1",
     "daikon": "^1.2.46",
     "date-fns": "^4.1.0",
+    "express": "^5.2.1",
     "firebase": "^12.11.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^0.546.0",
@@ -42,6 +44,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.3.0",
+    "@types/express": "^5.0.6",
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
