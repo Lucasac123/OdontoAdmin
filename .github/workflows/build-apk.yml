@@ -83,9 +83,13 @@ jobs:
           with open('android/app/release.keystore', 'wb') as f:
               f.write(base64.b64decode(keystore_b64))
 
+      - name: Patch Legacy Plugins (jcenter fix)
+        run: |
+          find node_modules -name "build.gradle" -exec sed -i 's/jcenter()/mavenCentral()/g' {} +
+
       - name: Generate Gradle Wrapper
         working-directory: ./android
-        run: gradle wrapper
+        run: gradle wrapper --gradle-version 8.10
 
       - name: Build APK
         working-directory: ./android
