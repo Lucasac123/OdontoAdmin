@@ -67,7 +67,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -85,10 +85,24 @@ jobs:
 
       - name: Patch Legacy Plugins (jcenter fix)
         run: |
-          # Patch all build.gradle files in node_modules and android
-          find . -name "build.gradle" -type f -exec sed -i 's/jcenter\s*( *)/mavenCentral()/g' {} +
-          # Also check settings.gradle just in case
-          find . -name "settings.gradle" -type f -exec sed -i 's/jcenter\s*( *)/mavenCentral()/g' {} +
+          # Patch all build.gradle and settings.gradle files
+          find . -name "*.gradle" -type f -exec sed -i 's/jcenter\s*( *)/mavenCentral()/g' {} +
+          find . -name "*.gradle" -type f -exec sed -i 's/maven\s*{\s*url\s*["\x27]https:\/\/jcenter.bintray.com["\x27]\s*}/mavenCentral()/g' {} +
+          
+          # Fix namespace for AGP 8+ in plugins if missing
+          # This is a bit complex but helps with legacy plugins
+          for f in $(find node_modules -name "build.gradle"); do
+            if ! grep -q "namespace" "$f"; then
+              # Try to extract package name from AndroidManifest.xml
+              manifest=$(dirname "$f")/src/main/AndroidManifest.xml
+              if [ -f "$manifest" ]; then
+                pkg=$(grep -oP 'package="\K[^"]+' "$manifest")
+                if [ -n "$pkg" ]; then
+                  sed -i "/android {/a \    namespace \"$pkg\"" "$f"
+                fi
+              fi
+            fi
+          done
 
       - name: Generate Gradle Wrapper
         working-directory: ./android
