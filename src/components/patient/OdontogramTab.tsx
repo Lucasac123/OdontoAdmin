@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { doc, updateDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType, auth } from '../../firebase';
 import { Patient, FileRecord } from '../../types';
-import { Save, Loader2, Info, ChevronRight, AlertCircle, CheckCircle2, BrainCircuit, Activity, XCircle, CheckCircle } from 'lucide-react';
+import { Save, Loader2, Info, ChevronRight, AlertCircle, CheckCircle2, BrainCircuit, Activity, XCircle, CheckCircle, Copy, Sparkles, Wand2, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI } from '@google/genai';
 import { useSync } from '../../context/SyncContext';
+import Markdown from 'react-markdown';
 
 type ToothStatus = 'healthy' | 'caries' | 'restored' | 'extracted' | 'missing' | 'implant' | 'endo';
 
@@ -191,6 +192,16 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
     }
   };
 
+  const copyAnalysisToNotes = () => {
+    if (aiAnalysis && selectedTooth) {
+      const currentNotes = teethState[selectedTooth]?.notes || '';
+      const newNotes = currentNotes 
+        ? `${currentNotes}\n\n---\nSugestão IA:\n${aiAnalysis}`
+        : `Sugestão IA:\n${aiAnalysis}`;
+      updateToothNotes(newNotes);
+    }
+  };
+
   const renderArch = (teeth: number[][]) => {
     const isAdult = teeth[0].length > 10;
     const spacing = isAdult ? 46 : 60;
@@ -363,23 +374,53 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
                   </div>
                   
                   {/* AI Analysis Section */}
-                  <div className="p-4 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl border border-indigo-100 dark:border-indigo-500/20">
-                    <div className="flex items-center gap-2 mb-2 text-indigo-700 dark:text-indigo-400">
-                      <BrainCircuit className="w-5 h-5" />
-                      <h4 className="font-semibold text-sm">Análise por IA</h4>
-                    </div>
-                    {isAnalyzing ? (
-                      <div className="flex items-center gap-2 text-sm text-zinc-500">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Analisando imagens...
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between px-1">
+                      <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
+                          <Sparkles className="w-4 h-4" />
+                        </div>
+                        <h4 className="font-bold text-sm tracking-tight">Análise Inteligente</h4>
                       </div>
-                    ) : aiAnalysis ? (
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{aiAnalysis}</p>
-                    ) : files.length > 0 ? (
-                      <p className="text-sm text-zinc-500">Clique no dente para analisar.</p>
-                    ) : (
-                      <p className="text-sm text-zinc-500">Nenhuma imagem disponível para análise.</p>
-                    )}
+                      {aiAnalysis && !isAnalyzing && (
+                        <button
+                          onClick={copyAnalysisToNotes}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all active:scale-95"
+                          title="Copiar para observações"
+                        >
+                          <Wand2 className="w-3.5 h-3.5" />
+                          <span>Aplicar</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                      <div className="p-4">
+                        {isAnalyzing ? (
+                          <div className="flex flex-col items-center justify-center py-6 text-center space-y-3">
+                            <div className="relative">
+                              <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400" />
+                              <Sparkles className="w-3 h-3 text-indigo-400 absolute -top-1 -right-1 animate-pulse" />
+                            </div>
+                            <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Processando imagens...</p>
+                          </div>
+                        ) : aiAnalysis ? (
+                          <div className="prose dark:prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-p:text-zinc-600 dark:prose-p:text-zinc-400 prose-strong:text-indigo-600 dark:prose-strong:text-indigo-400">
+                            <Markdown>{aiAnalysis}</Markdown>
+                          </div>
+                        ) : files.length > 0 ? (
+                          <div className="flex flex-col items-center justify-center py-6 text-center space-y-2 opacity-50">
+                            <BrainCircuit className="w-8 h-8 text-zinc-400 mb-2" />
+                            <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Clique no dente para analisar</p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-6 text-center space-y-2 opacity-50">
+                            <ImageIcon className="w-8 h-8 text-zinc-400 mb-2" />
+                            <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Sem imagens para análise</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
                 

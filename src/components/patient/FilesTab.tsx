@@ -2,10 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, writeBatch, getDocs } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../../firebase';
 import { Patient, FileRecord } from '../../types';
-import { Upload, FileImage, FileText, Trash2, Download, Eye, X, ZoomIn, ZoomOut, RotateCcw, Music, Clock, Calendar, Printer, Link as LinkIcon, ExternalLink } from 'lucide-react';
+import { Upload, FileImage, FileText, Trash2, Download, Eye, X, ZoomIn, ZoomOut, RotateCcw, Music, Clock, Calendar, Printer, Link as LinkIcon, ExternalLink, Box, Activity as DicomIcon, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from '../ConfirmModal';
 import { useSync } from '../../context/SyncContext';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, Stage } from '@react-three/drei';
+import { STLLoader } from 'three-stdlib';
+import * as THREE from 'three';
+import daikon from 'daikon';
+
+// Helper to render STL Object
+const STLModel = ({ geometry }: { geometry: THREE.BufferGeometry }) => {
+  return (
+    <mesh geometry={geometry}>
+      <meshStandardMaterial color="#c0c0c0" roughness={0.3} metalness={0.2} />
+    </mesh>
+  );
+};
 
 export const FilesTab = ({ patient }: { patient: Patient }) => {
   const [files, setFiles] = useState<FileRecord[]>([]);
@@ -21,6 +35,7 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [linkName, setLinkName] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
+  const [stlGeometry, setStlGeometry] = useState<THREE.BufferGeometry | null>(null);
   const { addSyncTask } = useSync();
 
   useEffect(() => {
@@ -79,9 +94,14 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
       try {
         setUploadProgress(60);
         let base64 = reader.result as string;
+        const fileName = file.name.toLowerCase();
+        
+        // Detection for advanced types
+        const isSTL = fileName.endsWith('.stl');
+        const isDICOM = fileName.endsWith('.dcm') || file.type === 'application/dicom';
         
         // Basic compression for images
-        if (file.type.startsWith('image/')) {
+        if (file.type.startsWith('image/') && !isDICOM) {
           const img = new Image();
           img.src = base64;
           await new Promise(resolve => {
@@ -101,14 +121,18 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
           });
         }
 
-        if (base64.length > 1000000) {
-          alert("O arquivo é muito grande. O tamanho máximo permitido é de aproximadamente 700KB.");
+        if (base64.length > 2000000) { // Increased limit for DICOM/STL
+          alert("O arquivo é muito grande. O tamanho máximo permitido para bases de dados é de aproximadamente 2MB.");
           setIsUploading(false);
           setUploadProgress(0);
           return;
         }
 
         let typeToSave = uploadType;
+        // Auto-assign type if recognized
+        if (isSTL) typeToSave = 'other';
+        if (isDICOM) typeToSave = 'tomography';
+
         const now = new Date();
         let expiresAt: string | null = null;
         
@@ -215,7 +239,11 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.25, 0.5));
   const handleResetZoom = () => setZoom(1);
 
-  const getIcon = (type: string) => {
+  const getIcon = (type: string, name?: string) => {
+    const fileName = name?.toLowerCase() || '';
+    if (fileName.endsWith('.stl')) return <Box className="w-8 h-8 text-blue-500" />;
+    if (fileName.endsWith('.dcm')) return <DicomIcon className="w-8 h-8 text-indigo-500" />;
+
     switch (type) {
       case 'consent': return <FileText className="w-8 h-8 text-blue-500" />;
       case 'xray':
@@ -285,7 +313,7 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
                   onChange={handleFileUpload} 
                   disabled={isUploading}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed z-10"
-                  accept="image/*,.pdf,audio/*"
+                  accept="image/*,.pdf,audio/*,.stl,.dcm,application/dicom"
                 />
                 <button 
                   className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-sm shadow-indigo-200 dark:shadow-none relative overflow-hidden text-sm font-medium"
@@ -368,7 +396,7 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
                     <Music className="w-12 h-12" />
                   </div>
                 ) : (
-                  getIcon(file.type)
+                  getIcon(file.type, file.name)
                 )}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                   {file.isLink ? (
@@ -514,6 +542,76 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
                     title={selectedFile.name}
                     className="w-full h-[70vh] rounded-lg bg-white"
                   />
+                ) : selectedFile.name.toLowerCase().endsWith('.stl') ? (
+                  <div className="w-full h-[70vh] rounded-lg bg-zinc-950 overflow-hidden relative">
+                    <Canvas 
+                      onCreated={({ gl }) => {
+                        const loader = new STLLoader();
+                        const buffer = Uint8Array.from(atob(selectedFile.url.split(',')[1]), c => c.charCodeAt(0)).buffer;
+                        const geometry = loader.parse(buffer);
+                        geometry.center();
+                        setStlGeometry(geometry);
+                      }}
+                      camera={{ position: [0, 0, 100], fov: 50 }}
+                    >
+                      <color attach="background" args={['#09090b']} />
+                      <ambientLight intensity={0.5} />
+                      <directionalLight position={[10, 10, 10]} intensity={1} />
+                      {stlGeometry && (
+                        <Stage environment="city" intensity={0.5}>
+                          <STLModel geometry={stlGeometry} />
+                        </Stage>
+                      )}
+                      <OrbitControls makeDefault />
+                    </Canvas>
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full pointer-events-none">
+                      <p className="text-[10px] text-zinc-300 font-bold uppercase tracking-widest">Visualização 3D Interativa</p>
+                    </div>
+                  </div>
+                ) : selectedFile.name.toLowerCase().endsWith('.dcm') ? (
+                   <div className="w-full h-[70vh] flex items-center justify-center p-4 bg-black rounded-lg">
+                      <canvas 
+                        ref={canvas => {
+                          if (canvas && selectedFile) {
+                            try {
+                              const base64 = selectedFile.url.split(',')[1];
+                              const binary = atob(base64);
+                              const array = new Uint8Array(binary.length);
+                              for(let i=0; i<binary.length; i++) array[i] = binary.charCodeAt(i);
+                              const data = new DataView(array.buffer);
+                              // @ts-ignore
+                              const image = daikon.Series.parseImage(data);
+                              if (image) {
+                                const cols = image.getCols();
+                                const rows = image.getRows();
+                                canvas.width = cols;
+                                canvas.height = rows;
+                                const ctx = canvas.getContext('2d');
+                                const imageData = ctx!.createImageData(cols, rows);
+                                const pixels = image.getInterpretedData();
+                                let min = Infinity; let max = -Infinity;
+                                for(let i=0; i<pixels.length; i++) {
+                                  if (pixels[i] < min) min = pixels[i];
+                                  if (pixels[i] > max) max = pixels[i];
+                                }
+                                for (let i = 0; i < pixels.length; i++) {
+                                  const val = ((pixels[i] - Math.min(min, 0)) / (max - Math.min(min, 0))) * 255;
+                                  const index = i * 4;
+                                  imageData.data[index] = val;
+                                  imageData.data[index + 1] = val;
+                                  imageData.data[index + 2] = val;
+                                  imageData.data[index + 3] = 255;
+                                }
+                                ctx!.putImageData(imageData, 0, 0);
+                              }
+                            } catch (e) {
+                              console.error("DICOM Load Error", e);
+                            }
+                          }
+                        }}
+                        className="max-w-full max-h-full object-contain shadow-2xl"
+                      />
+                   </div>
                 ) : (
                   <div className="text-center text-zinc-400">
                     <FileText className="w-24 h-24 mx-auto mb-4 opacity-50" />
