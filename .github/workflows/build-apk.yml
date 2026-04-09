@@ -50,7 +50,7 @@ jobs:
           svg_path = "public/logo.svg"
           if not os.path.exists(svg_path):
               print(f"⚠️ Error: {svg_path} not found! Skipping icon generation.")
-              sys.exit(0) # Don't fail the build here, use defaults
+              sys.exit(0)
 
           sizes = {
             "mipmap-mdpi": 48,
@@ -71,7 +71,6 @@ jobs:
                 print(f"  ✅ {folder}: {size}x{size}")
             except Exception as e:
                 print(f"  ❌ Error generating {folder}: {e}")
-          print("Icons generation process finished.")
           EOF
 
       - name: Capacitor Sync
@@ -81,12 +80,15 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '21'
+          java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.5
+          cache-disabled: false
 
-      - name: Decode Keystore (Safe Method)
+      - name: Decode Keystore
         shell: python
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -94,70 +96,40 @@ jobs:
           import base64
           import os
           keystore_b64 = os.environ['KEYSTORE_BASE64'].strip()
+          os.makedirs('android/app', exist_ok=True)
           with open('android/app/release.keystore', 'wb') as f:
               f.write(base64.b64decode(keystore_b64))
 
-      - name: Repair Gradle Wrapper (if corrupt)
-        working-directory: ./android
+      - name: Patch Plugins (Legacy Fix)
         run: |
-          echo "Validating gradle-wrapper.jar..."
-          if ! java -jar gradle/wrapper/gradle-wrapper.jar --version > /dev/null 2>&1; then
-            echo "❌ gradle-wrapper.jar is corrupt! Downloading a fresh copy for Gradle 8.5..."
-            curl -L https://github.com/gradle/gradle/raw/v8.5.0/gradle/wrapper/gradle-wrapper.jar -o gradle/wrapper/gradle-wrapper.jar
-            echo "✅ Fresh gradle-wrapper.jar downloaded."
-          else
-            echo "✅ gradle-wrapper.jar is valid."
-          fi
-
-      - name: Patch Legacy Plugins (jcenter fix)
-        run: |
-          # Patch all build.gradle and settings.gradle files
           find . -name "*.gradle" -type f -exec sed -i 's/jcenter\s*( *)/mavenCentral()/g' {} +
           find . -name "*.gradle" -type f -exec sed -i 's/maven\s*{\s*url\s*["\x27]https:\/\/jcenter.bintray.com["\x27]\s*}/mavenCentral()/g' {} +
           
-          # Fix namespace for AGP 8+ in plugins if missing
+          # Fix namespace for AGP 8+ in plugins
           for f in $(find node_modules -name "build.gradle"); do
             if ! grep -q "namespace" "$f"; then
               manifest=$(dirname "$f")/src/main/AndroidManifest.xml
               if [ -f "$manifest" ]; then
-                # Extract package name using a more robust approach
                 pkg=$(grep -oP 'package="\K[^"]+' "$manifest" || echo "")
                 if [ -n "$pkg" ]; then
-                  echo "Found package $pkg for $f. Patching namespace..."
                   sed -i "/android {/a \    namespace \"$pkg\"" "$f"
                 fi
               fi
             fi
           done
 
-      - name: Manifest Merger Report (Debug)
-        working-directory: ./android
-        if: always()
-        run: |
-          ./gradlew :app:processDebugManifest --stacktrace || echo "Manifest merger failed, check logs above."
-
       - name: Build APK
         working-directory: ./android
         run: |
-          chmod +x gradlew
           ./gradlew assembleDebug --stacktrace --info \
-            -PRELEASE_STORE_FILE=app/release.keystore \
+            -PRELEASE_STORE_FILE=release.keystore \
             -PRELEASE_STORE_PASSWORD="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
             -PRELEASE_KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}" \
             -PRELEASE_KEY_PASSWORD="${{ secrets.ANDROID_KEY_PASSWORD }}"
 
-      - name: Manifest Merger Error Report
-        working-directory: ./android
-        if: failure()
+      - name: Extraction SHA-1 for Firebase
         run: |
-          echo "Checking for manifest merger logs..."
-          find . -name "manifest-merger-debug-report.txt" -exec cat {} + || echo "No manifest report found."
-          ./gradlew :app:processDebugManifest --stacktrace || echo "Final manifest check failed."
-
-      - name: EXTRAINDO SHA-1 PARA O FIREBASE
-        run: |
-          echo "COPIE E COLE O SEGUINTE CÓDIGO NO SEU FIREBASE CONSOLE:"
-          keytool -list -v -keystore android/app/release.keystore -alias "${{ secrets.ANDROID_KEY_ALIAS }}" -storepass "${{ secrets.ANDROID_KEY_PASSWORD }}" -keypass "${{ secrets.ANDROID_KEY_PASSWORD }}" | grep "SHA1:" || echo "Não foi possível extrair o SHA1 automaticamente. Verifique os logs acima."
+          keytool -list -v -keystore android/app/release.keystore -alias "${{ secrets.ANDROID_KEY_ALIAS }}" -storepass "${{ secrets.ANDROID_KEY_PASSWORD }}" -keypass "${{ secrets.ANDROID_KEY_PASSWORD }}" | grep "SHA1:" || echo "SHA1 not found"
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
