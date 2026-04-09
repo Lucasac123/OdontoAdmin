@@ -1,8 +1,36 @@
-import React from 'react';
-import { motion } from 'motion/react';
-import { Stethoscope } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Stethoscope, Syringe } from 'lucide-react';
+
+const ToothIcon = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M12 5.5c-1.5-3-5.5-3-7.5-1-2 2-2 5.5-.5 8 1 1.5 2 3 2 5.5v2c0 1 1 2 2 2s2-1 2-2v-2c0-1 1-1 2-1s2 0 2 1v2c0 1 1 2 2 2s2-1 2-2v-2c0-2.5 1-4 2-5.5 1.5-2.5 1.5-6-.5-8-2-2-6-2-7.5 1z" />
+  </svg>
+);
+
+const ICONS = [Stethoscope, ToothIcon, Syringe];
 
 export const LoadingScreen = () => {
+  const [iconIndex, setIconIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIconIndex((prev) => (prev + 1) % ICONS.length);
+    }, 1500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const CurrentIcon = ICONS[iconIndex];
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950">
       <motion.div
@@ -14,10 +42,21 @@ export const LoadingScreen = () => {
           repeatType: "reverse",
           ease: "easeInOut"
         }}
-        className="relative"
+        className="relative flex items-center justify-center w-24 h-24"
       >
         <div className="absolute inset-0 bg-indigo-500/20 blur-3xl rounded-full" />
-        <Stethoscope className="w-16 h-16 text-indigo-600 dark:text-indigo-400 relative z-10" />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={iconIndex}
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            transition={{ duration: 0.3 }}
+            className="absolute z-10"
+          >
+            <CurrentIcon className="w-16 h-16 text-indigo-600 dark:text-indigo-400" />
+          </motion.div>
+        </AnimatePresence>
       </motion.div>
       
       <motion.div
