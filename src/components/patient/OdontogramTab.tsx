@@ -111,7 +111,7 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
     setIsAnalyzing(true);
     setAiAnalysis(null);
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) {
         setAiAnalysis('Chave de API do Gemini não configurada. Verifique as configurações do sistema.');
         setIsAnalyzing(false);
@@ -127,7 +127,7 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
       }));
 
       const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-3-flash-preview',
         contents: [
           {
             role: 'user',
@@ -138,8 +138,8 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
           }
         ]
       });
-      // Handle both .text property and .text() method
-      const text = typeof response.text === 'function' ? (response.text as any)() : response.text;
+      // Use the .text property directly
+      const text = response.text;
       setAiAnalysis(text || 'Nenhuma análise disponível.');
     } catch (error) {
       console.error('AI analysis error', error);

@@ -100,7 +100,7 @@ export const PrescriptionTemplatesModal: React.FC<PrescriptionTemplatesModalProp
       reader.onloadend = async () => {
         const base64Data = (reader.result as string).split(',')[1];
         
-        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
         const response = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
           contents: [
@@ -121,8 +121,10 @@ export const PrescriptionTemplatesModal: React.FC<PrescriptionTemplatesModalProp
           ]
         });
 
-        if (response.text) {
-          onSelectTemplate(response.text);
+        // Use the .text property directly
+        const text = response.text;
+        if (text) {
+          onSelectTemplate(text);
           onClose();
         }
       };

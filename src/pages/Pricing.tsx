@@ -120,7 +120,7 @@ export const Pricing: React.FC = () => {
         const base64Data = (reader.result as string).split(',')[1];
         const mimeType = file.type;
 
-        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
         const prompt = `Analise esta fatura/conta. Extraia as seguintes informações em formato JSON:
         {
           "name": "Nome da despesa (ex: Conta de Luz, Aluguel, Internet)",
@@ -142,6 +142,7 @@ export const Pricing: React.FC = () => {
           ]
         });
 
+        // Use the .text property directly
         const text = response.text?.replace(/```json/g, '').replace(/```/g, '').trim();
         if (text) {
           const result = JSON.parse(text);

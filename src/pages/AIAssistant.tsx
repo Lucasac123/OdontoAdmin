@@ -33,7 +33,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const API_KEY = process.env.GEMINI_API_KEY;
 const genAI = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 const PRESETS = [
@@ -219,14 +219,13 @@ export const AIAssistant: React.FC = () => {
   const { user } = useAuth();
   const { storageLocation } = useStorage();
   const [activeTab, setActiveTab] = useState<'chat' | 'search' | 'analyze'>('chat');
-  const [selectedModel, setSelectedModel] = useState('gemini-2.0-flash');
+  const [selectedModel, setSelectedModel] = useState('gemini-3-flash-preview');
   const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
 
   const MODELS = [
-    { id: 'gemini-2.0-flash', name: '2.0 Flash', fullName: 'Gemini 2.0 Flash', description: 'O mais novo e rápido: excelente para quase todas as tarefas' },
-    { id: 'gemini-2.0-flash-thinking-exp-01-21', name: 'Thinking', fullName: 'Gemini 2.0 Flash-Thinking (Exp)', description: 'Raciocínio avançado: ideal para diagnósticos complexos e lógica profunda' },
-    { id: 'gemini-2.0-pro-exp-02-05', name: '2.0 Pro', fullName: 'Gemini 2.0 Pro (Exp)', description: 'Inteligência superior: o modelo mais avançado para análises críticas' },
-    { id: 'gemini-1.5-flash-latest', name: '1.5 Flash', fullName: 'Gemini 1.5 Flash', description: 'Equilíbrio ideal: rápido e eficiente para uso diário' },
+    { id: 'gemini-3-flash-preview', name: 'G3 Flash', fullName: 'Gemini 3 Flash', description: 'O mais novo e rápido: excelente para quase todas as tarefas' },
+    { id: 'gemini-3.1-pro-preview', name: 'G3.1 Pro', fullName: 'Gemini 3.1 Pro', description: 'Inteligência superior: o modelo mais avançado para análises críticas' },
+    { id: 'gemini-2.0-flash', name: '2.0 Flash', fullName: 'Gemini 2.0 Flash', description: 'Estável e eficiente para uso diário' },
   ];
   
   const currentModel = MODELS.find(m => m.id === selectedModel) || MODELS[0];
@@ -305,7 +304,7 @@ export const AIAssistant: React.FC = () => {
   const [isApiKeyMissing, setIsApiKeyMissing] = useState(false);
 
   useEffect(() => {
-    if (!import.meta.env.VITE_GEMINI_API_KEY) {
+    if (!process.env.GEMINI_API_KEY) {
       setIsApiKeyMissing(true);
     }
   }, []);
@@ -375,8 +374,8 @@ export const AIAssistant: React.FC = () => {
         ]
       });
       
-      // Handle both .text property and .text() method for different SDK versions
-      const text = typeof response.text === 'function' ? (response.text as any)() : response.text;
+      // Use the .text property directly as per SDK guidelines
+      const text = response.text;
       setChatMessages(prev => [...prev, { role: 'model', text: text || 'Desculpe, não consegui gerar uma resposta.' }]);
     } catch (error) {
       const errorMessage = formatAIError(error);
@@ -417,8 +416,8 @@ export const AIAssistant: React.FC = () => {
         }
       });
       
-      // Handle both .text property and .text() method
-      const text = typeof response.text === 'function' ? (response.text as any)() : response.text;
+      // Use the .text property directly
+      const text = response.text;
       setSearchResult(text || 'Nenhum resultado encontrado.');
       
       // Grounding metadata
@@ -597,8 +596,8 @@ export const AIAssistant: React.FC = () => {
         ]
       });
       
-      // Handle both .text property and .text() method
-      const text = typeof response.text === 'function' ? (response.text as any)() : response.text;
+      // Use the .text property directly
+      const text = response.text;
       setAnalyzeResult(text || 'Não foi possível analisar a imagem.');
     } catch (error) {
       const errorMessage = formatAIError(error);
@@ -761,9 +760,9 @@ export const AIAssistant: React.FC = () => {
                 <X className="w-8 h-8" />
               </div>
               <h3 className="text-xl font-black text-text-primary tracking-tight">API Key não configurada</h3>
-              <p className="text-text-secondary max-w-sm text-sm">
-                Para utilizar o assistente de IA, você precisa configurar a variável de ambiente <code className="bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded text-indigo-600 dark:text-indigo-400 font-mono text-xs">VITE_GEMINI_API_KEY</code> no seu ambiente de hospedagem (Vercel) ou arquivo .env local.
-              </p>
+                  <p className="text-text-secondary max-w-sm text-sm">
+                    Para utilizar o assistente de IA, você precisa configurar a variável de ambiente <code className="bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded text-indigo-600 dark:text-indigo-400 font-mono text-xs">GEMINI_API_KEY</code> no seu ambiente de hospedagem ou arquivo .env local.
+                  </p>
               <div className="pt-4">
                 <a 
                   href="https://aistudio.google.com/app/apikey" 

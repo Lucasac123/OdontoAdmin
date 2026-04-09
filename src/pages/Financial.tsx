@@ -61,7 +61,7 @@ export const Financial: React.FC = () => {
       reader.onloadend = async () => {
         const base64Data = (reader.result as string).split(',')[1];
         
-        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
         const response = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
           contents: [
@@ -95,8 +95,10 @@ export const Financial: React.FC = () => {
           }
         });
 
-        if (response.text) {
-          const data = JSON.parse(response.text);
+        // Use the .text property directly
+        const text = response.text;
+        if (text) {
+          const data = JSON.parse(text);
           setNewFinance(prev => ({
             ...prev,
             description: data.description || '',
