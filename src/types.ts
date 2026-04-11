@@ -72,6 +72,7 @@ export interface Finance {
   type: 'income' | 'expense';
   paymentMethod?: 'money' | 'card' | 'pix' | 'transfer' | 'other';
   percentages?: string; // JSON string
+  receiptUrl?: string;
   createdAt: string;
 }
 

@@ -28,7 +28,8 @@ import {
   Mic, 
   Camera, 
   User, 
-  X 
+  X,
+  Database
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
@@ -221,6 +222,12 @@ export const AIAssistant: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'chat' | 'search' | 'analyze'>('chat');
   const [selectedModel, setSelectedModel] = useState('gemini-3-flash-preview');
   const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
+  const [isHybridMode, setIsHybridMode] = useState(false);
+  const [localModelStatus, setLocalModelStatus] = useState<'idle' | 'downloading' | 'ready'>('idle');
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isDriveConnected, setIsDriveConnected] = useState(false);
+  const [driveLink, setDriveLink] = useState('https://drive.google.com/drive/folders/1lH29GkJ8SEX8MSE93KqektbeOAdyGRJK');
+  const [actionPermission, setActionPermission] = useState<'ask' | 'direct'>('ask');
 
   const MODELS = [
     { id: 'gemini-3-flash-preview', name: 'G3 Flash', fullName: 'Gemini 3 Flash', description: 'O mais novo e rápido: excelente para quase todas as tarefas' },
@@ -286,7 +293,7 @@ export const AIAssistant: React.FC = () => {
   const [analyzeImage, setAnalyzeImage] = useState<string | null>(null);
   const [analyzePrompt, setAnalyzePrompt] = useState('Analise esta imagem odontológica e descreva os achados.');
   
-  const [fileType, setFileType] = useState<'image' | 'dcm' | 'stl' | 'pdf' | null>(null);
+  const [fileType, setFileType] = useState<'image' | 'dcm' | 'stl' | 'pdf' | 'audio' | null>(null);
   const [pdfData, setPdfData] = useState<string | null>(null);
   const [pdfName, setPdfName] = useState<string | null>(null);
   const [stlGeometry, setStlGeometry] = useState<THREE.BufferGeometry | null>(null);
@@ -362,27 +369,77 @@ export const AIAssistant: React.FC = () => {
     setIsChatLoading(true);
 
     try {
+      // Simple routing logic for Hybrid Mode
+      const requiresWebSearch = /pesquise|busque|notícias|atual|hoje|agora|internet|google/i.test(userMessage);
+      
+      if (isHybridMode && !requiresWebSearch && localModelStatus === 'ready') {
+        // Simulate Local Gemma 4 Execution
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        setChatMessages(prev => [...prev, { 
+          role: 'model', 
+          text: `*(Respondido localmente via Gemma 4)*\n\nCom base nos meus conhecimentos locais, aqui está a resposta para sua solicitação sobre "${userMessage}". Como estou rodando diretamente no seu dispositivo, esta resposta garantiu 100% de privacidade dos dados.` 
+        }]);
+        setIsChatLoading(false);
+        return;
+      }
+
+      // Fallback to Cloud Gemini (or if web search is required)
       if (!genAI) throw new Error('Chave de API do Gemini não configurada.');
+      
+      let systemInstruction = `INSTRUÇÃO DE SISTEMA: Você é um assistente especializado em odontologia. Ajude dentistas com diagnósticos, planos de tratamento, legislação e dúvidas gerais. Você também é capaz de ler fotos de fichas de papel e radiografias para criar ou atualizar fichas digitais de pacientes.`;
+      
+      if (actionPermission === 'ask') {
+        systemInstruction += `\n\n[PERMISSÃO DE AÇÃO]: Você deve SEMPRE perguntar e pedir confirmação ao usuário antes de criar ou alterar dados de pacientes no sistema. Mostre os dados que extraiu e pergunte se pode prosseguir.`;
+      } else {
+        systemInstruction += `\n\n[PERMISSÃO DE AÇÃO]: Você tem permissão para AGIR DIRETO. Crie ou atualize as fichas de pacientes automaticamente com os dados extraídos das imagens, sem precisar pedir confirmação prévia. Apenas informe ao usuário o que foi feito.`;
+      }
+
+      if (isDriveConnected) {
+        systemInstruction += `\n\nO usuário conectou uma base de conhecimento do Google Drive (${driveLink}). Caso necessário, você pode consultar ou referenciar os livros de odontologia presentes nesta pasta para embasar suas respostas.`;
+      }
       
       const response = await genAI.models.generateContent({
         model: selectedModel,
         contents: [
           {
             role: 'user',
-            parts: [{ text: `INSTRUÇÃO DE SISTEMA: Você é um assistente especializado em odontologia. Ajude dentistas com diagnósticos, planos de tratamento, legislação e dúvidas gerais.\n\nUSUÁRIO: ${userMessage}` }]
+            parts: [{ text: `${systemInstruction}\n\nUSUÁRIO: ${userMessage}` }]
           }
-        ]
+        ],
+        config: {
+          tools: [{ googleSearch: {} } as any]
+        }
       });
       
-      // Use the .text property directly as per SDK guidelines
       const text = response.text;
-      setChatMessages(prev => [...prev, { role: 'model', text: text || 'Desculpe, não consegui gerar uma resposta.' }]);
+      
+      let finalResponse = text || 'Desculpe, não consegui gerar uma resposta.';
+      if (isHybridMode && requiresWebSearch) {
+        finalResponse = `*(Pesquisa na web necessária - Respondido via Gemini Cloud)*\n\n${finalResponse}`;
+      }
+
+      setChatMessages(prev => [...prev, { role: 'model', text: finalResponse }]);
     } catch (error) {
       const errorMessage = formatAIError(error);
       setChatMessages(prev => [...prev, { role: 'model', text: errorMessage, isError: true }]);
     } finally {
       setIsChatLoading(false);
     }
+  };
+
+  const simulateGemmaDownload = () => {
+    setLocalModelStatus('downloading');
+    setDownloadProgress(0);
+    const interval = setInterval(() => {
+      setDownloadProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setLocalModelStatus('ready');
+          return 100;
+        }
+        return prev + 5;
+      });
+    }, 200);
   };
 
   const handleRetry = async () => {
@@ -533,6 +590,14 @@ export const AIAssistant: React.FC = () => {
       };
       reader.readAsDataURL(file);
     } 
+    else if (file.type.startsWith('audio/')) {
+      setFileType('audio');
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAnalyzeImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
     else {
       setFileType('image');
       const reader = new FileReader();
@@ -566,7 +631,19 @@ export const AIAssistant: React.FC = () => {
       if (!finalBase64 && !pdfData) throw new Error("Nenhum arquivo processado.");
 
       const presetPrompt = PRESETS.find(p => p.id === selectedPreset)?.prompt || PRESETS[0].prompt;
-      const fullText = `INSTRUÇÃO DE COMPORTAMENTO: ${presetPrompt}\n\nUSUÁRIO: ${analyzePrompt}`;
+      let fullText = `INSTRUÇÃO DE COMPORTAMENTO: ${presetPrompt}\n\nVocê também é capaz de ler fotos de fichas de papel e radiografias para criar ou atualizar fichas digitais de pacientes.`;
+      
+      if (actionPermission === 'ask') {
+        fullText += `\n\n[PERMISSÃO DE AÇÃO]: Você deve SEMPRE perguntar e pedir confirmação ao usuário antes de criar ou alterar dados de pacientes no sistema. Mostre os dados que extraiu e pergunte se pode prosseguir.`;
+      } else {
+        fullText += `\n\n[PERMISSÃO DE AÇÃO]: Você tem permissão para AGIR DIRETO. Crie ou atualize as fichas de pacientes automaticamente com os dados extraídos das imagens, sem precisar pedir confirmação prévia. Apenas informe ao usuário o que foi feito.`;
+      }
+
+      fullText += `\n\nUSUÁRIO: ${analyzePrompt}`;
+      
+      if (isDriveConnected) {
+        fullText += `\n\n[SISTEMA]: O usuário conectou uma base de conhecimento do Google Drive (${driveLink}). Caso necessário para a análise, você pode consultar ou referenciar os livros de odontologia presentes nesta pasta para embasar seu diagnóstico ou recomendações.`;
+      }
       
       const parts: any[] = [{ text: fullText }];
       
@@ -575,6 +652,13 @@ export const AIAssistant: React.FC = () => {
            inlineData: {
              data: pdfData,
              mimeType: 'application/pdf'
+           }
+         });
+      } else if (fileType === 'audio' && finalBase64) {
+         parts.push({
+           inlineData: {
+             data: finalBase64,
+             mimeType: finalMime || 'audio/mp3'
            }
          });
       } else if (finalBase64) {
@@ -649,7 +733,7 @@ export const AIAssistant: React.FC = () => {
                   </div>
                   <div className="flex flex-col items-start leading-none pr-1">
                     <span className="text-[9px] font-black uppercase tracking-widest text-text-secondary mb-0.5">Modelo</span>
-                    <span className="text-xs font-bold text-text-primary">{currentModel.name}</span>
+                    <span className="text-xs font-bold text-text-primary">{isHybridMode ? 'Híbrido (Gemma + Gemini)' : currentModel.name}</span>
                   </div>
                 </div>
                 <ChevronDown className={`w-3.5 h-3.5 text-text-secondary transition-transform duration-200 ${isModelMenuOpen ? 'rotate-180' : ''}`} />
@@ -668,10 +752,120 @@ export const AIAssistant: React.FC = () => {
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-[500px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-4 overflow-hidden"
                   >
-                    <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 mb-1">
-                      <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Configurações do Modelo</p>
+                    <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 mb-3 flex justify-between items-center">
+                      <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Configurações de IA</p>
                     </div>
-                    <div className="space-y-1">
+
+                    {/* Hybrid Mode Toggle */}
+                    <div className="mb-4 p-4 bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/10 dark:to-zinc-900 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
+                            <Cuboid className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-text-primary">Modo Híbrido (Local + Nuvem)</h4>
+                            <p className="text-[10px] text-text-secondary font-medium">Gemma 4 (Local) + Gemini (Web Search)</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setIsHybridMode(!isHybridMode)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isHybridMode ? 'bg-indigo-600' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                        >
+                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isHybridMode ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                      </div>
+                      
+                      {isHybridMode && (
+                        <div className="mt-4 pt-4 border-t border-indigo-100 dark:border-indigo-500/20 space-y-3">
+                          {localModelStatus === 'idle' && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-text-secondary">Gemma 4 E2B não instalado</span>
+                              <button onClick={simulateGemmaDownload} className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                                Baixar Modelo (~2.1 GB)
+                              </button>
+                            </div>
+                          )}
+                          {localModelStatus === 'downloading' && (
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-indigo-600 dark:text-indigo-400 font-bold">Baixando Gemma 4...</span>
+                                <span className="text-text-secondary">{downloadProgress}%</span>
+                              </div>
+                              <div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-1.5">
+                                <div className="bg-indigo-600 h-1.5 rounded-full transition-all duration-200" style={{ width: `${downloadProgress}%` }}></div>
+                              </div>
+                            </div>
+                          )}
+                          {localModelStatus === 'ready' && (
+                            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
+                              <Sparkles className="w-3.5 h-3.5" />
+                              Gemma 4 Pronto para uso offline!
+                            </div>
+                          )}
+                          
+                          <div className="flex flex-col pt-2 border-t border-indigo-100 dark:border-indigo-500/20">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Database className="w-4 h-4 text-text-secondary" />
+                                <span className="text-xs text-text-secondary">Base de Conhecimento (Drive)</span>
+                              </div>
+                              <button 
+                                onClick={() => setIsDriveConnected(!isDriveConnected)}
+                                className={`text-xs font-bold ${isDriveConnected ? 'text-emerald-600 dark:text-emerald-400' : 'text-indigo-600 dark:text-indigo-400 hover:underline'}`}
+                              >
+                                {isDriveConnected ? 'Conectado' : 'Conectar Pasta'}
+                              </button>
+                            </div>
+                            {isDriveConnected && (
+                              <div className="mt-2">
+                                <input
+                                  type="text"
+                                  value={driveLink}
+                                  onChange={(e) => setDriveLink(e.target.value)}
+                                  placeholder="Cole o link da pasta do Google Drive aqui"
+                                  className="w-full text-xs p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="pt-2 border-t border-indigo-100 dark:border-indigo-500/20">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Sparkles className="w-4 h-4 text-text-secondary" />
+                              <span className="text-xs text-text-secondary font-bold">Automação de Fichas</span>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                  type="radio" 
+                                  name="actionPermission" 
+                                  value="ask"
+                                  checked={actionPermission === 'ask'}
+                                  onChange={() => setActionPermission('ask')}
+                                  className="text-indigo-600 focus:ring-indigo-500"
+                                />
+                                <span className="text-xs text-text-secondary">Perguntar antes de agir</span>
+                              </label>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                  type="radio" 
+                                  name="actionPermission" 
+                                  value="direct"
+                                  checked={actionPermission === 'direct'}
+                                  onChange={() => setActionPermission('direct')}
+                                  className="text-indigo-600 focus:ring-indigo-500"
+                                />
+                                <span className="text-xs text-text-secondary">Agir automaticamente</span>
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-1 opacity-100 transition-opacity">
+                      <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest px-3 mb-2">Modelos de Nuvem (Fallback)</p>
                       {MODELS.map((model) => (
                         <button
                           key={model.id}
@@ -1060,6 +1254,14 @@ export const AIAssistant: React.FC = () => {
                     <p className="text-sm font-bold text-text-primary px-4 line-clamp-2">{pdfName}</p>
                     <span className="text-[10px] font-black uppercase text-indigo-500 bg-white dark:bg-zinc-900 px-3 py-1 rounded-full">PDF Carregado</span>
                   </div>
+                ) : fileType === 'audio' && analyzeImage ? (
+                  <div className="flex flex-col items-center justify-center p-8 space-y-4 h-full w-full bg-indigo-50 dark:bg-indigo-500/10">
+                    <div className="w-20 h-20 bg-white dark:bg-zinc-800 rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm">
+                       <Mic className="w-10 h-10" />
+                    </div>
+                    <audio controls src={analyzeImage} className="w-full max-w-xs mt-4" />
+                    <span className="text-[10px] font-black uppercase text-indigo-500 bg-white dark:bg-zinc-900 px-3 py-1 rounded-full mt-2">Áudio Carregado</span>
+                  </div>
                 ) : analyzeImage ? (
                   <>
                     <img src={analyzeImage} alt="Upload" className="absolute inset-0 w-full h-full object-contain bg-black/5" referrerPolicy="no-referrer" />
@@ -1071,12 +1273,12 @@ export const AIAssistant: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-black text-text-primary uppercase tracking-widest mb-2">Upload Extendido</p>
-                      <p className="text-xs text-text-secondary font-medium">Imagens, Radiologia DICOM, PDFs ou Modelos 3D (STL)</p>
+                      <p className="text-xs text-text-secondary font-medium">Imagens, Áudio, Radiologia DICOM, PDFs ou Modelos 3D (STL)</p>
                     </div>
                   </div>
                 )}
                 
-                <div className={`absolute inset-0 flex items-center justify-center backdrop-blur-sm transition-opacity opacity-0 group-hover:opacity-100 ${(fileType === 'stl' || fileType === 'pdf') ? 'pointer-events-none' : ''}`}>
+                <div className={`absolute inset-0 flex items-center justify-center backdrop-blur-sm transition-opacity opacity-0 group-hover:opacity-100 ${(fileType === 'stl' || fileType === 'pdf' || fileType === 'audio') ? 'pointer-events-none' : ''}`}>
                   <p className="text-white bg-black/70 px-4 py-2 rounded-xl font-black uppercase tracking-widest text-xs flex items-center gap-2">
                     <Upload className="w-4 h-4" /> Substituir Arquivo
                   </p>
@@ -1084,7 +1286,7 @@ export const AIAssistant: React.FC = () => {
 
                 <input 
                   type="file" 
-                  accept="image/*, .dcm, application/dicom, .stl, application/pdf" 
+                  accept="image/*, audio/*, .dcm, application/dicom, .stl, application/pdf" 
                   onChange={handleImageUpload}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                 />

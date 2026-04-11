@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, orderBy } from 'firebase/firestore';
-import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../../firebase';
+import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, orderBy, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, auth, storage, handleFirestoreError, OperationType, moveToTrash } from '../../firebase';
 import { Patient, Finance } from '../../types';
-import { Plus, Trash2, DollarSign, Calendar, CreditCard, Wallet, QrCode, ArrowRightLeft, Loader2, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, DollarSign, Calendar, CreditCard, Wallet, QrCode, ArrowRightLeft, Loader2, AlertCircle, Upload, FileText, Image as ImageIcon, X, Edit2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from '../ConfirmModal';
 import { useSync } from '../../context/SyncContext';
@@ -18,6 +19,7 @@ const paymentMethodConfig = {
 export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
   const [payments, setPayments] = useState<Finance[]>([]);
   const [isAdding, setIsAdding] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<Finance | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     amount: '',
@@ -25,6 +27,7 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
     description: 'Pagamento de tratamento',
     paymentMethod: 'pix' as Finance['paymentMethod']
   });
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [paymentToDelete, setPaymentToDelete] = useState<string | null>(null);
   const { addSyncTask } = useSync();
 
@@ -49,14 +52,40 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
     return () => unsubscribe();
   }, [patient.id]);
 
-  const handleAddPayment = (e: React.FormEvent) => {
+  const handleEdit = (payment: Finance) => {
+    setEditingPayment(payment);
+    setFormData({
+      amount: payment.amount.toString(),
+      date: payment.date,
+      description: payment.description,
+      paymentMethod: payment.paymentMethod || 'pix'
+    });
+    setReceiptFile(null);
+    setIsAdding(true);
+  };
+
+  const handleSavePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth.currentUser) return;
 
     const amount = parseFloat(formData.amount);
     if (isNaN(amount) || amount <= 0) return;
 
-    const savePromise = addDoc(collection(db, 'finances'), {
+    setIsSaving(true);
+    
+    let receiptUrl = editingPayment?.receiptUrl || '';
+    if (receiptFile) {
+      try {
+        const fileRef = ref(storage, `receipts/${auth.currentUser.uid}/${patient.id}/${Date.now()}_${receiptFile.name}`);
+        await uploadBytes(fileRef, receiptFile);
+        receiptUrl = await getDownloadURL(fileRef);
+      } catch (error) {
+        console.error("Error uploading receipt:", error);
+        // Continue saving even if upload fails
+      }
+    }
+
+    const paymentData = {
       dentistId: auth.currentUser.uid,
       patientId: patient.id,
       amount,
@@ -64,13 +93,31 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
       description: formData.description,
       type: 'income',
       paymentMethod: formData.paymentMethod,
-      createdAt: new Date().toISOString()
-    }).catch(error => {
-      handleFirestoreError(error, OperationType.CREATE, 'finances');
-    });
+      ...(receiptUrl ? { receiptUrl } : {})
+    };
+
+    let savePromise;
+    if (editingPayment) {
+      savePromise = updateDoc(doc(db, 'finances', editingPayment.id), {
+        ...paymentData,
+        updatedAt: new Date().toISOString()
+      }).catch(error => {
+        handleFirestoreError(error, OperationType.UPDATE, `finances/${editingPayment.id}`);
+      });
+    } else {
+      savePromise = addDoc(collection(db, 'finances'), {
+        ...paymentData,
+        createdAt: new Date().toISOString()
+      }).catch(error => {
+        handleFirestoreError(error, OperationType.CREATE, 'finances');
+      });
+    }
 
     addSyncTask(savePromise);
+    setIsSaving(false);
     setIsAdding(false);
+    setEditingPayment(null);
+    setReceiptFile(null);
     setFormData({
       amount: '',
       date: new Date().toISOString().split('T')[0],
@@ -105,7 +152,17 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
           <p className="text-sm text-text-secondary">Total recebido deste paciente: <span className="font-bold text-emerald-600">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPaid)}</span></p>
         </div>
         <button
-          onClick={() => setIsAdding(true)}
+          onClick={() => {
+            setEditingPayment(null);
+            setReceiptFile(null);
+            setFormData({
+              amount: '',
+              date: new Date().toISOString().split('T')[0],
+              description: 'Pagamento de tratamento',
+              paymentMethod: 'pix'
+            });
+            setIsAdding(true);
+          }}
           className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
         >
           <Plus className="w-5 h-5" />
@@ -121,7 +178,7 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
             exit={{ opacity: 0, y: -20 }}
             className="bg-surface p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
           >
-            <form onSubmit={handleAddPayment} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            <form onSubmit={handleSavePayment} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
               <div>
                 <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">Valor (R$)</label>
                 <input
@@ -166,18 +223,28 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
                   className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                 >
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                  {isSaving ? 'Salvando...' : 'Adicionar'}
+                  {isSaving ? 'Salvando...' : (editingPayment ? 'Salvar' : 'Adicionar')}
                 </button>
                 <button
                   type="button"
                   disabled={isSaving}
-                  onClick={() => setIsAdding(false)}
+                  onClick={() => {
+                    setIsAdding(false);
+                    setEditingPayment(null);
+                    setReceiptFile(null);
+                    setFormData({
+                      amount: '',
+                      date: new Date().toISOString().split('T')[0],
+                      description: 'Pagamento de tratamento',
+                      paymentMethod: 'pix'
+                    });
+                  }}
                   className="px-4 py-2.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
                 >
                   Cancelar
                 </button>
               </div>
-              <div className="md:col-span-2 lg:col-span-4">
+              <div className="md:col-span-2 lg:col-span-2">
                 <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">Descrição</label>
                 <input
                   type="text"
@@ -187,6 +254,46 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
                   className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
                   placeholder="Ex: Pagamento da primeira parcela do implante"
                 />
+              </div>
+              <div className="md:col-span-2 lg:col-span-2">
+                <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">Comprovante (Opcional)</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    id="receipt-upload"
+                    className="hidden"
+                    accept="image/*,.pdf"
+                    disabled={isSaving}
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setReceiptFile(e.target.files[0]);
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor="receipt-upload"
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed cursor-pointer transition-colors ${
+                      receiptFile 
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' 
+                        : 'border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 text-text-secondary'
+                    } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span className="text-sm font-medium truncate">
+                      {receiptFile ? receiptFile.name : 'Anexar foto ou PDF'}
+                    </span>
+                  </label>
+                  {receiptFile && !isSaving && (
+                    <button
+                      type="button"
+                      onClick={() => setReceiptFile(null)}
+                      className="p-2.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors"
+                      title="Remover anexo"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
               </div>
             </form>
           </motion.div>
@@ -232,7 +339,20 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-text-primary font-medium">{payment.description}</p>
+                        <div className="flex flex-col gap-1">
+                          <p className="text-sm text-text-primary font-medium">{payment.description}</p>
+                          {payment.receiptUrl && (
+                            <a 
+                              href={payment.receiptUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                            >
+                              <FileText className="w-3 h-3" />
+                              Ver comprovante
+                            </a>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${method.bg} ${method.color}`}>
@@ -246,13 +366,22 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <button
-                          onClick={() => handleDelete(payment.id)}
-                          className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all disabled:opacity-50"
-                          title="Excluir"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleEdit(payment)}
+                            className="p-2 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-xl transition-all disabled:opacity-50"
+                            title="Editar"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(payment.id)}
+                            className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all disabled:opacity-50"
+                            title="Excluir"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </motion.tr>
                   );
