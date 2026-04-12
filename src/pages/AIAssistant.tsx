@@ -220,14 +220,26 @@ export const AIAssistant: React.FC = () => {
   const { user } = useAuth();
   const { storageLocation } = useStorage();
   const [activeTab, setActiveTab] = useState<'chat' | 'search' | 'analyze'>('chat');
-  const [selectedModel, setSelectedModel] = useState('gemini-3-flash-preview');
+  const [selectedModel, setSelectedModel] = useState(() => {
+    return localStorage.getItem('odontoadmin_ai_model') || 'gemini-3-flash-preview';
+  });
   const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
-  const [isHybridMode, setIsHybridMode] = useState(false);
+  const [isHybridMode, setIsHybridMode] = useState(() => {
+    return localStorage.getItem('odontoadmin_ai_hybrid') === 'true';
+  });
   const [localModelStatus, setLocalModelStatus] = useState<'idle' | 'downloading' | 'ready'>('idle');
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isDriveConnected, setIsDriveConnected] = useState(false);
   const [driveLink, setDriveLink] = useState('https://drive.google.com/drive/folders/1lH29GkJ8SEX8MSE93KqektbeOAdyGRJK');
-  const [actionPermission, setActionPermission] = useState<'ask' | 'direct'>('ask');
+  const [actionPermission, setActionPermission] = useState<'ask' | 'direct'>(() => {
+    return (localStorage.getItem('odontoadmin_ai_permission') as 'ask' | 'direct') || 'ask';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('odontoadmin_ai_model', selectedModel);
+    localStorage.setItem('odontoadmin_ai_hybrid', isHybridMode.toString());
+    localStorage.setItem('odontoadmin_ai_permission', actionPermission);
+  }, [selectedModel, isHybridMode, actionPermission]);
 
   const MODELS = [
     { id: 'gemini-3-flash-preview', name: 'G3 Flash', fullName: 'Gemini 3 Flash', description: 'O mais novo e rápido: excelente para quase todas as tarefas' },
