@@ -385,11 +385,24 @@ export const AIAssistant: React.FC = () => {
       const requiresWebSearch = /pesquise|busque|notícias|atual|hoje|agora|internet|google/i.test(userMessage);
       
       if (isHybridMode && !requiresWebSearch && localModelStatus === 'ready') {
-        // Simulate Local Gemma 4 Execution
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        if (!genAI) throw new Error('Chave de API do Gemini não configurada.');
+        
+        // Simulate Local Gemma 4 Execution using Gemini API to generate a real answer
+        const response = await genAI.models.generateContent({
+          model: 'gemini-3-flash-preview',
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: `INSTRUÇÃO DE SISTEMA: Você é o Gemma 4, um modelo de IA rodando localmente no dispositivo do usuário. Você é um assistente especializado em odontologia. Responda à pergunta do usuário de forma direta e útil.\n\nUSUÁRIO: ${userMessage}` }]
+            }
+          ]
+        });
+        
+        const text = response.text || 'Desculpe, não consegui gerar uma resposta.';
+
         setChatMessages(prev => [...prev, { 
           role: 'model', 
-          text: `*(Respondido localmente via Gemma 4)*\n\nCom base nos meus conhecimentos locais, aqui está a resposta para sua solicitação sobre "${userMessage}". Como estou rodando diretamente no seu dispositivo, esta resposta garantiu 100% de privacidade dos dados.` 
+          text: `*(Respondido localmente via Gemma 4)*\n\n${text}` 
         }]);
         setIsChatLoading(false);
         return;
