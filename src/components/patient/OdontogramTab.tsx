@@ -82,6 +82,19 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
   const { addSyncTask } = useSync();
 
   useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640 && isHybridMode) {
+        setIsHybridMode(false);
+      }
+    };
+    // Run once on mount
+    handleResize();
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isHybridMode]);
+
+  useEffect(() => {
     if (patient.odontogram) {
       try {
         setTeethState(JSON.parse(patient.odontogram));
@@ -409,7 +422,7 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => setIsHybridMode(!isHybridMode)}
-                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isHybridMode ? 'bg-indigo-600' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                          className={`hidden sm:inline-flex relative h-5 w-9 items-center rounded-full transition-colors ${isHybridMode ? 'bg-indigo-600' : 'bg-zinc-300 dark:bg-zinc-700'}`}
                           title="Alternar Modo Híbrido (Gemma-4-E2B-it)"
                         >
                           <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${isHybridMode ? 'translate-x-5' : 'translate-x-1'}`} />

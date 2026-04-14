@@ -16,11 +16,11 @@ class WebLlmService {
     try {
       const adapter = await navigator.gpu.requestAdapter();
       if (!adapter) {
-        return { compatible: false, reason: "Nenhum adaptador gráfico compatível encontrado." };
+        return { compatible: false, reason: "O navegador bloqueou o acesso à GPU (WebGPU). Tente atualizar o Chrome ou ativar 'WebGPU' em chrome://flags." };
       }
       return { compatible: true };
     } catch (e) {
-      return { compatible: false, reason: "Erro ao acessar a GPU do dispositivo." };
+      return { compatible: false, reason: "Erro ao acessar a GPU via navegador. Verifique se o WebGPU está ativado." };
     }
   }
 

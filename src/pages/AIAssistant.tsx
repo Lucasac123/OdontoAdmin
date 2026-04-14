@@ -226,6 +226,7 @@ export const AIAssistant: React.FC = () => {
   });
   const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
   const [isHybridMode, setIsHybridMode] = useState(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) return false;
     return localStorage.getItem('odontoadmin_ai_hybrid') === 'true';
   });
   const [localModelStatus, setLocalModelStatus] = useState<'idle' | 'downloading' | 'ready'>('idle');
@@ -241,6 +242,16 @@ export const AIAssistant: React.FC = () => {
     localStorage.setItem('odontoadmin_ai_hybrid', isHybridMode.toString());
     localStorage.setItem('odontoadmin_ai_permission', actionPermission);
   }, [selectedModel, isHybridMode, actionPermission]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640 && isHybridMode) {
+        setIsHybridMode(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isHybridMode]);
 
   const MODELS = [
     { id: 'gemini-3-flash-preview', name: 'G3 Flash', fullName: 'Gemini 3 Flash', description: 'O mais novo e rápido: excelente para quase todas as tarefas' },
@@ -787,7 +798,7 @@ export const AIAssistant: React.FC = () => {
                     </div>
 
                     {/* Hybrid Mode Toggle */}
-                    <div className="mb-4 p-4 bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/10 dark:to-zinc-900 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl">
+                    <div className="hidden sm:block mb-4 p-4 bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/10 dark:to-zinc-900 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
