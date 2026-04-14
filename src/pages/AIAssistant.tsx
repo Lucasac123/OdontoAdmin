@@ -9,6 +9,7 @@ import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
 import { useStorage } from '../context/StorageContext';
 import { getDataService } from '../services/storageService';
 import { useAuth } from '../context/AuthContext';
+import { webLlmService } from '../services/webLlm';
 import { 
   Send, 
   Bot, 
@@ -385,24 +386,17 @@ export const AIAssistant: React.FC = () => {
       const requiresWebSearch = /pesquise|busque|notícias|atual|hoje|agora|internet|google/i.test(userMessage);
       
       if (isHybridMode && !requiresWebSearch && localModelStatus === 'ready') {
-        if (!genAI) throw new Error('Chave de API do Gemini não configurada.');
+        if (!webLlmService.isReady()) {
+          throw new Error('Modelo local não está pronto.');
+        }
         
-        // Simulate Local Gemma 4 Execution using Gemini API to generate a real answer
-        const response = await genAI.models.generateContent({
-          model: 'gemini-3-flash-preview',
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: `INSTRUÇÃO DE SISTEMA: Você é o Gemma 4, um modelo de IA rodando localmente no dispositivo do usuário. Você é um assistente especializado em odontologia. Responda à pergunta do usuário de forma direta e útil.\n\nUSUÁRIO: ${userMessage}` }]
-            }
-          ]
-        });
+        const systemInstruction = `Você é o Gemma-4-E2B-it, um modelo de IA rodando localmente no dispositivo do usuário. Você é um assistente especializado em odontologia. Responda à pergunta do usuário de forma direta e útil.`;
         
-        const text = response.text || 'Desculpe, não consegui gerar uma resposta.';
+        const text = await webLlmService.generateResponse(userMessage, systemInstruction);
 
         setChatMessages(prev => [...prev, { 
           role: 'model', 
-          text: `*(Respondido localmente via Gemma 4)*\n\n${text}` 
+          text: `*(Respondido localmente via Gemma-4-E2B-it)*\n\n${text}` 
         }]);
         setIsChatLoading(false);
         return;
@@ -452,19 +446,30 @@ export const AIAssistant: React.FC = () => {
     }
   };
 
-  const simulateGemmaDownload = () => {
+  const downloadAndInitGemma = async () => {
     setLocalModelStatus('downloading');
     setDownloadProgress(0);
-    const interval = setInterval(() => {
-      setDownloadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setLocalModelStatus('ready');
-          return 100;
-        }
-        return prev + 5;
+    
+    try {
+      const hwCheck = await webLlmService.checkHardwareCompatibility();
+      if (!hwCheck.compatible) {
+        alert(`Hardware incompatível: ${hwCheck.reason}`);
+        setLocalModelStatus('not_installed');
+        return;
+      }
+
+      webLlmService.setInitProgressCallback((report) => {
+        // report.progress is between 0 and 1
+        setDownloadProgress(Math.round(report.progress * 100));
       });
-    }, 200);
+
+      await webLlmService.initializeEngine();
+      setLocalModelStatus('ready');
+    } catch (error) {
+      console.error("Erro ao inicializar Gemma local:", error);
+      alert("Erro ao baixar ou inicializar o modelo local.");
+      setLocalModelStatus('not_installed');
+    }
   };
 
   const handleRetry = async () => {
@@ -790,7 +795,7 @@ export const AIAssistant: React.FC = () => {
                           </div>
                           <div>
                             <h4 className="text-sm font-bold text-text-primary">Modo Híbrido (Local + Nuvem)</h4>
-                            <p className="text-[10px] text-text-secondary font-medium">Gemma 4 (Local) + Gemini (Web Search)</p>
+                            <p className="text-[10px] text-text-secondary font-medium">Gemma-4-E2B-it (Local) + Gemini (Web Search)</p>
                           </div>
                         </div>
                         <button
@@ -805,16 +810,16 @@ export const AIAssistant: React.FC = () => {
                         <div className="mt-4 pt-4 border-t border-indigo-100 dark:border-indigo-500/20 space-y-3">
                           {localModelStatus === 'idle' && (
                             <div className="flex items-center justify-between">
-                              <span className="text-xs text-text-secondary">Gemma 4 E2B não instalado</span>
-                              <button onClick={simulateGemmaDownload} className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
-                                Baixar Modelo (~2.1 GB)
+                              <span className="text-xs text-text-secondary">Gemma-4-E2B-it não instalado</span>
+                              <button onClick={downloadAndInitGemma} className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                                Baixar Modelo (~2.5 GB)
                               </button>
                             </div>
                           )}
                           {localModelStatus === 'downloading' && (
                             <div className="space-y-2">
                               <div className="flex justify-between text-xs">
-                                <span className="text-indigo-600 dark:text-indigo-400 font-bold">Baixando Gemma 4...</span>
+                                <span className="text-indigo-600 dark:text-indigo-400 font-bold">Baixando Gemma-4-E2B-it...</span>
                                 <span className="text-text-secondary">{downloadProgress}%</span>
                               </div>
                               <div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-1.5">
@@ -825,7 +830,7 @@ export const AIAssistant: React.FC = () => {
                           {localModelStatus === 'ready' && (
                             <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
                               <Sparkles className="w-3.5 h-3.5" />
-                              Gemma 4 Pronto para uso offline!
+                              Gemma-4-E2B-it Pronto para uso offline!
                             </div>
                           )}
                           

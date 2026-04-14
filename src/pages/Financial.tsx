@@ -668,9 +668,9 @@ export const Financial: React.FC = () => {
         </div>
 
         <div className="premium-card p-8 !translate-y-0 hover:!shadow-premium flex flex-col h-full border-indigo-500/10">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+              <div className="w-12 h-12 shrink-0 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                 <Building className="w-6 h-6" />
               </div>
               <div>
@@ -678,7 +678,7 @@ export const Financial: React.FC = () => {
                 <p className="text-xs text-text-secondary font-bold uppercase tracking-widest">Valor estimado</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
               {isEditingValuationDate ? (
                 <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
                   <input

@@ -5,6 +5,7 @@ import { Patient, FileRecord } from '../../types';
 import { Save, Loader2, Info, ChevronRight, AlertCircle, CheckCircle2, BrainCircuit, Activity, XCircle, CheckCircle, Copy, Sparkles, Wand2, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI } from '@google/genai';
+import { webLlmService } from '../../services/webLlm';
 import { useSync } from '../../context/SyncContext';
 import Markdown from 'react-markdown';
 
@@ -114,9 +115,16 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
     
     try {
       if (isHybridMode) {
-        // Simulate Gemma 4 local execution
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        setAiAnalysis(`*(Análise Local via Gemma 4)*\n\nAnalisando as imagens do dente ${toothId}:\n- Nenhuma cárie evidente detectada nas superfícies visíveis.\n- Estrutura dental parece íntegra.\n- Recomendação: Acompanhamento clínico padrão.`);
+        if (!webLlmService.isReady()) {
+          setAiAnalysis('O modelo Gemma-4-E2B-it local não está inicializado. Vá para a aba de IA para baixá-lo.');
+          setIsAnalyzing(false);
+          return;
+        }
+        const text = await webLlmService.generateResponse(
+          `Analise o dente ${toothId} com base no histórico do paciente.`,
+          `Você é o Gemma-4-E2B-it, um assistente odontológico rodando localmente. Como não tem acesso à visão nesta versão local, forneça uma análise genérica e conservadora sobre o dente ${toothId}.`
+        );
+        setAiAnalysis(`*(Análise Local via Gemma-4-E2B-it)*\n\n${text}`);
         setIsAnalyzing(false);
         return;
       }
@@ -395,14 +403,14 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
                         </div>
                         <div>
                           <h4 className="font-bold text-sm text-text-primary tracking-tight">Análise Inteligente</h4>
-                          <p className="text-[10px] text-text-secondary font-medium uppercase tracking-wider">Powered by {isHybridMode ? 'Gemma 4 (Local)' : 'Gemini'}</p>
+                          <p className="text-[10px] text-text-secondary font-medium uppercase tracking-wider">Powered by {isHybridMode ? 'Gemma-4-E2B-it (Local)' : 'Gemini'}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => setIsHybridMode(!isHybridMode)}
                           className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isHybridMode ? 'bg-indigo-600' : 'bg-zinc-300 dark:bg-zinc-700'}`}
-                          title="Alternar Modo Híbrido (Gemma 4)"
+                          title="Alternar Modo Híbrido (Gemma-4-E2B-it)"
                         >
                           <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${isHybridMode ? 'translate-x-5' : 'translate-x-1'}`} />
                         </button>
