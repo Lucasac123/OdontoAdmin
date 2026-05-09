@@ -90,10 +90,13 @@ export const ConsentFormsTab = ({ patient }: { patient: Patient }) => {
       )}
     </div>
 
-    <div className="print-only max-w-4xl mx-auto font-sans">
-      <PrintHeader title="Termo de Consentimento" patientName={patient.name} />
+    <div className="print-only max-w-4xl mx-auto font-sans w-full" style={{ padding: '0 40px' }}>
+      <PrintHeader 
+        title={selectedTemplate === 'imageRelease' ? "Autorização de Uso de Imagem" : "Termo de Consentimento Livre e Esclarecido"} 
+        patientName={patient.name} 
+      />
       
-      <div className="mb-12 whitespace-pre-wrap text-base leading-relaxed text-zinc-800 text-justify">
+      <div className="mb-16 whitespace-pre-wrap font-serif text-xl leading-relaxed text-zinc-900 text-justify px-4">
         {customText || templates[selectedTemplate as keyof typeof templates]}
       </div>
 

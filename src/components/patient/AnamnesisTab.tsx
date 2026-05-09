@@ -152,102 +152,73 @@ export const AnamnesisTab = ({ patient }: { patient: Patient }) => {
       </div>
 
       {/* --- Print View --- */}
-      <div className="print-only max-w-4xl mx-auto font-sans text-sm">
-        <PrintHeader title="FICHA CLÍNICA DE ANAMNESE" patientName={patient.name} />
-        
-        <div className="mt-8 border-2 border-zinc-900 rounded-lg overflow-hidden">
-          {/* Dados do Paciente */}
-          <div className="bg-zinc-100 font-bold text-zinc-900 p-2 uppercase border-b-2 border-zinc-900 text-xs tracking-wider">
-            I. Identificação do Paciente
-          </div>
-          <div className="p-3 grid grid-cols-3 gap-4 text-sm">
-            <div className="col-span-2"><span className="font-bold text-zinc-700">Nome:</span> {patient.name}</div>
-            <div><span className="font-bold text-zinc-700">Data Nasc.:</span> {patient.dob ? new Date(patient.dob).toLocaleDateString('pt-BR') : '___/___/_____'}</div>
-            <div><span className="font-bold text-zinc-700">CPF:</span> {patient.cpf || '_________________'}</div>
-            <div><span className="font-bold text-zinc-700">RG:</span> {patient.rg || '_________________'}</div>
-            <div><span className="font-bold text-zinc-700">Telefone:</span> {patient.phone || '_________________'}</div>
-          </div>
+      <div className="print-only max-w-4xl mx-auto font-sans w-full" style={{ padding: '0 40px' }}>
+        <div className="avoid-break page-break-after mb-20">
+          <PrintHeader title="Ficha de Anamnese Odontológica" patientName={patient.name} />
           
-          {/* Informações Clínicas */}
-          <div className="bg-zinc-100 font-bold text-zinc-900 p-2 uppercase border-y-2 border-zinc-900 text-xs tracking-wider">
-            II. Informações Clínicas
-          </div>
-          <div className="p-3 space-y-4">
-            <div>
-              <span className="font-bold text-zinc-700 block mb-1">Motivo da Consulta (Queixa Principal):</span>
-              <div className="border-b border-zinc-300 pb-1">{formData.mainComplaint || 'Sem queixa principal relatada.'}</div>
-            </div>
-            <div>
-              <span className="font-bold text-zinc-700 block mb-1">Histórico Médico Atual e Pregresso:</span>
-              <div className="border-b border-zinc-300 pb-1">{formData.medicalHistory || 'Nada digno de nota.'}</div>
-            </div>
-            <div>
-              <span className="font-bold text-zinc-700 block mb-1">Alergias (Medicamentos/Outros):</span>
-              <div className="border-b border-zinc-300 pb-1">{formData.allergies || 'Nega.'}</div>
-            </div>
-            <div>
-              <span className="font-bold text-zinc-700 block mb-1">Medicamentos em Uso Contínuo:</span>
-              <div className="border-b border-zinc-300 pb-1">{formData.medications || 'Nenhum.'}</div>
-            </div>
-          </div>
-
-          {/* Questionário de Saúde */}
-          <div className="bg-zinc-100 font-bold text-zinc-900 p-2 uppercase border-y-2 border-zinc-900 text-xs tracking-wider">
-            III. Questionário de Saúde
-          </div>
-          <div className="p-3 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-            {[
-              { name: 'diabetes', label: 'Diabetes' },
-              { name: 'hypertension', label: 'Hipertensão Arterial' },
-              { name: 'cardiacIssues', label: 'Cardiopatias (Problemas Cardíacos)' },
-              { name: 'bleedingDisorders', label: 'Hemorragias / Alterações Sanguíneas' },
-              { name: 'pregnancy', label: 'Gestante' },
-              { name: 'asthma', label: 'Asma / Bronquite' },
-              { name: 'hepatitis', label: 'Hepatite' },
-              { name: 'hiv', label: 'HIV / AIDS' },
-              { name: 'rheumaticFever', label: 'Febre Reumática' },
-              { name: 'anesthesiaReaction', label: 'Reação adversa à Anestesia' },
-              { name: 'smoker', label: 'Fumante' },
-              { name: 'alcohol', label: 'Consome Álcool' },
-            ].map(condition => (
-              <div key={condition.name} className="flex items-center justify-between border-b border-zinc-200 pb-1">
-                <span>{condition.label}</span>
-                <div className="flex gap-2">
-                  <span className="flex items-center gap-1">
-                    <span className="w-3 h-3 border border-black inline-block text-center text-[10px] leading-3 font-bold">
-                      {formData[condition.name as keyof typeof formData] ? 'X' : ''}
-                    </span> Sim
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-3 h-3 border border-black inline-block text-center text-[10px] leading-3 font-bold">
-                      {!formData[condition.name as keyof typeof formData] ? 'X' : ''}
-                    </span> Não
-                  </span>
+          <div className="mb-12">
+            <h3 className="font-serif font-black text-xs uppercase tracking-[0.2em] text-zinc-400 mb-8 border-b-2 border-zinc-900 pb-2">I. Histórico Clínico e Queixas</h3>
+            <div className="space-y-8">
+              {[
+                { label: 'Motivo da Consulta (Queixa Principal)', value: formData.mainComplaint, placeholder: 'Nenhuma queixa relatada.' },
+                { label: 'Histórico Médico Pregresso', value: formData.medicalHistory, placeholder: 'Nada digno de nota.' },
+                { label: 'Alergias a Medicamentos / Substâncias', value: formData.allergies, placeholder: 'Nenhuma alergia relatada.' },
+                { label: 'Medicamentos em Uso Contínuo', value: formData.medications, placeholder: 'Nenhum medicamento em uso.' },
+              ].map((item, idx) => (
+                <div key={idx} className="avoid-break">
+                  <p className="text-[10px] font-black text-zinc-900 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full"></span>
+                    {item.label}
+                  </p>
+                  <p className="font-serif text-lg text-zinc-800 leading-relaxed pl-4 border-l-2 border-zinc-100 py-1">
+                    {item.value || item.placeholder}
+                  </p>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
-          {/* Observações */}
-          <div className="bg-zinc-100 font-bold text-zinc-900 p-2 uppercase border-y-2 border-zinc-900 text-xs tracking-wider">
-            IV. Observações Adicionais
-          </div>
-          <div className="p-3 min-h-[60px]">
-            {formData.notes || 'Sem observações adicionais.'}
+          <div className="mb-12 avoid-break">
+            <h3 className="font-serif font-black text-xs uppercase tracking-[0.2em] text-zinc-400 mb-8 border-b-2 border-zinc-900 pb-2">II. Condições Sistêmicas e Hábitos</h3>
+            <div className="grid grid-cols-2 gap-y-4 gap-x-12 p-6 border border-zinc-100 rounded-2xl">
+              {[
+                { name: 'diabetes', label: 'Diabetes' },
+                { name: 'hypertension', label: 'Hipertensão' },
+                { name: 'cardiacIssues', label: 'Problemas Cardíacos' },
+                { name: 'bleedingDisorders', label: 'Hemorragia' },
+                { name: 'pregnancy', label: 'Gravidez' },
+                { name: 'asthma', label: 'Asma/Bronquite' },
+                { name: 'hepatitis', label: 'Hepatite' },
+                { name: 'hiv', label: 'HIV/AIDS' },
+                { name: 'rheumaticFever', label: 'Febre Reumática' },
+                { name: 'anesthesiaReaction', label: 'Reação à Anestesia' },
+                { name: 'smoker', label: 'Fumante' },
+                { name: 'alcohol', label: 'Consome Álcool' },
+              ].map(condition => (
+                <div key={condition.name} className="flex items-center justify-between border-b border-zinc-100 pb-2">
+                  <span className="text-sm font-medium text-zinc-700">{condition.label}</span>
+                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center font-black text-xs ${formData[condition.name as keyof typeof formData] ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-zinc-300'}`}>
+                    {formData[condition.name as keyof typeof formData] ? '✓' : ''}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Termo de Responsabilidade */}
-          <div className="bg-zinc-100 font-bold text-zinc-900 p-2 uppercase border-y-2 border-zinc-900 text-xs tracking-wider">
-            V. Termo de Responsabilidade
+          <div className="mb-12 avoid-break">
+            <h3 className="font-serif font-black text-xs uppercase tracking-[0.2em] text-zinc-400 mb-4 border-b border-zinc-100 pb-2">III. Observações Adicionais</h3>
+            <p className="font-serif text-lg text-zinc-800 leading-relaxed italic">
+              {formData.notes || 'Sem observações adicionais.'}
+            </p>
           </div>
-          <div className="p-4 text-justify text-xs leading-relaxed text-zinc-800">
-            Declaro, sob as penas da lei, que as informações prestadas nesta Ficha Clínica de Anamnese são a mais estrita expressão da verdade, não tendo omitido ou ocultado qualquer informação sobre minha saúde física ou mental, medicações de uso contínuo ou qualquer outra circunstância que possa interferir no diagnóstico e tratamento odontológico proposto.
-            <br/><br/>
-            Comprometo-me a informar ao cirurgião-dentista responsável qualquer alteração no meu estado de saúde ou uso de novos medicamentos ao longo do tratamento. Estou ciente de que a omissão de fatos poderá acarretar sérias complicações médicas.
+
+          <div className="mb-12 text-sm text-justify p-6 border-l-4 border-indigo-600 bg-indigo-50/30 rounded-r-2xl avoid-break">
+            <p className="font-serif leading-relaxed text-zinc-700">
+              <strong>Termo de Responsabilidade:</strong> Declaro, sob as penas da lei, que as informações prestadas nesta Ficha Clínica de Anamnese são a mais estrita expressão da verdade, não tendo omitido ou ocultado qualquer informação sobre minha saúde física ou mental. Comprometo-me a informar ao cirurgião-dentista qualquer alteração no meu estado de saúde.
+            </p>
           </div>
+          <PrintFooter signatureType="both" patientName={patient.name} />
         </div>
-
-        <PrintFooter signatureType="both" patientName={patient.name} />
       </div>
     </>
   );

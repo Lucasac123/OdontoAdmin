@@ -555,12 +555,12 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
       />
     </div>
 
-    <div className="print-only max-w-4xl mx-auto font-sans">
+    <div className="print-only max-w-4xl mx-auto font-sans w-full" style={{ padding: '0 40px' }}>
       <div className="space-y-16">
         {/* First Copy */}
-        <div className="relative min-h-[45vh] flex flex-col">
+        <div className="relative min-h-[50vh] flex flex-col mb-20 avoid-break">
           {needsTwoCopies && (
-            <div className="absolute -top-6 right-0 text-[10px] font-black uppercase tracking-widest text-zinc-400 border border-zinc-200 px-2 py-0.5 rounded">
+            <div className="absolute -top-6 right-0 text-[10px] font-black uppercase tracking-widest text-zinc-400 border border-zinc-200 px-3 py-1 rounded-full">
               1ª Via - Farmácia
             </div>
           )}
@@ -577,7 +577,7 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
             patientName={patient.name} 
           />
           
-          <div className="flex-1 mb-12 whitespace-pre-wrap text-base leading-relaxed text-zinc-800">
+          <div className="flex-1 mb-16 whitespace-pre-wrap font-serif text-xl leading-relaxed text-zinc-900 text-justify px-4">
             {
               documentType === 'prescription' ? prescriptionText :
               documentType === 'certificate' ? certificateText :
@@ -594,13 +594,13 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
 
         {/* Second Copy (if needed) */}
         {needsTwoCopies && (
-          <div className="relative pt-16 border-t-2 border-dashed border-zinc-200 min-h-[45vh] flex flex-col">
-            <div className="absolute top-10 right-0 text-[10px] font-black uppercase tracking-widest text-zinc-400 border border-zinc-200 px-2 py-0.5 rounded">
+          <div className="relative pt-20 border-t-4 border-dashed border-zinc-200 min-h-[50vh] flex flex-col avoid-break">
+            <div className="absolute top-10 right-0 text-[10px] font-black uppercase tracking-widest text-zinc-400 border border-zinc-200 px-3 py-1 rounded-full">
               2ª Via - Paciente
             </div>
             <PrintHeader title="Receituário" patientName={patient.name} />
             
-            <div className="flex-1 mb-12 whitespace-pre-wrap text-base leading-relaxed text-zinc-800">
+            <div className="flex-1 mb-16 whitespace-pre-wrap font-serif text-xl leading-relaxed text-zinc-900 text-justify px-4">
               {prescriptionText}
             </div>
 

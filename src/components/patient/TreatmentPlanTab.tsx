@@ -418,44 +418,63 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
       </AnimatePresence>
     </div>
 
-    <div className="print-only max-w-4xl mx-auto font-sans">
-      <PrintHeader title="Plano de Tratamento e Orçamento" patientName={patient.name} />
+    <div className="print-only max-w-4xl mx-auto font-sans w-full" style={{ padding: '0 40px' }}>
+      <PrintHeader title="Planejamento de Tratamento Odontológico" patientName={patient.name} />
       
-      <div className="mb-8 grid grid-cols-2 gap-4 text-sm text-zinc-600">
-        <div><strong>Status:</strong> {treatmentStatus}</div>
-        <div><strong>Emissão:</strong> {new Date().toLocaleDateString('pt-BR')}</div>
-        {startDate && <div><strong>Início:</strong> {new Date(startDate).toLocaleDateString('pt-BR')}</div>}
-        {endDate && <div><strong>Fim Previsto:</strong> {new Date(endDate).toLocaleDateString('pt-BR')}</div>}
+      <div className="mb-10 grid grid-cols-2 gap-y-2 gap-x-12 p-6 border border-zinc-100 rounded-2xl bg-zinc-50/30">
+        <div className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Status do Plano</div>
+        <div className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Data de Emissão</div>
+        <div className="font-serif text-lg text-zinc-900">{treatmentStatus}</div>
+        <div className="font-serif text-lg text-zinc-900">{new Date().toLocaleDateString('pt-BR')}</div>
+        
+        {startDate && (
+          <>
+            <div className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mt-4">Previsão de Início</div>
+            <div className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mt-4">Previsão de Conclusão</div>
+            <div className="font-serif text-lg text-zinc-900">{new Date(startDate).toLocaleDateString('pt-BR')}</div>
+            <div className="font-serif text-lg text-zinc-900">{endDate ? new Date(endDate).toLocaleDateString('pt-BR') : 'A definir'}</div>
+          </>
+        )}
       </div>
 
-      <table className="w-full text-left border-collapse mb-8 text-sm">
-        <thead>
-          <tr className="border-b-2 border-zinc-200">
-            <th className="py-2">Procedimento</th>
-            <th className="py-2 text-center">Dente/Região</th>
-            <th className="py-2 text-center">Qtd</th>
-            <th className="py-2 text-right">V. Unitário</th>
-            <th className="py-2 text-right">Total</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-100">
-          {procedures.map(p => (
-            <tr key={p.id}>
-              <td className="py-3 pr-2">{p.name}</td>
-              <td className="py-3 text-center">{p.tooth || '-'}</td>
-              <td className="py-3 text-center">{p.quantity || 1}</td>
-              <td className="py-3 text-right">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.unitPrice || p.cost)}</td>
-              <td className="py-3 text-right">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.cost)}</td>
+      <div className="mb-12">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="border-b-2 border-zinc-900">
+              <th className="py-3 font-serif text-xs uppercase tracking-widest text-zinc-500">Procedimento / Descrição</th>
+              <th className="py-3 text-center font-serif text-xs uppercase tracking-widest text-zinc-500">Região</th>
+              <th className="py-3 text-center font-serif text-xs uppercase tracking-widest text-zinc-500">Qtd</th>
+              <th className="py-3 text-right font-serif text-xs uppercase tracking-widest text-zinc-500">Valor Total</th>
             </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr className="border-t-2 border-zinc-200 font-bold">
-            <td colSpan={4} className="py-4 text-right">Total Estimado:</td>
-            <td className="py-4 text-right text-base">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalCost)}</td>
-          </tr>
-        </tfoot>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-zinc-100">
+            {procedures.map(p => (
+              <tr key={p.id} className="avoid-break">
+                <td className="py-4 font-serif text-lg text-zinc-900 pr-4">{p.name}</td>
+                <td className="py-4 text-center font-serif text-lg text-zinc-700">{p.tooth || '-'}</td>
+                <td className="py-4 text-center font-serif text-lg text-zinc-700">{p.quantity || 1}</td>
+                <td className="py-4 text-right font-serif text-lg font-bold text-zinc-900">
+                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.cost)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="border-t-4 border-zinc-900 font-bold">
+              <td colSpan={3} className="py-6 text-right font-serif text-xl uppercase tracking-widest text-zinc-500">Investimento Total:</td>
+              <td className="py-6 text-right font-serif text-2xl text-indigo-700">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalCost)}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div className="mb-16 p-6 border-l-4 border-zinc-200 bg-zinc-50/50 rounded-r-2xl avoid-break">
+        <p className="font-serif text-sm text-zinc-600 leading-relaxed italic">
+          * Este orçamento tem validade de 30 dias. O plano de tratamento pode sofrer alterações conforme a resposta biológica do paciente ou necessidade de procedimentos complementares identificados durante a execução.
+        </p>
+      </div>
 
       <PrintFooter signatureType="both" patientName={patient.name} />
     </div>

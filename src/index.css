@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,200..900;1,200..900&display=swap');
+
 .search-open button {
   pointer-events: none;
 }
@@ -31,6 +33,8 @@
   --color-border-subtle: var(--border-subtle);
   --shadow-premium: var(--shadow-premium);
   --shadow-premium-hover: var(--shadow-premium-hover);
+
+  --font-serif: "Crimson Pro", serif;
 }
 
 @variant dark (&:where(.dark, .dark *));

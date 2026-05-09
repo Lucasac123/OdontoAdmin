@@ -29,17 +29,17 @@ export const PrintFooter: React.FC<PrintFooterProps> = ({
     <div className="print-only print-footer mt-16 pt-8 border-t border-zinc-200 avoid-break">
       {/* Signature Section */}
       <div className="flex justify-between items-end gap-8 mb-12">
-        <div className="flex-1 flex flex-col gap-12">
+        <div className="flex-1 flex flex-col gap-20">
           {signatureType === 'both' && (
             <div className="text-center">
-              <div className="border-b border-zinc-400 w-full mb-2"></div>
+              <div className="border-b-2 border-zinc-900 w-full mb-2 h-16"></div>
               <p className="font-bold text-zinc-900 text-sm">{patientName}</p>
               <p className="text-zinc-600 text-[10px] uppercase tracking-wider font-medium">Assinatura do Paciente / Responsável</p>
             </div>
           )}
           
           <div className="text-center">
-            <div className="border-b border-zinc-400 w-full mb-2"></div>
+            <div className="border-b-2 border-zinc-900 w-full mb-2 h-16"></div>
             <p className="font-bold text-zinc-900 text-sm">{dentistName}</p>
             <p className="text-zinc-600 text-[10px] uppercase tracking-wider font-medium">{cro} - Cirurgião-Dentista</p>
           </div>
