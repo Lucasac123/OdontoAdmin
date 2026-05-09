@@ -22,7 +22,6 @@ export const ConsentFormsTab = ({ patient }: { patient: Patient }) => {
     ortodontia: `TERMO DE CONSENTIMENTO LIVRE E ESCLARECIDO - TRATAMENTO ORTODÔNTICO\n\nEu, ${patient.name}, portador(a) do CPF ${cpfText} e RG ${rgText}, concordo em iniciar o tratamento ortodôntico.\n\nEstou ciente de que:\n1. O tempo estimado de tratamento é uma previsão e pode variar dependendo da resposta biológica e da minha colaboração.\n2. É fundamental comparecer às consultas de manutenção agendadas.\n3. A higiene oral deve ser rigorosa para evitar cáries, manchas e problemas gengivais durante o uso do aparelho.\n4. Aparelhos quebrados ou soltos podem atrasar o tratamento e gerar custos adicionais.`,
  
     imageRelease: `TERMO DE AUTORIZAÇÃO DE USO DE IMAGEM\n\nEu, ${patient.name}, portador(a) do CPF ${cpfText} e RG ${rgText}, AUTORIZO o uso de minha imagem (fotos e vídeos) captada durante o tratamento odontológico pelo(a) cirurgião-dentista responsável.\n\nA presente autorização é concedida a título gratuito, abrangendo o uso das imagens para fins de:\n( ) Documentação clínica e prontuário.\n( ) Publicações científicas, aulas e palestras.\n( ) Divulgação em redes sociais (Instagram, Facebook, etc.) e materiais de marketing da clínica, desde que não exponha minha intimidade de forma vexatória.\n\nDeclaro estar ciente de que posso revogar esta autorização a qualquer momento, mediante solicitação por escrito.`
-  };a do Paciente\n\nData: ${new Date().toLocaleDateString('pt-BR')}`
   };
 
   const handlePrint = () => {
