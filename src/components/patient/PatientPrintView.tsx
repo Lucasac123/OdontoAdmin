@@ -264,14 +264,6 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
 
   return (
     <div className="unified-print-only max-w-4xl mx-auto font-sans w-full" style={{ padding: '0 20px' }}>
-      <style dangerouslySetInnerHTML={{__html: `
-        @media print {
-          .page-break-after { page-break-after: always; break-after: page; }
-          .avoid-break { page-break-inside: avoid; break-inside: avoid; }
-          /* Ensure the last element doesn't have a blank page after it */
-          .page-break-after:last-child { page-break-after: auto; break-after: auto; }
-        }
-      `}} />
       
       {selectedSections.includes('personal') && renderPersonal()}
       {selectedSections.includes('anamnesis') && renderAnamnesis()}

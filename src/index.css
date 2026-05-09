@@ -154,59 +154,71 @@ body {
 @media print {
   @page {
     size: A4;
-    margin: 20mm;
+    margin: 15mm;
   }
-  
-  body {
-    background-color: white;
+
+  /* Aggressive reset to ensure no clipping occurs during print */
+  html, body, #root, #root > div, main, .flex-1, .overflow-hidden, .overflow-y-auto {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important; /* Fixed/Absolute positions often cause clipping */
+    display: block !important;
+    background-color: white !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  .no-print, nav, aside, header, footer:not(.print-footer), button, .sidebar {
+  .no-print, nav, aside, header, footer:not(.print-footer), button, .sidebar, [role="button"], .fixed:not(.print-only *):not(.unified-print-only *), .absolute:not(.print-only *):not(.unified-print-only *) {
     display: none !important;
   }
 
-  /* When unified printing is active, hide normal print-only items */
-  body.is-unified-printing .print-only {
-    display: none !important;
-  }
-
-  body:not(.is-unified-printing) .unified-print-only {
-    display: none !important;
-  }
-
+  /* Ensure print containers are visible and full-width */
   .print-only, .unified-print-only {
     display: block !important;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-  }
-
-  main {
-    padding: 0 !important;
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
     margin: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
+    padding: 0 !important;
   }
 
   .premium-card {
     box-shadow: none !important;
     border: none !important;
     border-radius: 0 !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
-  .print-only {
-    display: block !important;
-  }
-
-  /* Force page breaks where needed */
+  /* Improved page break handling */
   .page-break {
     page-break-before: always;
+    break-before: page;
+    clear: both;
   }
   
+  .page-break-after {
+    page-break-after: always;
+    break-after: page;
+    clear: both;
+  }
+
   .avoid-break {
     page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Special case for unified printing class on body */
+  body.is-unified-printing .print-only {
+    display: none !important;
+  }
+
+  body:not(.is-unified-printing) .unified-print-only {
+    display: none !important;
   }
 }
 

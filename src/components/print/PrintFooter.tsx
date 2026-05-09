@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck } from 'lucide-react';
+
 
 interface PrintFooterProps {
   dentistName?: string;
@@ -26,7 +26,7 @@ export const PrintFooter: React.FC<PrintFooterProps> = ({
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(govBrUrl)}`;
 
   return (
-    <div className="print-only print-footer mt-16 pt-8 border-t border-zinc-200">
+    <div className="print-only print-footer mt-16 pt-8 border-t border-zinc-200 avoid-break">
       {/* Signature Section */}
       <div className="flex justify-between items-end gap-8 mb-12">
         <div className="flex-1 flex flex-col gap-12">
@@ -64,17 +64,7 @@ export const PrintFooter: React.FC<PrintFooterProps> = ({
         <span>{formattedDate}</span>
       </div>
 
-      <div className="mt-6 bg-zinc-50 border border-zinc-200 rounded-lg p-4 flex gap-4 items-start avoid-break">
-        <div className="bg-green-100 text-green-700 p-2 rounded-lg shrink-0">
-          <ShieldCheck className="w-5 h-5" />
-        </div>
-        <div>
-          <h4 className="font-bold text-xs text-zinc-900 mb-0.5 uppercase tracking-wide">Validade Jurídica (ICP-Brasil)</h4>
-          <p className="text-[10px] text-zinc-600 leading-relaxed">
-            Este documento possui validade jurídica em todo o território nacional quando assinado digitalmente pelo portal <strong>gov.br</strong>. Aponte a câmera do seu celular para o QR Code acima para acessar o assinador oficial gratuito.
-          </p>
-        </div>
-      </div>
+
     </div>
   );
 };
