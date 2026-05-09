@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Search, Image as ImageIcon, Calendar, Trash2 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useStorage } from '../../context/StorageContext';
-import { getDataService } from '../../services/storageService';
+import { useAuth } from '../context/AuthContext';
+import { useStorage } from '../context/StorageContext';
+import { getDataService } from '../services/storageService';
 import Markdown from 'react-markdown';
 
 interface AIHistoryModalProps {
