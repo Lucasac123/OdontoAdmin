@@ -6,6 +6,8 @@ import { Save, Loader2, Plus, Trash2, Printer, DollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CRMTab } from './CRMTab';
 import { useSync } from '../../context/SyncContext';
+import { PrintHeader } from '../print/PrintHeader';
+import { PrintFooter } from '../print/PrintFooter';
 
 interface Procedure {
   id: string;
@@ -136,72 +138,13 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
   };
 
   const totalCost = procedures.reduce((acc, curr) => acc + curr.cost, 0);
-
   const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Plano de Tratamento - ${patient.name}</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 40px; line-height: 1.6; }
-              .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 40px; }
-              table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-              th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-              th { background-color: #f5f5f5; }
-              .total { text-align: right; font-size: 18px; font-weight: bold; margin-top: 20px; }
-              .footer { text-align: center; margin-top: 100px; font-size: 14px; color: #666; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>PLANO DE TRATAMENTO E ORÇAMENTO</h1>
-              <p>Paciente: ${patient.name}</p>
-              <p>Status: ${treatmentStatus}</p>
-              ${startDate ? `<p>Data de Início: ${new Date(startDate).toLocaleDateString('pt-BR')}</p>` : ''}
-              ${endDate ? `<p>Previsão de Fim: ${new Date(endDate).toLocaleDateString('pt-BR')}</p>` : ''}
-              <p>Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}</p>
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Procedimento</th>
-                  <th>Dente/Região</th>
-                  <th>Qtd</th>
-                  <th>V. Unitário</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${procedures.map(p => `
-                  <tr>
-                    <td>${p.name}</td>
-                    <td>${p.tooth || '-'}</td>
-                    <td>${p.quantity || 1}</td>
-                    <td>${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.unitPrice || p.cost)}</td>
-                    <td>${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.cost)}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-            <div class="total">
-              Total: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalCost)}
-            </div>
-            <div class="footer">
-              <p>___________________________________</p>
-              <p>Assinatura do Paciente</p>
-            </div>
-            <script>window.print(); window.close();</script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-    }
+    window.print();
   };
 
   return (
-    <div className="space-y-6">
+    <>
+    <div className="space-y-6 no-print">
       <AnimatePresence>
         {hasChanges && (
           <motion.div 
@@ -474,5 +417,53 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
         )}
       </AnimatePresence>
     </div>
+
+    <div className="print-only max-w-4xl mx-auto font-sans">
+      <PrintHeader title="Plano de Tratamento e Orçamento" patientName={patient.name} />
+      
+      <div className="mb-8 grid grid-cols-2 gap-4 text-sm text-zinc-600">
+        <div><strong>Status:</strong> {treatmentStatus}</div>
+        <div><strong>Emissão:</strong> {new Date().toLocaleDateString('pt-BR')}</div>
+        {startDate && <div><strong>Início:</strong> {new Date(startDate).toLocaleDateString('pt-BR')}</div>}
+        {endDate && <div><strong>Fim Previsto:</strong> {new Date(endDate).toLocaleDateString('pt-BR')}</div>}
+      </div>
+
+      <table className="w-full text-left border-collapse mb-8 text-sm">
+        <thead>
+          <tr className="border-b-2 border-zinc-200">
+            <th className="py-2">Procedimento</th>
+            <th className="py-2 text-center">Dente/Região</th>
+            <th className="py-2 text-center">Qtd</th>
+            <th className="py-2 text-right">V. Unitário</th>
+            <th className="py-2 text-right">Total</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-zinc-100">
+          {procedures.map(p => (
+            <tr key={p.id}>
+              <td className="py-3 pr-2">{p.name}</td>
+              <td className="py-3 text-center">{p.tooth || '-'}</td>
+              <td className="py-3 text-center">{p.quantity || 1}</td>
+              <td className="py-3 text-right">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.unitPrice || p.cost)}</td>
+              <td className="py-3 text-right">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.cost)}</td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr className="border-t-2 border-zinc-200 font-bold">
+            <td colSpan={4} className="py-4 text-right">Total Estimado:</td>
+            <td className="py-4 text-right text-base">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalCost)}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div className="mt-16 pt-8 text-center text-sm text-zinc-600">
+        <div className="w-64 border-t border-zinc-400 mx-auto mb-2"></div>
+        <p>Assinatura do Paciente</p>
+      </div>
+
+      <PrintFooter />
+    </div>
+    </>
   );
 };

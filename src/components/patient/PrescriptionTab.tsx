@@ -9,6 +9,8 @@ import { PediatricTable } from './PediatricTable';
 import { CidTable } from './CidTable';
 import { MedicationPosologyTable } from '../MedicationPosologyTable';
 import { PrescriptionTemplatesModal } from './PrescriptionTemplatesModal';
+import { PrintHeader } from '../print/PrintHeader';
+import { PrintFooter } from '../print/PrintFooter';
 
 export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
   const [documentType, setDocumentType] = useState<'prescription' | 'certificate' | 'attendance' | 'referral' | 'postop' | 'laudo' | 'exame'>('prescription');
@@ -60,58 +62,7 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
   };
 
   const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    let contentToPrint = '';
-    let title = '';
-
-    switch (documentType) {
-      case 'prescription':
-        contentToPrint = prescriptionText;
-        title = 'RECEITUÁRIO ODONTOLÓGICO';
-        break;
-      case 'certificate':
-        contentToPrint = certificateText;
-        title = 'ATESTADO ODONTOLÓGICO';
-        break;
-      case 'attendance':
-        contentToPrint = attendanceText;
-        title = 'DECLARAÇÃO DE COMPARECIMENTO';
-        break;
-      case 'referral':
-        contentToPrint = referralText;
-        title = 'CARTA DE ENCAMINHAMENTO';
-        break;
-      case 'postop':
-        contentToPrint = postopText;
-        title = 'RECOMENDAÇÕES PÓS-OPERATÓRIAS';
-        break;
-    }
-
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>${title} - ${patient.name}</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 40px; line-height: 1.6; }
-              .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 40px; }
-              .content { white-space: pre-wrap; font-size: 16px; }
-              .footer { text-align: center; margin-top: 100px; font-size: 14px; color: #666; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>${title}</h1>
-              <p>Dr(a). Dentista - CRO 12345</p>
-            </div>
-            <div class="content">${contentToPrint}</div>
-            <div class="footer">Gerado por OdontoAdmin</div>
-            <script>window.print(); window.close();</script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-    }
+    window.print();
   };
 
   const calculatePosology = () => {
@@ -218,7 +169,8 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 no-print">
       <div className="lg:col-span-2 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex flex-wrap bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl w-full">
@@ -569,6 +521,36 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
           else setExameText(text);
         }}
       />
-    </div>
+
+      <div className="print-only max-w-4xl mx-auto font-sans">
+        <PrintHeader 
+          title={
+            documentType === 'prescription' ? 'Receituário Odontológico' :
+            documentType === 'certificate' ? 'Atestado Odontológico' :
+            documentType === 'attendance' ? 'Declaração de Comparecimento' :
+            documentType === 'referral' ? 'Carta de Encaminhamento' :
+            documentType === 'postop' ? 'Recomendações Pós-Operatórias' :
+            documentType === 'laudo' ? 'Laudo Odontológico' :
+            'Solicitação de Exames'
+          } 
+          patientName={patient.name} 
+        />
+        
+        <div className="mb-12 whitespace-pre-wrap text-base leading-relaxed text-zinc-800">
+          {
+            documentType === 'prescription' ? prescriptionText :
+            documentType === 'certificate' ? certificateText :
+            documentType === 'attendance' ? attendanceText :
+            documentType === 'referral' ? referralText :
+            documentType === 'postop' ? postopText :
+            documentType === 'laudo' ? laudoText :
+            exameText
+          }
+        </div>
+
+        <PrintFooter />
+      </div>
+      </div>
+    </>
   );
 };

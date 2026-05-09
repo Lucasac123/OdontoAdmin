@@ -143,3 +143,73 @@ body {
   outline: none !important;
   -webkit-tap-highlight-color: transparent;
 }
+
+/* --- Print Styles --- */
+@media screen {
+  .print-only, .unified-print-only {
+    display: none !important;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 20mm;
+  }
+  
+  body {
+    background-color: white;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .no-print, nav, aside, header, footer:not(.print-footer), button, .sidebar {
+    display: none !important;
+  }
+
+  /* When unified printing is active, hide normal print-only items */
+  body.is-unified-printing .print-only {
+    display: none !important;
+  }
+
+  body:not(.is-unified-printing) .unified-print-only {
+    display: none !important;
+  }
+
+  .print-only, .unified-print-only {
+    display: block !important;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .premium-card {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  /* Force page breaks where needed */
+  .page-break {
+    page-break-before: always;
+  }
+  
+  .avoid-break {
+    page-break-inside: avoid;
+  }
+}
+
+.print-only {
+  display: none;
+}

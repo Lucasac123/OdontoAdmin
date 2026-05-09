@@ -231,6 +231,7 @@ export const AIAssistant: React.FC = () => {
   });
   const [localModelStatus, setLocalModelStatus] = useState<'idle' | 'downloading' | 'ready'>('idle');
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadText, setDownloadText] = useState('');
   const [isDriveConnected, setIsDriveConnected] = useState(false);
   const [driveLink, setDriveLink] = useState('https://drive.google.com/drive/folders/1lH29GkJ8SEX8MSE93KqektbeOAdyGRJK');
   const [actionPermission, setActionPermission] = useState<'ask' | 'direct'>(() => {
@@ -401,13 +402,13 @@ export const AIAssistant: React.FC = () => {
           throw new Error('Modelo local não está pronto.');
         }
         
-        const systemInstruction = `Você é o Gemma-4-E2B-it, um modelo de IA rodando localmente no dispositivo do usuário. Você é um assistente especializado em odontologia. Responda à pergunta do usuário de forma direta e útil.`;
+        const systemInstruction = `Você é o Gemma-2-2B-it, um modelo de IA rodando localmente no dispositivo do usuário. Você é um assistente especializado em odontologia. Responda à pergunta do usuário de forma direta e útil.`;
         
         const text = await webLlmService.generateResponse(userMessage, systemInstruction);
 
         setChatMessages(prev => [...prev, { 
           role: 'model', 
-          text: `*(Respondido localmente via Gemma-4-E2B-it)*\n\n${text}` 
+          text: `*(Respondido localmente via Gemma-2-2B-it)*\n\n${text}` 
         }]);
         setIsChatLoading(false);
         return;
@@ -460,6 +461,7 @@ export const AIAssistant: React.FC = () => {
   const downloadAndInitGemma = async () => {
     setLocalModelStatus('downloading');
     setDownloadProgress(0);
+    setDownloadText('Iniciando...');
     
     try {
       const hwCheck = await webLlmService.checkHardwareCompatibility();
@@ -472,6 +474,7 @@ export const AIAssistant: React.FC = () => {
       webLlmService.setInitProgressCallback((report) => {
         // report.progress is between 0 and 1
         setDownloadProgress(Math.round(report.progress * 100));
+        setDownloadText(report.text || 'Baixando modelo...');
       });
 
       await webLlmService.initializeEngine();
@@ -806,7 +809,7 @@ export const AIAssistant: React.FC = () => {
                           </div>
                           <div>
                             <h4 className="text-sm font-bold text-text-primary">Modo Híbrido (Local + Nuvem)</h4>
-                            <p className="text-[10px] text-text-secondary font-medium">Gemma-4-E2B-it (Local) + Gemini (Web Search)</p>
+                            <p className="text-[10px] text-text-secondary font-medium">Gemma-2-2B-it (Local) + Gemini (Web Search)</p>
                           </div>
                         </div>
                         <button
@@ -821,27 +824,37 @@ export const AIAssistant: React.FC = () => {
                         <div className="mt-4 pt-4 border-t border-indigo-100 dark:border-indigo-500/20 space-y-3">
                           {localModelStatus === 'idle' && (
                             <div className="flex items-center justify-between">
-                              <span className="text-xs text-text-secondary">Gemma-4-E2B-it não instalado</span>
+                              <span className="text-xs text-text-secondary">Gemma-2-2B-it não instalado</span>
                               <button onClick={downloadAndInitGemma} className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
-                                Baixar Modelo (~2.5 GB)
+                                Baixar Modelo (~1.8 GB)
                               </button>
                             </div>
                           )}
                           {localModelStatus === 'downloading' && (
-                            <div className="space-y-2">
-                              <div className="flex justify-between text-xs">
-                                <span className="text-indigo-600 dark:text-indigo-400 font-bold">Baixando Gemma-4-E2B-it...</span>
-                                <span className="text-text-secondary">{downloadProgress}%</span>
+                            <div className="space-y-3 bg-white dark:bg-zinc-900 p-3 rounded-xl border border-indigo-100 dark:border-indigo-500/20 shadow-sm">
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-tight flex items-center gap-2">
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Baixando Gemma 2...
+                                </span>
+                                <span className="text-indigo-600 font-black">{downloadProgress}%</span>
                               </div>
-                              <div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-1.5">
-                                <div className="bg-indigo-600 h-1.5 rounded-full transition-all duration-200" style={{ width: `${downloadProgress}%` }}></div>
+                              <div className="w-full bg-indigo-50 dark:bg-indigo-900/30 rounded-full h-2 overflow-hidden shadow-inner">
+                                <motion.div 
+                                  className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-full rounded-full" 
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${downloadProgress}%` }}
+                                  transition={{ type: "tween", ease: "linear", duration: 0.5 }}
+                                />
                               </div>
+                              <p className="text-[9px] text-text-secondary truncate font-mono bg-zinc-50 dark:bg-zinc-800/50 p-1.5 rounded-lg border border-zinc-100 dark:border-zinc-800">
+                                {downloadText}
+                              </p>
                             </div>
                           )}
                           {localModelStatus === 'ready' && (
-                            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
-                              <Sparkles className="w-3.5 h-3.5" />
-                              Gemma-4-E2B-it Pronto para uso offline!
+                            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-bold bg-emerald-50 dark:bg-emerald-500/10 p-3 rounded-xl border border-emerald-100 dark:border-emerald-500/20">
+                              <Sparkles className="w-4 h-4" />
+                              Gemma-2-2B-it Pronto para uso offline!
                             </div>
                           )}
                           

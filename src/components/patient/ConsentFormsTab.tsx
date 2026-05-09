@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Patient } from '../../types';
 import { FileSignature, Printer, Search } from 'lucide-react';
 import { PrescriptionTemplatesModal } from './PrescriptionTemplatesModal';
+import { PrintHeader } from '../print/PrintHeader';
+import { PrintFooter } from '../print/PrintFooter';
 
 export const ConsentFormsTab = ({ patient }: { patient: Patient }) => {
   const [selectedTemplate, setSelectedTemplate] = useState('geral');
@@ -22,38 +24,12 @@ export const ConsentFormsTab = ({ patient }: { patient: Patient }) => {
   };
 
   const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    const contentToPrint = customText || templates[selectedTemplate as keyof typeof templates];
-
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>TCLE - ${patient.name}</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 40px; line-height: 1.6; }
-              .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 40px; }
-              .content { white-space: pre-wrap; font-size: 16px; text-align: justify; }
-              .footer { text-align: center; margin-top: 100px; font-size: 14px; color: #666; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>TERMO DE CONSENTIMENTO</h1>
-              <p>Clínica Odontológica</p>
-            </div>
-            <div class="content">${contentToPrint}</div>
-            <div class="footer">Gerado por OdontoAdmin</div>
-            <script>window.print(); window.close();</script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-    }
+    window.print();
   };
 
   return (
-    <div className="space-y-6">
+    <>
+    <div className="space-y-6 no-print">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="text-lg sm:text-xl font-bold text-text-primary flex items-center gap-2">
           <FileSignature className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" />
@@ -134,5 +110,16 @@ export const ConsentFormsTab = ({ patient }: { patient: Patient }) => {
         />
       )}
     </div>
+
+    <div className="print-only max-w-4xl mx-auto font-sans">
+      <PrintHeader title="Termo de Consentimento" patientName={patient.name} />
+      
+      <div className="mb-12 whitespace-pre-wrap text-base leading-relaxed text-zinc-800 text-justify">
+        {customText || templates[selectedTemplate as keyof typeof templates]}
+      </div>
+
+      <PrintFooter />
+    </div>
+    </>
   );
 };

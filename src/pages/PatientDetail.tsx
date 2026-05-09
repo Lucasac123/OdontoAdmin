@@ -16,7 +16,8 @@ import { PaymentsTab } from '../components/patient/PaymentsTab';
 import { ClinicalEvolutionTab } from '../components/patient/ClinicalEvolutionTab';
 import { ConsentFormsTab } from '../components/patient/ConsentFormsTab';
 import { LabJobsTab } from '../components/patient/LabJobsTab';
-import { FileSignature, Briefcase, Microscope } from 'lucide-react';
+import { PatientPrintModal } from '../components/patient/PatientPrintModal';
+import { FileSignature, Briefcase, Microscope, Printer } from 'lucide-react';
 
 export const PatientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +26,7 @@ export const PatientDetail: React.FC = () => {
   const [dentist, setDentist] = useState<Dentist | null>(null);
   const [activeTab, setActiveTab] = useState('personal');
   const [direction, setDirection] = useState(0);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -112,6 +114,15 @@ export const PatientDetail: React.FC = () => {
             </div>
           </div>
         </div>
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={() => setIsPrintModalOpen(true)}
+            className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-4 py-2 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors font-medium text-sm shadow-sm"
+          >
+            <Printer className="w-4 h-4" />
+            <span className="hidden sm:inline">Imprimir Prontuário</span>
+          </button>
+        </div>
       </div>
 
       <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
@@ -174,6 +185,13 @@ export const PatientDetail: React.FC = () => {
           </AnimatePresence>
         </div>
       </div>
+
+      <PatientPrintModal 
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        patient={patient}
+        preSelectedTab={activeTab}
+      />
     </motion.div>
   );
 };

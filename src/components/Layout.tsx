@@ -295,7 +295,7 @@ export const Layout: React.FC = () => {
   return (
     <div className="flex h-[100dvh] bg-bg overflow-hidden font-sans">
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex h-full shrink-0 relative">
+      <div className="hidden md:flex h-full shrink-0 relative no-print">
         <SidebarContent 
           user={user}
           theme={theme}
