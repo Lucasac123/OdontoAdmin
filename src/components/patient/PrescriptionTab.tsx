@@ -9,18 +9,20 @@ import { PediatricTable } from './PediatricTable';
 import { CidTable } from './CidTable';
 import { MedicationPosologyTable } from '../MedicationPosologyTable';
 import { PrescriptionTemplatesModal } from './PrescriptionTemplatesModal';
+import { QuickTemplatesList } from './QuickTemplatesList';
 import { PrintHeader } from '../print/PrintHeader';
 import { PrintFooter } from '../print/PrintFooter';
+import { TWO_COPY_MEDICATIONS } from '../../data/clinicalData';
 
 export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
   const [documentType, setDocumentType] = useState<'prescription' | 'certificate' | 'attendance' | 'referral' | 'postop' | 'laudo' | 'exame'>('prescription');
-  const [prescriptionText, setPrescriptionText] = useState(`Para: ${patient.name}\nData: ${new Date().toLocaleDateString('pt-BR')}\n\nUso Interno:\n1. Amoxicilina 500mg\nTomar 1 cápsula de 8 em 8 horas por 7 dias.\n\nUso Externo:\n1. Periogard\nBochechar 15ml por 1 minuto a cada 12 horas.\n\n\n\n___________________________________\nAssinatura e Carimbo`);
-  const [certificateText, setCertificateText] = useState(`ATESTADO ODONTOLÓGICO\n\nAtesto para os devidos fins que o(a) paciente ${patient.name}, portador(a) do CPF _________________, esteve sob meus cuidados profissionais no dia ${new Date().toLocaleDateString('pt-BR')}, das ____ às ____ horas, necessitando de ____ dias de repouso por motivo de tratamento odontológico.\n\nCID-10: K04 (Exemplo)\n\n\n\n___________________________________\nAssinatura e Carimbo`);
-  const [attendanceText, setAttendanceText] = useState(`DECLARAÇÃO DE COMPARECIMENTO\n\nDeclaro para os devidos fins que o(a) paciente ${patient.name}, portador(a) do CPF _________________, compareceu a esta clínica odontológica no dia ${new Date().toLocaleDateString('pt-BR')}, das ____ às ____ horas, para realização de consulta/tratamento odontológico.\n\n\n\n___________________________________\nAssinatura e Carimbo`);
-  const [referralText, setReferralText] = useState(`CARTA DE ENCAMINHAMENTO / AVALIAÇÃO MÉDICA\n\nAo colega Médico(a),\n\nO(a) paciente ${patient.name}, encontra-se em tratamento odontológico em nossa clínica. Planejamos realizar procedimentos de [descrever procedimentos, ex: cirurgia oral menor, raspagem periodontal], que envolverão o uso de anestesia local [especificar anestésico, ex: Lidocaína 2% com Epinefrina 1:100.000].\n\nSolicito, por gentileza, avaliação e parecer cardiológico/médico quanto ao risco cirúrgico e liberação para o procedimento proposto, bem como orientações sobre a necessidade de suspensão ou alteração de medicamentos de uso contínuo.\n\nAtenciosamente,\n\n\n\n___________________________________\nAssinatura e Carimbo`);
-  const [postopText, setPostopText] = useState(`RECOMENDAÇÕES PÓS-OPERATÓRIAS\n\nPaciente: ${patient.name}\nData: ${new Date().toLocaleDateString('pt-BR')}\n\n1. Alimentação: Líquida e pastosa, fria ou gelada nas primeiras 24 horas. Evitar alimentos quentes, duros ou condimentados.\n2. Repouso: Evitar esforço físico, sol e calor por 48 horas. Dormir com a cabeça mais elevada.\n3. Higiene: Não bochechar vigorosamente nas primeiras 24 horas. Escovar os dentes normalmente, com cuidado na área operada.\n4. Sangramento: É normal um leve sangramento (saliva rosada) nas primeiras horas. Em caso de hemorragia, morder uma gaze estéril no local por 30 minutos.\n5. Inchaço: Aplicar bolsa de gelo no rosto (lado operado) nas primeiras 24 horas (20 min aplica, 20 min descansa).\n6. Medicação: Tomar rigorosamente os medicamentos prescritos nos horários indicados.\n\nEm caso de dor intensa, febre ou sangramento excessivo, entre em contato imediatamente.\n\n\n\n___________________________________\nAssinatura e Carimbo`);
-  const [laudoText, setLaudoText] = useState(`LAUDO ODONTOLÓGICO\n\nPaciente: ${patient.name}\nData: ${new Date().toLocaleDateString('pt-BR')}\n\nAo exame clínico e radiográfico, observou-se: [Descrição dos achados]\n\nDiagnóstico: [Diagnóstico]\n\nConduta/Tratamento: [Conduta]\n\n\n\n___________________________________\nAssinatura e Carimbo`);
-  const [exameText, setExameText] = useState(`SOLICITAÇÃO DE EXAMES\n\nPaciente: ${patient.name}\nData: ${new Date().toLocaleDateString('pt-BR')}\n\nSolicito a realização dos seguintes exames:\n( ) Radiografia Periapical de [Dentes]\n( ) Radiografia Panorâmica\n( ) Tomografia Computadorizada de [Região]\n( ) Exames laboratoriais: [Exames]\n\nFinalidade: [Finalidade]\n\n\n\n___________________________________\nAssinatura e Carimbo`);
+  const [prescriptionText, setPrescriptionText] = useState(`Para: ${patient.name}\nData: ${new Date().toLocaleDateString('pt-BR')}\n\nUso Interno:\n1. Amoxicilina 500mg\nTomar 1 cápsula de 8 em 8 horas por 7 dias.\n\nUso Externo:\n1. Periogard\nBochechar 15ml por 1 minuto a cada 12 horas.`);
+  const [certificateText, setCertificateText] = useState(`ATESTADO ODONTOLÓGICO\n\nAtesto para os devidos fins que o(a) paciente ${patient.name}, portador(a) do CPF _________________, esteve sob meus cuidados profissionais no dia ${new Date().toLocaleDateString('pt-BR')}, das ____ às ____ horas, necessitando de ____ dias de repouso por motivo de tratamento odontológico.\n\nCID-10: K04 (Exemplo)`);
+  const [attendanceText, setAttendanceText] = useState(`DECLARAÇÃO DE COMPARECIMENTO\n\nDeclaro para os devidos fins que o(a) paciente ${patient.name}, portador(a) do CPF _________________, compareceu a esta clínica odontológica no dia ${new Date().toLocaleDateString('pt-BR')}, das ____ às ____ horas, para realização de consulta/tratamento odontológico.`);
+  const [referralText, setReferralText] = useState(`CARTA DE ENCAMINHAMENTO / AVALIAÇÃO MÉDICA\n\nAo colega Médico(a),\n\nO(a) paciente ${patient.name}, encontra-se em tratamento odontológico em nossa clínica. Planejamos realizar procedimentos de [descrever procedimentos, ex: cirurgia oral menor, raspagem periodontal], que envolverão o uso de anestesia local [especificar anestésico, ex: Lidocaína 2% com Epinefrina 1:100.000].\n\nSolicito, por gentileza, avaliação e parecer cardiológico/médico quanto ao risco cirúrgico e liberação para o procedimento proposto, bem como orientações sobre a necessidade de suspensão ou alteração de medicamentos de uso contínuo.\n\nAtenciosamente,`);
+  const [postopText, setPostopText] = useState(`RECOMENDAÇÕES PÓS-OPERATÓRIAS\n\nPaciente: ${patient.name}\nData: ${new Date().toLocaleDateString('pt-BR')}\n\n1. Alimentação: Líquida e pastosa, fria ou gelada nas primeiras 24 horas. Evitar alimentos quentes, duros ou condimentados.\n2. Repouso: Evitar esforço físico, sol e calor por 48 horas. Dormir com a cabeça mais elevada.\n3. Higiene: Não bochechar vigorosamente nas primeiras 24 horas. Escovar os dentes normalmente, com cuidado na área operada.\n4. Sangramento: É normal um leve sangramento (saliva rosada) nas primeiras horas. Em caso de hemorragia, morder uma gaze estéril no local por 30 minutos.\n5. Inchaço: Aplicar bolsa de gelo no rosto (lado operado) nas primeiras 24 horas (20 min aplica, 20 min descansa).\n6. Medicação: Tomar rigorosamente os medicamentos prescritos nos horários indicados.\n\nEm caso de dor intensa, febre ou sangramento excessivo, entre em contato imediatamente.`);
+  const [laudoText, setLaudoText] = useState(`LAUDO ODONTOLÓGICO\n\nPaciente: ${patient.name}\nData: ${new Date().toLocaleDateString('pt-BR')}\n\nAo exame clínico e radiográfico, observou-se: [Descrição dos achados]\n\nDiagnóstico: [Diagnóstico]\n\nConduta/Tratamento: [Conduta]`);
+  const [exameText, setExameText] = useState(`SOLICITAÇÃO DE EXAMES\n\nPaciente: ${patient.name}\nData: ${new Date().toLocaleDateString('pt-BR')}\n\nSolicito a realização dos seguintes exames:\n( ) Radiografia Periapical de [Dentes]\n( ) Radiografia Panorâmica\n( ) Tomografia Computadorizada de [Região]\n( ) Exames laboratoriais: [Exames]\n\nFinalidade: [Finalidade]`);
   
   const [prescriptionStatus, setPrescriptionStatus] = useState<'não impresso' | 'não assinado' | 'assinado'>('não impresso');
   
@@ -163,10 +165,18 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
 
   const addDoseToPrescription = () => {
     if (calculatedDose) {
-      const template = `\n\nMedicamento: ${calculatedDose.name}\nDose: ${calculatedDose.dose}\nPosologia: ${calculatedDose.posology}\n\n___________________________________`;
-      setPrescriptionText(prev => prev.replace('\n\n\n\n___________________________________', `${template}\n\n\n\n___________________________________`));
+      const template = `\n\nMedicamento: ${calculatedDose.name}\nDose: ${calculatedDose.dose}\nPosologia: ${calculatedDose.posology}`;
+      setPrescriptionText(prev => prev + template);
     }
   };
+
+  const checkNeedsTwoCopies = (text: string) => {
+    return TWO_COPY_MEDICATIONS.some(med => 
+      text.toLowerCase().includes(med.toLowerCase())
+    );
+  };
+
+  const needsTwoCopies = documentType === 'prescription' && checkNeedsTwoCopies(prescriptionText);
 
   return (
     <>
@@ -354,6 +364,28 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
       </div>
 
       <div className="space-y-6">
+        <QuickTemplatesList 
+          currentType={documentType}
+          currentText={
+            documentType === 'prescription' ? prescriptionText :
+            documentType === 'certificate' ? certificateText :
+            documentType === 'attendance' ? attendanceText :
+            documentType === 'referral' ? referralText :
+            documentType === 'postop' ? postopText :
+            documentType === 'laudo' ? laudoText :
+            exameText
+          }
+          onSelectTemplate={(text) => {
+            if (documentType === 'prescription') setPrescriptionText(text);
+            else if (documentType === 'certificate') setCertificateText(text);
+            else if (documentType === 'attendance') setAttendanceText(text);
+            else if (documentType === 'referral') setReferralText(text);
+            else if (documentType === 'postop') setPostopText(text);
+            else if (documentType === 'laudo') setLaudoText(text);
+            else setExameText(text);
+          }}
+        />
+
         <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-3xl border border-indigo-100 dark:border-indigo-800/30 p-6">
           <h3 className="text-lg font-bold text-indigo-900 dark:text-indigo-100 flex items-center gap-2 mb-6">
             <Calculator className="w-5 h-5" />
@@ -433,7 +465,7 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-emerald-900 dark:text-emerald-200 mb-1">Peso do Paciente (kg)</label>
+              <label className="block text-sm font-medium text-emerald-900 dark:emerald-200 mb-1">Peso do Paciente (kg)</label>
               <input 
                 type="number" 
                 step="0.1"
@@ -445,7 +477,7 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-emerald-900 dark:text-emerald-200 mb-1">Anestésico</label>
+              <label className="block text-sm font-medium text-emerald-900 dark:emerald-200 mb-1">Anestésico</label>
               <select 
                 value={selectedAnesthetic}
                 onChange={(e) => setSelectedAnesthetic(e.target.value)}
@@ -472,7 +504,7 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
                   exit={{ opacity: 0, height: 0, y: -10 }}
                   className="mt-6 p-4 bg-surface rounded-xl border border-emerald-200 dark:border-emerald-700 shadow-sm overflow-hidden"
                 >
-                  <h4 className="text-sm font-bold text-emerald-900 dark:text-emerald-200 mb-2">Limite Máximo:</h4>
+                  <h4 className="text-sm font-bold text-emerald-900 dark:emerald-200 mb-2">Limite Máximo:</h4>
                   <div className="flex items-center justify-between">
                     <span className="text-2xl font-bold text-emerald-600">{maxTubetes.toFixed(1)}</span>
                     <span className="text-sm text-text-secondary">tubetes</span>
@@ -521,36 +553,62 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
           else setExameText(text);
         }}
       />
+    </div>
 
-      <div className="print-only max-w-4xl mx-auto font-sans">
-        <PrintHeader 
-          title={
-            documentType === 'prescription' ? 'Receituário Odontológico' :
-            documentType === 'certificate' ? 'Atestado Odontológico' :
-            documentType === 'attendance' ? 'Declaração de Comparecimento' :
-            documentType === 'referral' ? 'Carta de Encaminhamento' :
-            documentType === 'postop' ? 'Recomendações Pós-Operatórias' :
-            documentType === 'laudo' ? 'Laudo Odontológico' :
-            'Solicitação de Exames'
-          } 
-          patientName={patient.name} 
-        />
-        
-        <div className="mb-12 whitespace-pre-wrap text-base leading-relaxed text-zinc-800">
-          {
-            documentType === 'prescription' ? prescriptionText :
-            documentType === 'certificate' ? certificateText :
-            documentType === 'attendance' ? attendanceText :
-            documentType === 'referral' ? referralText :
-            documentType === 'postop' ? postopText :
-            documentType === 'laudo' ? laudoText :
-            exameText
-          }
+    <div className="print-only max-w-4xl mx-auto font-sans">
+      <div className="space-y-16">
+        {/* First Copy */}
+        <div className="relative min-h-[45vh] flex flex-col">
+          {needsTwoCopies && (
+            <div className="absolute -top-6 right-0 text-[10px] font-black uppercase tracking-widest text-zinc-400 border border-zinc-200 px-2 py-0.5 rounded">
+              1ª Via - Farmácia
+            </div>
+          )}
+          <PrintHeader 
+            title={
+              documentType === 'prescription' ? "Receituário" :
+              documentType === 'certificate' ? "Atestado Odontológico" :
+              documentType === 'attendance' ? "Declaração de Comparecimento" :
+              documentType === 'referral' ? "Encaminhamento Médico" :
+              documentType === 'postop' ? "Recomendações Pós-Operatórias" :
+              documentType === 'laudo' ? "Laudo Odontológico" :
+              "Solicitação de Exames"
+            } 
+            patientName={patient.name} 
+          />
+          
+          <div className="flex-1 mb-12 whitespace-pre-wrap text-base leading-relaxed text-zinc-800">
+            {
+              documentType === 'prescription' ? prescriptionText :
+              documentType === 'certificate' ? certificateText :
+              documentType === 'attendance' ? attendanceText :
+              documentType === 'referral' ? referralText :
+              documentType === 'postop' ? postopText :
+              documentType === 'laudo' ? laudoText :
+              exameText
+            }
+          </div>
+
+          <PrintFooter signatureType="dentist" />
         </div>
 
-        <PrintFooter />
+        {/* Second Copy (if needed) */}
+        {needsTwoCopies && (
+          <div className="relative pt-16 border-t-2 border-dashed border-zinc-200 min-h-[45vh] flex flex-col">
+            <div className="absolute top-10 right-0 text-[10px] font-black uppercase tracking-widest text-zinc-400 border border-zinc-200 px-2 py-0.5 rounded">
+              2ª Via - Paciente
+            </div>
+            <PrintHeader title="Receituário" patientName={patient.name} />
+            
+            <div className="flex-1 mb-12 whitespace-pre-wrap text-base leading-relaxed text-zinc-800">
+              {prescriptionText}
+            </div>
+
+            <PrintFooter signatureType="dentist" />
+          </div>
+        )}
       </div>
-      </div>
+    </div>
     </>
   );
 };

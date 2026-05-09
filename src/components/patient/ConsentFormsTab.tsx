@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Patient } from '../../types';
 import { FileSignature, Printer, Search } from 'lucide-react';
 import { PrescriptionTemplatesModal } from './PrescriptionTemplatesModal';
+import { QuickTemplatesList } from './QuickTemplatesList';
 import { PrintHeader } from '../print/PrintHeader';
 import { PrintFooter } from '../print/PrintFooter';
 
@@ -14,13 +15,14 @@ export const ConsentFormsTab = ({ patient }: { patient: Patient }) => {
   const rgText = patient.rg || '_________________';
 
   const templates = {
-    geral: `TERMO DE CONSENTIMENTO LIVRE E ESCLARECIDO (TCLE) - GERAL\n\nEu, ${patient.name}, portador(a) do CPF ${cpfText} e RG ${rgText}, autorizo o(a) cirurgião-dentista a realizar os procedimentos odontológicos propostos no plano de tratamento.\n\nFui devidamente informado(a) sobre:\n1. O diagnóstico e o plano de tratamento proposto.\n2. Os benefícios, riscos e possíveis complicações dos procedimentos.\n3. As alternativas de tratamento existentes.\n4. A necessidade de minha colaboração durante e após o tratamento (cuidados, higiene, retornos).\n\nDeclaro que tive a oportunidade de fazer perguntas e todas as minhas dúvidas foram esclarecidas.\n\n\n\n___________________________________\nAssinatura do Paciente\n\nData: ${new Date().toLocaleDateString('pt-BR')}`,
+    geral: `TERMO DE CONSENTIMENTO LIVRE E ESCLARECIDO (TCLE) - GERAL\n\nEu, ${patient.name}, portador(a) do CPF ${cpfText} e RG ${rgText}, autorizo o(a) cirurgião-dentista a realizar os procedimentos odontológicos propostos no plano de tratamento.\n\nFui devidamente informado(a) sobre:\n1. O diagnóstico e o plano de tratamento proposto.\n2. Os benefícios, riscos e possíveis complicações dos procedimentos.\n3. As alternativas de tratamento existentes.\n4. A necessidade de minha colaboração durante e após o tratamento (cuidados, higiene, retornos).\n\nDeclaro que tive a oportunidade de fazer perguntas e todas as minhas dúvidas foram esclarecidas.`,
     
-    cirurgia: `TERMO DE CONSENTIMENTO LIVRE E ESCLARECIDO - CIRURGIA ODONTOLÓGICA\n\nEu, ${patient.name}, portador(a) do CPF ${cpfText} e RG ${rgText}, autorizo o(a) cirurgião-dentista a realizar o procedimento cirúrgico de ___________________________________.\n\nFui informado(a) que:\n1. Todo procedimento cirúrgico envolve riscos, incluindo, mas não se limitando a: sangramento, infecção, inchaço, dor e parestesia (dormência temporária ou permanente).\n2. Devo seguir rigorosamente as recomendações pós-operatórias entregues a mim.\n3. O sucesso do tratamento depende também da minha colaboração.\n\nAutorizo também a administração de anestésicos locais necessários para o procedimento.\n\n\n\n___________________________________\nAssinatura do Paciente\n\nData: ${new Date().toLocaleDateString('pt-BR')}`,
+    cirurgia: `TERMO DE CONSENTIMENTO LIVRE E ESCLARECIDO - CIRURGIA ODONTOLÓGICA\n\nEu, ${patient.name}, portador(a) do CPF ${cpfText} e RG ${rgText}, autorizo o(a) cirurgião-dentista a realizar o procedimento cirúrgico de ___________________________________.\n\nFui informado(a) que:\n1. Todo procedimento cirúrgico envolve riscos, incluindo, mas não se limitando a: sangramento, infecção, inchaço, dor e parestesia (dormência temporária ou permanente).\n2. Devo seguir rigorosamente as recomendações pós-operatórias entregues a mim.\n3. O sucesso do tratamento depende também da minha colaboração.\n\nAutorizo também a administração de anestésicos locais necessários para o procedimento.`,
     
-    ortodontia: `TERMO DE CONSENTIMENTO LIVRE E ESCLARECIDO - TRATAMENTO ORTODÔNTICO\n\nEu, ${patient.name}, portador(a) do CPF ${cpfText} e RG ${rgText}, concordo em iniciar o tratamento ortodôntico.\n\nEstou ciente de que:\n1. O tempo estimado de tratamento é uma previsão e pode variar dependendo da resposta biológica e da minha colaboração.\n2. É fundamental comparecer às consultas de manutenção agendadas.\n3. A higiene oral deve ser rigorosa para evitar cáries, manchas e problemas gengivais durante o uso do aparelho.\n4. Aparelhos quebrados ou soltos podem atrasar o tratamento e gerar custos adicionais.\n\n\n\n___________________________________\nAssinatura do Paciente\n\nData: ${new Date().toLocaleDateString('pt-BR')}`,
-
-    imageRelease: `TERMO DE AUTORIZAÇÃO DE USO DE IMAGEM\n\nEu, ${patient.name}, portador(a) do CPF ${cpfText} e RG ${rgText}, AUTORIZO o uso de minha imagem (fotos e vídeos) captada durante o tratamento odontológico pelo(a) cirurgião-dentista responsável.\n\nA presente autorização é concedida a título gratuito, abrangendo o uso das imagens para fins de:\n( ) Documentação clínica e prontuário.\n( ) Publicações científicas, aulas e palestras.\n( ) Divulgação em redes sociais (Instagram, Facebook, etc.) e materiais de marketing da clínica, desde que não exponha minha intimidade de forma vexatória.\n\nDeclaro estar ciente de que posso revogar esta autorização a qualquer momento, mediante solicitação por escrito.\n\n\n\n___________________________________\nAssinatura do Paciente\n\nData: ${new Date().toLocaleDateString('pt-BR')}`
+    ortodontia: `TERMO DE CONSENTIMENTO LIVRE E ESCLARECIDO - TRATAMENTO ORTODÔNTICO\n\nEu, ${patient.name}, portador(a) do CPF ${cpfText} e RG ${rgText}, concordo em iniciar o tratamento ortodôntico.\n\nEstou ciente de que:\n1. O tempo estimado de tratamento é uma previsão e pode variar dependendo da resposta biológica e da minha colaboração.\n2. É fundamental comparecer às consultas de manutenção agendadas.\n3. A higiene oral deve ser rigorosa para evitar cáries, manchas e problemas gengivais durante o uso do aparelho.\n4. Aparelhos quebrados ou soltos podem atrasar o tratamento e gerar custos adicionais.`,
+ 
+    imageRelease: `TERMO DE AUTORIZAÇÃO DE USO DE IMAGEM\n\nEu, ${patient.name}, portador(a) do CPF ${cpfText} e RG ${rgText}, AUTORIZO o uso de minha imagem (fotos e vídeos) captada durante o tratamento odontológico pelo(a) cirurgião-dentista responsável.\n\nA presente autorização é concedida a título gratuito, abrangendo o uso das imagens para fins de:\n( ) Documentação clínica e prontuário.\n( ) Publicações científicas, aulas e palestras.\n( ) Divulgação em redes sociais (Instagram, Facebook, etc.) e materiais de marketing da clínica, desde que não exponha minha intimidade de forma vexatória.\n\nDeclaro estar ciente de que posso revogar esta autorização a qualquer momento, mediante solicitação por escrito.`
+  };a do Paciente\n\nData: ${new Date().toLocaleDateString('pt-BR')}`
   };
 
   const handlePrint = () => {
@@ -55,35 +57,13 @@ export const ConsentFormsTab = ({ patient }: { patient: Patient }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1 space-y-4">
-          <div className="bg-surface rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4">
-            <h3 className="font-semibold text-text-primary mb-3">Modelos Padrão</h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => { setSelectedTemplate('geral'); setCustomText(''); }}
-                className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${selectedTemplate === 'geral' && !customText ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium' : 'text-text-secondary hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}
-              >
-                Tratamento Geral
-              </button>
-              <button
-                onClick={() => { setSelectedTemplate('cirurgia'); setCustomText(''); }}
-                className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${selectedTemplate === 'cirurgia' && !customText ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium' : 'text-text-secondary hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}
-              >
-                Cirurgia
-              </button>
-              <button
-                onClick={() => { setSelectedTemplate('ortodontia'); setCustomText(''); }}
-                className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${selectedTemplate === 'ortodontia' && !customText ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium' : 'text-text-secondary hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}
-              >
-                Ortodontia
-              </button>
-              <button
-                onClick={() => { setSelectedTemplate('imageRelease'); setCustomText(''); }}
-                className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${selectedTemplate === 'imageRelease' && !customText ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium' : 'text-text-secondary hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}
-              >
-                Uso de Imagem
-              </button>
-            </div>
-          </div>
+          <QuickTemplatesList
+            currentType={selectedTemplate === 'imageRelease' ? 'image-release' : 'tcle'}
+            currentText={customText || templates[selectedTemplate as keyof typeof templates]}
+            onSelectTemplate={(content) => {
+              setCustomText(content);
+            }}
+          />
         </div>
 
         <div className="lg:col-span-3">
@@ -118,7 +98,7 @@ export const ConsentFormsTab = ({ patient }: { patient: Patient }) => {
         {customText || templates[selectedTemplate as keyof typeof templates]}
       </div>
 
-      <PrintFooter />
+      <PrintFooter signatureType="both" patientName={patient.name} />
     </div>
     </>
   );

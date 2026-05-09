@@ -16,7 +16,7 @@ export const PEDIATRIC_MEDICATIONS = [
 export const DOCUMENT_TEMPLATES = {
   receita: {
     title: "Modelo de Receita",
-    content: "Para: [Nome do Paciente]\nData: [Data]\n\n1. [Medicamento] - [Dose] - [Posologia]\n\n___________________________________\nAssinatura e Carimbo"
+    content: "Para: [Nome do Paciente]\nData: [Data]\n\n1. [Medicamento] - [Dose] - [Posologia]"
   },
   atestado: {
     title: "Modelo de Atestado",
@@ -25,6 +25,14 @@ export const DOCUMENT_TEMPLATES = {
   termoConsentimento: {
     title: "Termo de Consentimento Livre e Esclarecido",
     content: "Eu, [Nome do Paciente], declaro que fui informado(a) e esclarecido(a) a respeito do tratamento que será realizado..."
+  },
+  termoCirurgia: {
+    title: "TCLE - Cirurgia Odontológica",
+    content: "TERMO DE CONSENTIMENTO LIVRE E ESCLARECIDO - CIRURGIA ODONTOLÓGICA\n\nEu, [Nome do Paciente], portador(a) do CPF [CPF] e RG [RG], autorizo o(a) cirurgião-dentista a realizar o procedimento cirúrgico de ___________________________________.\n\nFui informado(a) que:\n1. Todo procedimento cirúrgico envolve riscos, incluindo, mas não se limitando a: sangramento, infecção, inchaço, dor e parestesia (dormência temporária ou permanente).\n2. Devo seguir rigorosamente as recomendações pós-operatórias entregues a mim.\n3. O sucesso do tratamento depende também da minha colaboração.\n\nAutorizo também a administração de anestésicos locais necessários para o procedimento.\n\nData: [Data]"
+  },
+  termoOrtodontia: {
+    title: "TCLE - Tratamento Ortodôntico",
+    content: "TERMO DE CONSENTIMENTO LIVRE E ESCLARECIDO - TRATAMENTO ORTODÔNTICO\n\nEu, [Nome do Paciente], portador(a) do CPF [CPF] e RG [RG], concordo em iniciar o tratamento ortodôntico.\n\nEstou ciente de que:\n1. O tempo estimado de tratamento é uma previsão e pode variar dependendo da resposta biológica e da minha colaboração.\n2. É fundamental comparecer às consultas de manutenção agendadas.\n3. A higiene oral deve ser rigorosa para evitar cáries, manchas e problemas gengivais durante o uso do aparelho.\n4. Aparelhos quebrados ou soltos podem atrasar o tratamento e gerar custos adicionais.\n\nData: [Data]"
   },
   posOperatorio: {
     title: "Cuidados Pós-operatório",
@@ -36,27 +44,27 @@ export const DOCUMENT_TEMPLATES = {
   },
   encaminhamentoMedico: {
     title: "Encaminhamento Médico",
-    content: "ENCAMINHAMENTO MÉDICO\n\nProfissional: [Nome do Profissional]\nCRO: [CRO]\nEndereço: [Endereço]\nTelefone: [Telefone]\n\nPaciente: [Nome do Paciente]\nCPF: [CPF]\nData de Nascimento: [Data de Nascimento]\n\nSolicitação de Avaliação, Conduta e Parecer Médico no campo da [Especialidade].\n\nEncaminho o(a) paciente acima qualificado(a) para sua avaliação e/ou conduta médica, informando que o mesmo possui necessidade de realizar procedimento odontológico de [Procedimento], a ser realizado sob anestesia local, com expectativa de duração de aproximadamente [Duração] hora(s).\n\nSolicito que seja especificado no Parecer Médico se o(a) referido paciente está apto a ser submetido ao procedimento, com apontamento sobre eventuais observações e/ou cuidados médicos específicos, no pré e no pós-procedimento.\n\nAnamnese/Inventário de Saúde: [Aspectos Relevantes]\n\nLocal e data: [Local e Data]\n\n___________________________________\nAssinatura e Carimbo"
+    content: "ENCAMINHAMENTO MÉDICO\n\nProfissional: [Nome do Profissional]\nCRO: [CRO]\nEndereço: [Endereço]\nTelefone: [Telefone]\n\nPaciente: [Nome do Paciente]\nCPF: [CPF]\nData de Nascimento: [Data de Nascimento]\n\nSolicitação de Avaliação, Conduta e Parecer Médico no campo da [Especialidade].\n\nEncaminho o(a) paciente acima qualificado(a) para sua avaliação e/ou conduta médica, informando que o mesmo possui necessidade de realizar procedimento odontológico de [Procedimento], a ser realizado sob anestesia local, com expectativa de duração de aproximadamente [Duração] hora(s).\n\nSolicito que seja especificado no Parecer Médico se o(a) referido paciente está apto a ser submetido ao procedimento, com apontamento sobre eventuais observações e/ou cuidados médicos específicos, no pré e no pós-procedimento.\n\nAnamnese/Inventário de Saúde: [Aspectos Relevantes]\n\nLocal e data: [Local e Data]"
   },
   encaminhamentoOdontologico: {
     title: "Encaminhamento Odontológico",
-    content: "ENCAMINHAMENTO ODONTOLÓGICO\n\nProfissional: [Nome do Profissional]\nCRO: [CRO]\nEndereço: [Endereço]\nTelefone: [Telefone]\n\nPaciente: [Nome do Paciente]\nCPF: [CPF]\nData de Nascimento: [Data de Nascimento]\n\nSolicitação de Avaliação, Conduta e Parecer Odontológico no campo da [Especialidade].\n\nEncaminho o(a) paciente acima qualificado(a) para sua avaliação e/ou conduta odontológica, informando que o mesmo possui necessidade de realizar procedimento de [Procedimento].\n\nDentes e área/região a serem avaliados: [Área/Região]\n\nSolicito que seja especificado no Parecer Odontológico apontamento sobre sua análise especializada, detalhamento de procedimento e/ou conduta realizada, bem como eventuais observações e/ou cuidados específicos que entender pertinentes.\n\nAnamnese/Inventário de Saúde: [Aspectos Relevantes]\n\nLocal e data: [Local e Data]\n\n___________________________________\nAssinatura e Carimbo"
+    content: "ENCAMINHAMENTO ODONTOLÓGICO\n\nProfissional: [Nome do Profissional]\nCRO: [CRO]\nEndereço: [Endereço]\nTelefone: [Telefone]\n\nPaciente: [Nome do Paciente]\nCPF: [CPF]\nData de Nascimento: [Data de Nascimento]\n\nSolicitação de Avaliação, Conduta e Parecer Odontológico no campo da [Especialidade].\n\nEncaminho o(a) paciente acima qualificado(a) para sua avaliação e/ou conduta odontológica, informando que o mesmo possui necessidade de realizar procedimento de [Procedimento].\n\nDentes e área/região a serem avaliados: [Área/Região]\n\nSolicito que seja especificado no Parecer Odontológico apontamento sobre sua análise especializada, detalhamento de procedimento e/ou conduta realizada, bem como eventuais observações e/ou cuidados específicos que entender pertinentes.\n\nAnamnese/Inventário de Saúde: [Aspectos Relevantes]\n\nLocal e data: [Local e Data]"
   },
   encaminhamentoProtetico: {
     title: "Encaminhamento para Tratamento Protético",
-    content: "ENCAMINHAMENTO PARA TRATAMENTO PROTÉTICO\n\nCirurgião-Dentista: [Nome]\nCRO: [CRO]\nTelefone: [Telefone]\n\nDADOS DO PACIENTE\nNome do paciente: [Nome]\nData de nascimento: [Data]\nTelefone: [Telefone]\n\nINFORMAÇÕES CLÍNICAS\nElemento(s) dentário(s): [Elementos]\nDiagnóstico clínico: [Diagnóstico]\nCondição atual: [Condição]\nTratamento prévio realizado: [Tratamento]\n\nSOLICITAÇÃO\nEncaminho o(a) paciente acima identificado(a) para avaliação e realização de tratamento protético, com a finalidade de reabilitação funcional e estética, conforme necessidade clínica.\n\nTIPO DE PRÓTESE SUGERIDA\n( ) Prótese total\n( ) Prótese parcial removível\n( ) Prótese fixa\n( ) Coroa unitária\n( ) Outro: [Outro]\n\nLocal e data: [Local e Data]\n\n___________________________________\nAssinatura e carimbo do Cirurgião-Dentista"
+    content: "ENCAMINHAMENTO PARA TRATAMENTO PROTÉTICO\n\nCirurgião-Dentista: [Nome]\nCRO: [CRO]\nTelefone: [Telefone]\n\nDADOS DO PACIENTE\nNome do paciente: [Nome]\nData de nascimento: [Data]\nTelefone: [Telefone]\n\nINFORMAÇÕES CLÍNICAS\nElemento(s) dentário(s): [Elementos]\nDiagnóstico clínico: [Diagnóstico]\nCondição atual: [Condição]\nTratamento prévio realizado: [Tratamento]\n\nSOLICITAÇÃO\nEncaminho o(a) paciente acima identificado(a) para avaliação e realização de tratamento protético, com a finalidade de reabilitação funcional e estética, conforme necessidade clínica.\n\nTIPO DE PRÓTESE SUGERIDA\n( ) Prótese total\n( ) Prótese parcial removível\n( ) Prótese fixa\n( ) Coroa unitária\n( ) Outro: [Outro]\n\nLocal e data: [Local e Data]"
   },
   atestadoComparecimento: {
     title: "Atestado de Comparecimento",
-    content: "DECLARAÇÃO DE COMPARECIMENTO\n\nDeclaro para os devidos fins que o(a) paciente [Nome do Paciente], portador(a) do CPF [CPF], compareceu a esta clínica odontológica no dia [Data], das [Início] às [Fim] horas, para realização de consulta/tratamento odontológico.\n\nLocal e data: [Local e Data]\n\n___________________________________\nAssinatura e Carimbo"
+    content: "DECLARAÇÃO DE COMPARECIMENTO\n\nDeclaro para os devidos fins que o(a) paciente [Nome do Paciente], portador(a) do CPF [CPF], compareceu a esta clínica odontológica no dia [Data], das [Início] às [Fim] horas, para realização de consulta/tratamento odontológico.\n\nLocal e data: [Local e Data]"
   },
   laudo: {
     title: "Laudo Odontológico",
-    content: "LAUDO ODONTOLÓGICO\n\nPaciente: [Nome do Paciente]\nData: [Data]\n\nAo exame clínico e radiográfico, observou-se: [Descrição dos achados]\n\nDiagnóstico: [Diagnóstico]\n\nConduta/Tratamento: [Conduta]\n\nLocal e data: [Local e Data]\n\n___________________________________\nAssinatura e Carimbo"
+    content: "LAUDO ODONTOLÓGICO\n\nPaciente: [Nome do Paciente]\nData: [Data]\n\nAo exame clínico e radiográfico, observou-se: [Descrição dos achados]\n\nDiagnóstico: [Diagnóstico]\n\nConduta/Tratamento: [Conduta]\n\nLocal e data: [Local e Data]"
   },
   exame: {
     title: "Pedido de Exames",
-    content: "SOLICITAÇÃO DE EXAMES\n\nPaciente: [Nome do Paciente]\nData: [Data]\n\nSolicito a realização dos seguintes exames:\n( ) Radiografia Periapical de [Dentes]\n( ) Radiografia Panorâmica\n( ) Tomografia Computadorizada de [Região]\n( ) Exames laboratoriais: [Exames]\n\nFinalidade: [Finalidade]\n\nLocal e data: [Local e Data]\n\n___________________________________\nAssinatura e Carimbo"
+    content: "SOLICITAÇÃO DE EXAMES\n\nPaciente: [Nome do Paciente]\nData: [Data]\n\nSolicito a realização dos seguintes exames:\n( ) Radiografia Periapical de [Dentes]\n( ) Radiografia Panorâmica\n( ) Tomografia Computadorizada de [Região]\n( ) Exames laboratoriais: [Exames]\n\nFinalidade: [Finalidade]\n\nLocal e data: [Local e Data]"
   },
   registroImagens: {
     title: "Registro de Imagens/Modelos",
@@ -138,4 +146,11 @@ export const CATEGORIZED_MEDICATIONS = [
       { name: "Midazolam", indication: "Sedação profunda/emergência.", choiceOrder: "Uso restrito e monitorado.", posology: "1-2 mg EV ou 5-10 mg IM.", observation: "Sedação. Controle especial.", contraindication: "-" }
     ]
   }
+];
+
+export const TWO_COPY_MEDICATIONS = [
+  // Antibióticos
+  "Amoxicilina", "Clavulanato", "Azitromicina", "Clindamicina", "Metronidazol", "Cefalexina", "Ceftriaxona",
+  // Controle Especial / Psicotrópicos / Opioides
+  "Diazepam", "Midazolam", "Tramadol", "Codeína", "Cetorolaco"
 ];

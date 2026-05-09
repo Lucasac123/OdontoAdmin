@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
+import { AIHistoryModal } from '../components/AIHistoryModal';
 
 const API_KEY = process.env.GEMINI_API_KEY;
 const genAI = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
@@ -234,6 +235,7 @@ export const AIAssistant: React.FC = () => {
   const [downloadText, setDownloadText] = useState('');
   const [isDriveConnected, setIsDriveConnected] = useState(false);
   const [driveLink, setDriveLink] = useState('https://drive.google.com/drive/folders/1lH29GkJ8SEX8MSE93KqektbeOAdyGRJK');
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [actionPermission, setActionPermission] = useState<'ask' | 'direct'>(() => {
     return (localStorage.getItem('odontoadmin_ai_permission') as 'ask' | 'direct') || 'ask';
   });
@@ -539,6 +541,19 @@ export const AIAssistant: React.FC = () => {
       } else {
         setSearchLinks([]);
       }
+
+      if (user) {
+        try {
+          const service = getDataService(storageLocation);
+          const history = await service.getData('ai_searches', user.uid) || { searches: [] };
+          const newSearch = { query: searchQuery, result: text, date: new Date().toISOString() };
+          const newSearches = [newSearch, ...history.searches].slice(0, 50);
+          await service.saveData('ai_searches', user.uid, { searches: newSearches });
+        } catch (err) {
+          console.error("Erro ao salvar histórico de pesquisa", err);
+        }
+      }
+
     } catch (error) {
       const errorMessage = formatAIError(error);
       setSearchResult(errorMessage);
@@ -727,6 +742,33 @@ export const AIAssistant: React.FC = () => {
       // Use the .text property directly
       const text = response.text;
       setAnalyzeResult(text || 'Não foi possível analisar a imagem.');
+
+      if (user) {
+        try {
+          const service = getDataService(storageLocation);
+          const history = await service.getData('ai_analyses', user.uid) || { analyses: [] };
+          
+          // Limit base64 to avoid huge storage. If it's a PDF, we don't save the data.
+          let thumbnail = null;
+          if (analyzeImage && analyzeImage.length < 500000) { // Only save if < 500kb approx
+            thumbnail = analyzeImage;
+          }
+          
+          const newAnalysis = { 
+            prompt: analyzePrompt, 
+            result: text, 
+            type: fileType, 
+            thumbnail,
+            preset: PRESETS.find(p => p.id === selectedPreset)?.name || 'Geral',
+            date: new Date().toISOString() 
+          };
+          const newAnalyses = [newAnalysis, ...history.analyses].slice(0, 20); // Keep last 20
+          await service.saveData('ai_analyses', user.uid, { analyses: newAnalyses });
+        } catch (err) {
+          console.error("Erro ao salvar histórico de análise", err);
+        }
+      }
+
     } catch (error) {
       const errorMessage = formatAIError(error);
       setAnalyzeResult(errorMessage);
@@ -765,6 +807,15 @@ export const AIAssistant: React.FC = () => {
                 <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Limpar Chat</span>
               </button>
             )}
+
+            <button
+              onClick={() => setShowHistoryModal(true)}
+              className="flex-1 sm:flex-none flex items-center justify-center p-2 sm:px-3 sm:py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:border-indigo-500 hover:text-indigo-600 transition-all shadow-sm active:scale-95 text-text-secondary"
+              title="Ver Histórico Completo da IA"
+            >
+              <History className="w-4 h-4 sm:mr-2" />
+              <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Histórico</span>
+            </button>
 
             <div className="relative flex-1 sm:flex-none">
               <button 
@@ -962,6 +1013,13 @@ export const AIAssistant: React.FC = () => {
               )}
             </AnimatePresence>
           </div>
+
+          {showHistoryModal && (
+            <AIHistoryModal 
+              isOpen={showHistoryModal} 
+              onClose={() => setShowHistoryModal(false)} 
+            />
+          )}
         </div>
       </div>
         

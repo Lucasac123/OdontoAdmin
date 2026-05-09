@@ -2,6 +2,7 @@ import React from 'react';
 import { Patient, DocumentTemplate } from '../../types';
 import { PrintHeader } from '../print/PrintHeader';
 import { PrintFooter } from '../print/PrintFooter';
+import { TWO_COPY_MEDICATIONS } from '../../data/clinicalData';
 
 interface PatientPrintViewProps {
   patient: Patient;
@@ -36,11 +37,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
         <p><strong>Cidade/UF:</strong> {patient.city || 'Não informada'} {patient.state ? `/ ${patient.state}` : ''}</p>
         <p><strong>CEP:</strong> {patient.zipCode || 'Não informado'}</p>
       </div>
-      <div className="mt-16 text-center">
-        <p>_________________________________________________</p>
-        <p className="text-sm mt-1">Assinatura do Paciente</p>
-      </div>
-      <PrintFooter />
+      <PrintFooter signatureType="patient" patientName={patient.name} />
     </div>
   );
 
@@ -114,17 +111,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
         <div className="mb-8 text-sm text-justify avoid-break">
           <p>Declaro que as informações acima são verdadeiras e assumo a responsabilidade por elas. Comprometo-me a informar o cirurgião-dentista sobre qualquer alteração no meu estado de saúde ou medicamentos em uso.</p>
         </div>
-        <div className="mt-16 flex justify-between avoid-break">
-          <div className="w-[45%] border-t border-black text-center pt-2">
-            <strong>{patient.name}</strong><br />
-            Paciente ou Responsável Legal
-          </div>
-          <div className="w-[45%] border-t border-black text-center pt-2">
-            <strong>Cirurgião-Dentista</strong><br />
-            Responsável Técnico
-          </div>
-        </div>
-        <PrintFooter />
+        <PrintFooter signatureType="both" patientName={patient.name} />
       </div>
     );
   };
@@ -156,11 +143,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
             ))}
           </div>
         )}
-        <div className="mt-16 text-center avoid-break">
-          <p>_________________________________________________</p>
-          <p className="text-sm mt-1">Assinatura do(a) Cirurgião(ã)-Dentista</p>
-        </div>
-        <PrintFooter />
+        <PrintFooter signatureType="dentist" />
       </div>
     );
   };
@@ -218,11 +201,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
             </tr>
           </tfoot>
         </table>
-        <div className="mt-16 text-center text-sm text-zinc-600 avoid-break">
-          <div className="w-64 border-t border-zinc-400 mx-auto mb-2"></div>
-          <p>Assinatura do Paciente</p>
-        </div>
-        <PrintFooter />
+        <PrintFooter signatureType="both" patientName={patient.name} />
       </div>
     );
   };
@@ -233,14 +212,13 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     const cpfText = patient.cpf || '_________________';
     const rgText = patient.rg || '_________________';
     
-    // Very basic placeholder replacement if they used standard formats
-    content = content.replace(/\[Nome do Paciente\]/g, patient.name);
-    content = content.replace(/\[CPF\]/g, cpfText);
-    content = content.replace(/\[RG\]/g, rgText);
-    // Not perfect but better than nothing for general templates
+    content = content.replace(/\[Nome do Paciente\]/g, patient.name)
+                     .replace(/\[CPF\]/g, cpfText)
+                     .replace(/\[RG\]/g, rgText)
+                     .replace(/\[Data\]/g, new Date().toLocaleDateString('pt-BR'));
 
     let title = "Documento Odontológico";
-    if (template.type === 'prescription') title = "Receituário Odontológico";
+    if (template.type === 'prescription') title = "Receituário";
     if (template.type === 'certificate') title = "Atestado Odontológico";
     if (template.type === 'tcle') title = "Termo de Consentimento Livre e Esclarecido";
     if (template.type === 'image-release') title = "Termo de Autorização de Uso de Imagem";
@@ -248,16 +226,41 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     if (template.type === 'postop') title = "Recomendações Pós-Operatórias";
     if (template.type === 'referral') title = "Carta de Encaminhamento";
 
-    return (
-      <div key={template.id} className="avoid-break page-break-after">
+    const needsTwoCopies = template.type === 'prescription' && TWO_COPY_MEDICATIONS.some(med => 
+      content.toLowerCase().includes(med.toLowerCase())
+    );
+
+    const renderContent = (via?: string) => (
+      <div className="relative min-h-[45vh] flex flex-col mb-16">
+        {via && (
+          <div className="absolute -top-6 right-0 text-[10px] font-black uppercase tracking-widest text-zinc-400 border border-zinc-200 px-2 py-0.5 rounded">
+            {via}
+          </div>
+        )}
         <PrintHeader title={title} patientName={patient.name} />
-        <div className="mb-12 whitespace-pre-wrap text-base leading-relaxed text-zinc-800 text-justify">
+        <div className="flex-1 mb-12 whitespace-pre-wrap text-base leading-relaxed text-zinc-800 text-justify">
           {content}
         </div>
-        <PrintFooter />
+        <PrintFooter signatureType={template.type === 'tcle' || template.type === 'image-release' ? 'both' : 'dentist'} patientName={patient.name} />
+      </div>
+    );
+
+    return (
+      <div key={template.id} className="page-break-after">
+        {needsTwoCopies ? (
+          <>
+            {renderContent("1ª Via - Farmácia")}
+            <div className="border-t-2 border-dashed border-zinc-200 pt-16">
+              {renderContent("2ª Via - Paciente")}
+            </div>
+          </>
+        ) : (
+          renderContent()
+        )}
       </div>
     );
   };
+
 
   return (
     <div className="unified-print-only max-w-4xl mx-auto font-sans w-full" style={{ padding: '0 20px' }}>

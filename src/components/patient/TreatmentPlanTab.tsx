@@ -457,12 +457,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
         </tfoot>
       </table>
 
-      <div className="mt-16 pt-8 text-center text-sm text-zinc-600">
-        <div className="w-64 border-t border-zinc-400 mx-auto mb-2"></div>
-        <p>Assinatura do Paciente</p>
-      </div>
-
-      <PrintFooter />
+      <PrintFooter signatureType="both" patientName={patient.name} />
     </div>
     </>
   );
