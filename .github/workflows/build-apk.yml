@@ -88,6 +88,10 @@ jobs:
           gradle-version: 8.5
           cache-disabled: false
 
+      - name: Regenerate Gradle Wrapper
+        working-directory: ./android
+        run: gradle wrapper --gradle-version 8.5
+
       - name: Decode Keystore
         shell: python
         env:
