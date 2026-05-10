@@ -130,12 +130,37 @@ export interface InventoryItem {
   id: string;
   dentistId: string;
   name: string;
+  brand?: string;
+  reference?: string;
   quantity: number;
   minQuantity: number;
   unit: string;
   price?: number;
   category: string;
+  kitId?: string;
+  notes?: string;
+  implantSpec?: {
+    diameter?: string;
+    length?: string;
+    platform?: string;
+    connection?: string;
+  };
+  resinSpec?: {
+    shade?: string;
+    opacity?: string;
+    system?: string;
+  };
   updatedAt: string;
+}
+
+export interface InventoryKit {
+  id: string;
+  dentistId: string;
+  name: string;
+  icon: string;
+  color: string;
+  description?: string;
+  createdAt: string;
 }
 
 export interface LabJob {
