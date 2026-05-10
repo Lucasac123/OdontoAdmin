@@ -57,7 +57,7 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
     );
 
     const unsubEvolutions = onSnapshot(qEvolutions, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
       setEvolutions(data);
     });
 
@@ -69,7 +69,7 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
     );
 
     const unsubPayments = onSnapshot(qPayments, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
       data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setPayments(data);
     });

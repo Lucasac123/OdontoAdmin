@@ -213,7 +213,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
         </div>
         <button
           onClick={() => setIsAddingProposal(true)}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none font-bold"
+          className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-2xl hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100 dark:shadow-none font-bold"
         >
           <Plus className="w-5 h-5" />
           Nova Proposta
@@ -299,7 +299,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
               {currentProposal.status !== 'selected' && (
                 <button
                   onClick={() => handleApproveProposal(currentProposal.id)}
-                  className="bg-emerald-600 text-white px-6 py-3 rounded-2xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 dark:shadow-none font-bold flex items-center gap-2"
+                  className="bg-emerald-600 text-white px-6 py-3 rounded-2xl hover:bg-emerald-700 transition-all shadow-md shadow-emerald-100 dark:shadow-none font-bold flex items-center gap-2"
                 >
                   <CheckCircle2 className="w-5 h-5" />
                   Aprovar este Plano

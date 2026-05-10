@@ -16,8 +16,13 @@ const firebaseService: DataService = {
       const snap = await getDoc(docRef);
       return snap.exists() ? snap.data() : null;
     } catch (e) {
-      const snap = await getDocFromCache(docRef);
-      return snap.exists() ? snap.data() : null;
+      try {
+        const snap = await getDocFromCache(docRef);
+        return snap.exists() ? snap.data() : null;
+      } catch (cacheError) {
+        console.warn("Could not get document from server or cache", cacheError);
+        return null;
+      }
     }
   },
   saveData: async (collection, id, data) => {

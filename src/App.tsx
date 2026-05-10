@@ -7,6 +7,8 @@ import { StorageProvider } from './context/StorageContext';
 import { SyncProvider } from './context/SyncContext';
 import { Layout } from './components/Layout';
 import { LoadingScreen } from './components/LoadingScreen';
+import { db } from './firebase';
+import { doc, getDocFromServer } from 'firebase/firestore';
 
 // Lazy loading pages for better performance
 const Dashboard = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
@@ -53,9 +55,24 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default function App() {
+  React.useEffect(() => {
+    // Initial connection test as per guidelines
+    const testConnection = async () => {
+      try {
+        await getDocFromServer(doc(db, 'test', 'connection'));
+      } catch (error) {
+        // Silently handle initial connection issues
+        if (error instanceof Error && (error.message.includes('offline') || error.message.includes('unavailable'))) {
+          console.warn("Firestore connection check: client is offline.");
+        }
+      }
+    };
+    testConnection();
+  }, []);
+
   return (
-    <ThemeProvider>
-      <AuthProvider>
+    <AuthProvider>
+      <ThemeProvider>
         <StorageProvider>
           <SyncProvider>
             <BrowserRouter>
@@ -82,7 +99,7 @@ export default function App() {
             </BrowserRouter>
           </SyncProvider>
         </StorageProvider>
-      </AuthProvider>
-    </ThemeProvider>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }

@@ -125,7 +125,7 @@ export const PatientDetail: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+      <div className="bg-surface rounded-2xl shadow-premium border border-zinc-200 dark:border-zinc-800 overflow-hidden text-sm">
         <div className="border-b border-zinc-200 dark:border-zinc-800">
           <div className="flex overflow-x-auto hide-scrollbar scroll-smooth md:justify-center">
             {tabs.map((tab) => (

@@ -143,7 +143,7 @@ export const Patients: React.FC = () => {
           </div>
           <button
             onClick={() => setIsAdding(true)}
-            className="w-full sm:w-auto max-w-full flex items-center justify-center gap-2 bg-accent text-white px-6 py-3 rounded-2xl hover:bg-accent-hover active:scale-[0.98] transition-all shadow-lg shadow-accent/20 font-black uppercase text-[10px] tracking-widest shrink-0"
+            className="w-full sm:w-auto max-w-full flex items-center justify-center gap-2 bg-accent text-white px-6 py-3 rounded-2xl hover:bg-accent-hover active:scale-[0.98] transition-all shadow-md shadow-accent/10 font-black uppercase text-[10px] tracking-widest shrink-0"
           >
             <Plus className="w-5 h-5" />
             Novo Paciente

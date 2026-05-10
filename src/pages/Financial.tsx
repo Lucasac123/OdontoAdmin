@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, updateDoc, getDocs } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../firebase';
 import { Finance } from '../types';
-import { Plus, Trash2, DollarSign, TrendingUp, TrendingDown, PieChart, Edit2, Check, X, BarChart as BarChartIcon, User, Camera, Loader2, FileText, AlertTriangle, Building, Zap, Calendar } from 'lucide-react';
+import { Plus, Trash2, DollarSign, TrendingUp, TrendingDown, PieChart, Edit2, Check, X, BarChart as BarChartIcon, User, Camera, Loader2, FileText, AlertTriangle, Building, Zap, Calendar, CheckCircle2, XCircle } from 'lucide-react';
 import { AddFinanceForm } from '../components/patient/AddFinanceForm';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Patient } from '../types';
@@ -280,6 +280,18 @@ export const Financial: React.FC = () => {
       patientId: '',
       paymentMethod: 'pix'
     });
+  };
+
+  const togglePaymentStatus = async (finance: Finance) => {
+    if (!auth.currentUser) return;
+    try {
+      const newStatus = finance.paymentStatus === 'pendente' ? 'pago' : 'pendente';
+      const updatePromise = updateDoc(doc(db, 'finances', finance.id), { paymentStatus: newStatus })
+        .catch(error => handleFirestoreError(error, OperationType.UPDATE, `finances/${finance.id}`));
+      addSyncTask(updatePromise);
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error);
+    }
   };
 
   const handleDelete = async (finance: Finance) => {
@@ -777,19 +789,19 @@ export const Financial: React.FC = () => {
             <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1.5 rounded-2xl w-full sm:w-auto">
               <button
                 onClick={() => setFilter('all')}
-                className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all ${filter === 'all' ? 'bg-surface text-text-primary shadow-md' : 'text-text-secondary hover:text-text-primary'}`}
+                className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all ${filter === 'all' ? 'bg-surface text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
               >
                 Todos
               </button>
               <button
                 onClick={() => setFilter('income')}
-                className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all ${filter === 'income' ? 'bg-surface text-emerald-600 dark:text-emerald-400 shadow-md' : 'text-text-secondary hover:text-text-primary'}`}
+                className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all ${filter === 'income' ? 'bg-surface text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
               >
                 Receitas
               </button>
               <button
                 onClick={() => setFilter('expense')}
-                className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all ${filter === 'expense' ? 'bg-surface text-red-600 dark:text-red-400 shadow-md' : 'text-text-secondary hover:text-text-primary'}`}
+                className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all ${filter === 'expense' ? 'bg-surface text-red-600 dark:text-red-400 shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
               >
                 Despesas
               </button>
@@ -823,10 +835,17 @@ export const Financial: React.FC = () => {
                     <tr key={finance.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors group">
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${finance.type === 'income' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'}`}>
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${finance.type === 'income' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'}`}>
                             {finance.type === 'income' ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
                           </div>
-                          <span className="font-bold text-text-primary text-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">{finance.description}</span>
+                          <div className="flex flex-col gap-1 min-w-0">
+                            <span className="font-bold text-text-primary text-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]" title={finance.description}>{finance.description}</span>
+                            {finance.type === 'income' && (
+                              <span className={`w-fit px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${finance.paymentStatus === 'pendente' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                {finance.paymentStatus === 'pendente' ? 'Pendente' : 'Pago'}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="py-4 px-6 text-xs text-text-secondary font-medium">
@@ -852,6 +871,16 @@ export const Financial: React.FC = () => {
                       </td>
                       <td className="py-4 px-6 text-right">
                         <div className="flex justify-end gap-2 transition-opacity">
+                          {finance.type === 'income' && finance.paymentStatus === 'pendente' && (
+                            <button onClick={() => togglePaymentStatus(finance)} className="p-2 text-text-secondary hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-colors" title="Marcar como Pago">
+                              <CheckCircle2 className="w-4 h-4" />
+                            </button>
+                          )}
+                          {finance.type === 'income' && finance.paymentStatus !== 'pendente' && (
+                            <button onClick={() => togglePaymentStatus(finance)} className="p-2 text-text-secondary hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-lg transition-colors" title="Marcar como Pendente">
+                              <XCircle className="w-4 h-4" />
+                            </button>
+                          )}
                           {finance.type === 'income' && (
                             <button onClick={() => handlePrintTaxReceipt(finance)} className="p-2 text-text-secondary hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-colors" title="Emitir Recibo">
                               <FileText className="w-4 h-4" />
@@ -882,6 +911,11 @@ export const Financial: React.FC = () => {
                       </div>
                       <div className="min-w-0">
                         <p className="font-black text-text-primary leading-tight truncate">{finance.description}</p>
+                        {finance.type === 'income' && (
+                          <span className={`inline-block mt-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${finance.paymentStatus === 'pendente' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                            {finance.paymentStatus === 'pendente' ? 'Pendente' : 'Pago'}
+                          </span>
+                        )}
                         <div className="flex items-center gap-2 mt-1">
                           <p className="text-[10px] text-text-secondary uppercase font-black tracking-widest">{new Date(finance.date).toLocaleDateString('pt-BR')}</p>
                           {finance.paymentMethod && (
@@ -910,6 +944,16 @@ export const Financial: React.FC = () => {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
+                      {finance.type === 'income' && finance.paymentStatus === 'pendente' && (
+                        <button onClick={() => togglePaymentStatus(finance)} className="p-2.5 text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-1.5 font-bold text-xs" title="Marcar como Pago">
+                          <CheckCircle2 className="w-4 h-4" /> Pago
+                        </button>
+                      )}
+                      {finance.type === 'income' && finance.paymentStatus !== 'pendente' && (
+                        <button onClick={() => togglePaymentStatus(finance)} className="p-2.5 text-amber-600 bg-amber-50 dark:bg-amber-500/10 rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-1.5 font-bold text-xs" title="Marcar como Pendente">
+                          <XCircle className="w-4 h-4" /> Pendente
+                        </button>
+                      )}
                       {finance.type === 'income' && (
                         <button onClick={() => handlePrintTaxReceipt(finance)} className="p-2.5 text-text-secondary bg-zinc-100 dark:bg-zinc-800 rounded-xl active:scale-95 transition-transform" title="Emitir Recibo">
                           <FileText className="w-4 h-4" />
@@ -1053,7 +1097,11 @@ export const Financial: React.FC = () => {
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: `${split.percentage}%` }}
-                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-600 to-indigo-400 rounded-full shadow-[0_0_10px_rgba(79,70,229,0.4)]"
+                        className="absolute inset-y-0 left-0 rounded-full"
+                        style={{ 
+                          background: `linear-gradient(to right, var(--accent), var(--accent-light))`,
+                          boxShadow: `0 0 10px rgba(var(--accent-rgb), 0.4)`
+                        }}
                       />
                       <input 
                         type="range" 

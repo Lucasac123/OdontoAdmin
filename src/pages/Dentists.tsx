@@ -113,7 +113,7 @@ export const Dentists: React.FC = () => {
             setEditingId(null);
             setIsAdding(!isAdding);
           }}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-all shadow-lg dark:shadow-none dark:shadow-none active:scale-[0.98] font-bold"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-all shadow-md dark:shadow-none dark:shadow-none active:scale-[0.98] font-bold"
         >
           <Plus className="w-5 h-5" />
           Novo Dentista
@@ -186,7 +186,7 @@ export const Dentists: React.FC = () => {
               <div className="flex items-end gap-3 lg:col-span-3 pt-2">
                 <button
                   type="submit"
-                  className="flex-1 sm:flex-none bg-indigo-600 text-white px-8 py-2.5 rounded-xl hover:bg-indigo-700 transition-all font-bold shadow-lg dark:shadow-none active:scale-95 flex items-center justify-center gap-2"
+                  className="flex-1 sm:flex-none bg-indigo-600 text-white px-8 py-2.5 rounded-xl hover:bg-indigo-700 transition-all font-bold shadow-md dark:shadow-none active:scale-95 flex items-center justify-center gap-2"
                 >
                   {editingId ? 'Salvar Alterações' : 'Cadastrar'}
                 </button>

@@ -214,6 +214,7 @@ export interface FixedExpense {
   id: string;
   dentistId: string;
   name: string;
+  costType?: 'fixed' | 'variable';
   minValue: number;
   maxValue: number;
   periodicity: 'monthly' | 'yearly' | 'weekly' | 'one-time';

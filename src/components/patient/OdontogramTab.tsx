@@ -411,7 +411,7 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
                   <div className="flex flex-col gap-3 mt-2">
                     <div className="flex items-center justify-between px-2 py-1">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200 dark:shadow-none">
+                        <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-100 dark:shadow-none">
                           <Sparkles className="w-4.5 h-4.5" />
                         </div>
                         <div>
@@ -469,7 +469,7 @@ export const OdontogramTab = ({ patient }: { patient: Patient }) => {
                               </div>
                               <button
                                 onClick={() => selectedTooth && analyzeTooth(selectedTooth)}
-                                className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none active:scale-95"
+                                className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100 dark:shadow-none active:scale-95"
                               >
                                 <Sparkles className="w-4 h-4" />
                                 Iniciar Análise

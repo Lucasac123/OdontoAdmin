@@ -116,7 +116,14 @@ export const AnamnesisTab = ({ patient }: { patient: Patient }) => {
 
       {/* ─── PRINT VIEW (CFO-standard) ─── */}
       <div className="print-only" style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <div style={{ pageBreakAfter: 'always', breakAfter: 'page', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+        <div style={{ 
+          pageBreakAfter: 'always', 
+          breakAfter: 'page', 
+          minHeight: '29.7cm',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative'
+        }}>
           <PrintHeader
             title="Ficha de Anamnese Odontológica"
             subtitle="Histórico de Saúde – Preenchimento Obrigatório"
@@ -125,71 +132,73 @@ export const AnamnesisTab = ({ patient }: { patient: Patient }) => {
             patientDob={patient.dob ? new Date(patient.dob).toLocaleDateString('pt-BR') : undefined}
           />
 
-          {/* I – Clinical history */}
-          <div style={{ marginBottom: '24px' }}>
-            <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase' as const, letterSpacing: '0.18em', color: '#71717a', borderBottom: '2px solid #18181b', paddingBottom: '6px', marginBottom: '16px' }}>
-              I. Queixas e Histórico Clínico
-            </p>
-            {[
-              { label: 'Motivo da Consulta / Queixa Principal', value: formData.mainComplaint },
-              { label: 'Histórico Médico Pregresso', value: formData.medicalHistory },
-              { label: 'Alergias a Medicamentos ou Substâncias', value: formData.allergies },
-              { label: 'Medicamentos em Uso Contínuo', value: formData.medications },
-            ].map((item, i) => (
-              <div key={i} style={{ marginBottom: '14px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-                <span style={{ fontSize: '8px', fontWeight: '700', textTransform: 'uppercase' as const, letterSpacing: '0.15em', color: '#a1a1aa', display: 'block', marginBottom: '3px' }}>{item.label}</span>
-                <div style={{ borderBottom: '1px dashed #d4d4d8', minHeight: '32px', paddingBottom: '4px' }}>
-                  <span style={{ fontFamily: '"Crimson Pro", serif', fontSize: '15px', color: '#18181b' }}>
-                    {item.value || <em style={{ color: '#a1a1aa' }}>Não informado.</em>}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* II – Systemic conditions */}
-          <div style={{ marginBottom: '24px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-            <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase' as const, letterSpacing: '0.18em', color: '#71717a', borderBottom: '2px solid #18181b', paddingBottom: '6px', marginBottom: '16px' }}>
-              II. Condições Sistêmicas e Hábitos
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px 40px' }}>
-              {conditions.map(([key, label]) => {
-                const checked = Boolean(formData[key as keyof typeof formData]);
-                return (
-                  <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed #e4e4e7', padding: '5px 0' }}>
-                    <span style={{ fontSize: '12px', fontWeight: '500', color: '#3f3f46' }}>{label}</span>
-                    <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
-                      {[{ v: true, t: 'SIM' }, { v: false, t: 'NÃO' }].map(({ v, t }) => (
-                        <span key={t} style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px', fontWeight: '700' }}>
-                          <span style={{ width: '13px', height: '13px', border: '1.5px solid #18181b', borderRadius: '2px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: checked === v ? (v ? '#4f46e5' : '#18181b') : 'white', color: checked === v ? 'white' : 'transparent', fontSize: '9px' }}>✓</span>
-                          {t}
-                        </span>
-                      ))}
-                    </div>
+          <div style={{ flex: 1, padding: '20px 0' }}>
+            {/* I – Clinical history */}
+            <div style={{ marginBottom: '32px' }}>
+              <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase' as const, letterSpacing: '0.18em', color: '#71717a', borderBottom: '2px solid #18181b', paddingBottom: '6px', marginBottom: '16px' }}>
+                I. Queixas e Histórico Clínico
+              </p>
+              {[
+                { label: 'Motivo da Consulta / Queixa Principal', value: formData.mainComplaint },
+                { label: 'Histórico Médico Pregresso', value: formData.medicalHistory },
+                { label: 'Alergias a Medicamentos ou Substâncias', value: formData.allergies },
+                { label: 'Medicamentos em Uso Contínuo', value: formData.medications },
+              ].map((item, i) => (
+                <div key={i} style={{ marginBottom: '18px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+                  <span style={{ fontSize: '8px', fontWeight: '800', textTransform: 'uppercase' as const, letterSpacing: '0.15em', color: '#a1a1aa', display: 'block', marginBottom: '3px' }}>{item.label}</span>
+                  <div style={{ borderBottom: '1px dashed #d4d4d8', minHeight: '32px', paddingBottom: '4px' }}>
+                    <span style={{ fontFamily: '"Crimson Pro", serif', fontSize: '15px', color: '#18181b' }}>
+                      {item.value || <em style={{ color: '#a1a1aa' }}>Não informado.</em>}
+                    </span>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
-          </div>
 
-          {/* III – Notes */}
-          <div style={{ marginBottom: '20px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-            <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase' as const, letterSpacing: '0.18em', color: '#71717a', borderBottom: '1px solid #e4e4e7', paddingBottom: '4px', marginBottom: '10px' }}>
-              III. Observações Adicionais
-            </p>
-            <div style={{ border: '1px solid #e4e4e7', borderRadius: '6px', padding: '10px 14px', minHeight: '52px' }}>
-              <span style={{ fontFamily: '"Crimson Pro", serif', fontSize: '14px', color: '#18181b', fontStyle: formData.notes ? 'normal' : 'italic' }}>
-                {formData.notes || 'Sem observações adicionais.'}
-              </span>
+            {/* II – Systemic conditions */}
+            <div style={{ marginBottom: '32px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+              <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase' as const, letterSpacing: '0.18em', color: '#71717a', borderBottom: '2px solid #18181b', paddingBottom: '6px', marginBottom: '16px' }}>
+                II. Condições Sistêmicas e Hábitos
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 40px' }}>
+                {conditions.map(([key, label]) => {
+                  const checked = Boolean(formData[key as keyof typeof formData]);
+                  return (
+                    <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed #e4e4e7', padding: '6px 0' }}>
+                      <span style={{ fontSize: '12px', fontWeight: '500', color: '#3f3f46' }}>{label}</span>
+                      <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
+                        {[{ v: true, t: 'SIM' }, { v: false, t: 'NÃO' }].map(({ v, t }) => (
+                          <span key={t} style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px', fontWeight: '700' }}>
+                            <span style={{ width: '13px', height: '13px', border: '1.5px solid #18181b', borderRadius: '2px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: checked === v ? (v ? '#4f46e5' : '#18181b') : 'white', color: checked === v ? 'white' : 'transparent', fontSize: '9px' }}>✓</span>
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
 
-          {/* IV – Declaration */}
-          <div style={{ pageBreakInside: 'avoid', breakInside: 'avoid', marginBottom: '24px', padding: '14px 18px', borderLeft: '4px solid #4f46e5', background: '#f5f5ff', borderRadius: '0 8px 8px 0' }}>
-            <p style={{ fontSize: '9px', fontWeight: '800', textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#4f46e5', margin: '0 0 6px' }}>IV. Declaração de Veracidade</p>
-            <p style={{ fontFamily: '"Crimson Pro", serif', fontSize: '13px', color: '#3f3f46', lineHeight: '1.7', margin: 0, textAlign: 'justify' }}>
-              Declaro, sob as penas da lei, que as informações prestadas nesta ficha são a mais estrita expressão da verdade, não tendo omitido qualquer dado relativo ao meu estado de saúde, medicamentos em uso ou alergias. Comprometo-me a informar ao cirurgião-dentista qualquer alteração relevante durante o tratamento.
-            </p>
+            {/* III – Notes */}
+            <div style={{ marginBottom: '24px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+              <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase' as const, letterSpacing: '0.18em', color: '#71717a', borderBottom: '1px solid #e4e4e7', paddingBottom: '4px', marginBottom: '10px' }}>
+                III. Observações Adicionais
+              </p>
+              <div style={{ border: '1px solid #e4e4e7', borderRadius: '8px', padding: '12px 16px', minHeight: '60px' }}>
+                <span style={{ fontFamily: '"Crimson Pro", serif', fontSize: '14px', color: '#18181b', fontStyle: formData.notes ? 'normal' : 'italic' }}>
+                  {formData.notes || 'Sem observações adicionais.'}
+                </span>
+              </div>
+            </div>
+
+            {/* IV – Declaration */}
+            <div style={{ pageBreakInside: 'avoid', breakInside: 'avoid', marginBottom: '32px', padding: '18px 22px', borderLeft: '4px solid #4f46e5', background: '#f8f8ff', borderRadius: '0 8px 8px 0' }}>
+              <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#4f46e5', margin: '0 0 8px' }}>IV. Declaração de Veracidade</p>
+              <p style={{ fontFamily: '"Crimson Pro", serif', fontSize: '13px', color: '#3f3f46', lineHeight: '1.8', margin: 0, textAlign: 'justify' }}>
+                Declaro, sob as penas da lei, que as informações prestadas nesta ficha são a mais estrita expressão da verdade, não tendo omitido qualquer dado relativo ao meu estado de saúde, medicamentos em uso ou alergias. Comprometo-me a informar ao cirurgião-dentista qualquer alteração relevante durante o tratamento.
+              </p>
+            </div>
           </div>
 
           <PrintFooter signatureType="both" patientName={patient.name} />

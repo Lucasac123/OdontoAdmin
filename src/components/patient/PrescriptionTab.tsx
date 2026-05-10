@@ -585,7 +585,13 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
       };
 
       const renderCopy = (via?: string) => (
-        <div style={PAGE}>
+        <div style={{ 
+          ...PAGE, 
+          minHeight: '29.7cm', 
+          display: 'flex', 
+          flexDirection: 'column',
+          position: 'relative'
+        }}>
           <PrintHeader
             title={docTitle}
             patientName={patient.name}
@@ -594,10 +600,12 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
             via={via}
           />
           <div style={{
+            flex: 1,
             fontFamily: '"Crimson Pro", serif',
-            fontSize: '17px', lineHeight: '1.9',
+            fontSize: '18px', lineHeight: '1.8',
             color: '#18181b', whiteSpace: 'pre-wrap',
-            textAlign: 'justify', marginBottom: '32px',
+            textAlign: 'justify', marginBottom: '60px',
+            padding: '20px 0'
           }}>
             {activeText}
           </div>

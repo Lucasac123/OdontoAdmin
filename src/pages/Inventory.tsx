@@ -128,8 +128,17 @@ const Inventory = () => {
         category: item.category,
         kitId: item.kitId || '',
         notes: item.notes || '',
-        implantSpec: item.implantSpec || { diameter: '', length: '', platform: '', connection: '' },
-        resinSpec: item.resinSpec || { shade: '', opacity: '', system: '' }
+        implantSpec: { 
+          diameter: item.implantSpec?.diameter || '', 
+          length: item.implantSpec?.length || '', 
+          platform: item.implantSpec?.platform || '', 
+          connection: item.implantSpec?.connection || '' 
+        },
+        resinSpec: { 
+          shade: item.resinSpec?.shade || '', 
+          opacity: item.resinSpec?.opacity || '', 
+          system: item.resinSpec?.system || '' 
+        }
       });
     } else {
       setEditingItem(null);
@@ -298,39 +307,42 @@ const Inventory = () => {
         <div className="lg:col-span-1 space-y-6">
           {/* Categories */}
           <div className="bg-surface rounded-2xl p-4 shadow-sm border border-zinc-200 dark:border-zinc-800">
-            <div className="flex items-center justify-between mb-4 px-2">
-              <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Categorias</h3>
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h3 className="text-[11px] font-bold text-text-tertiary uppercase tracking-wider">Categorias</h3>
               <button 
                 onClick={() => { setActiveCategory('All'); setSelectedKitId(null); }}
-                className="text-[10px] text-indigo-500 font-bold uppercase hover:underline"
+                className="text-[10px] text-indigo-500 font-semibold uppercase hover:underline disabled:opacity-50"
+                disabled={activeCategory === 'All' && !selectedKitId}
               >
                 Limpar
               </button>
             </div>
-            <div className="space-y-1">
+            <div className="flex flex-wrap gap-1.5">
               <button
                 onClick={() => { setActiveCategory('All'); setSelectedKitId(null); }}
-                className={`w-full text-left px-4 py-2 rounded-xl transition-all flex items-center gap-3 ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
                   activeCategory === 'All' && !selectedKitId
-                    ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 font-semibold' 
-                    : 'text-text-secondary hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-text-primary'
+                    ? 'bg-indigo-500 text-white dark:bg-indigo-500 shadow-sm' 
+                    : 'bg-zinc-100 dark:bg-zinc-800/80 text-text-secondary hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:text-text-primary'
                 }`}
               >
-                <Package size={16} />
-                <span className="text-sm">Todos</span>
+                <Package size={13} />
+                <span>Todos</span>
               </button>
               {CATEGORIES.map(cat => (
                 <button
                   key={cat.id}
                   onClick={() => { setActiveCategory(cat.id); setSelectedKitId(null); }}
-                  className={`w-full text-left px-4 py-2 rounded-xl transition-all flex items-center gap-3 ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
                     activeCategory === cat.id 
-                      ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 font-semibold' 
-                      : 'text-text-secondary hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-text-primary'
+                      ? 'bg-indigo-500 text-white shadow-sm' 
+                      : 'bg-zinc-100 dark:bg-zinc-800/80 text-text-secondary hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:text-text-primary'
                   }`}
                 >
-                  {cat.icon}
-                  <span className="text-sm">{cat.id}</span>
+                  <span className="[&>svg]:w-3 [&>svg]:h-3">
+                    {cat.icon}
+                  </span>
+                  <span>{cat.id}</span>
                 </button>
               ))}
             </div>
@@ -655,7 +667,7 @@ const Inventory = () => {
 
                 <div className="flex gap-3 pt-4">
                   <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-3.5 text-text-secondary font-bold hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-2xl transition-all">Cancelar</button>
-                  <button type="submit" disabled={isSaving} className="flex-[2] bg-indigo-600 text-white font-bold py-3.5 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg active:scale-95 disabled:opacity-50">
+                  <button type="submit" disabled={isSaving} className="flex-[2] bg-indigo-600 text-white font-bold py-3.5 rounded-2xl hover:bg-indigo-700 transition-all shadow-md active:scale-95 disabled:opacity-50">
                     {isSaving ? 'Salvando...' : 'Salvar Material'}
                   </button>
                 </div>

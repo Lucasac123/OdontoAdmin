@@ -35,14 +35,17 @@ export const Dashboard: React.FC = () => {
   const [isQuickAccessModalOpen, setIsQuickAccessModalOpen] = useState(false);
   const [selectedQuickAccess, setSelectedQuickAccess] = useState<string[]>(() => {
     const saved = localStorage.getItem('quickAccessLinks');
-    return saved ? JSON.parse(saved) : ['patients', 'agenda', 'financial', 'ai'];
+    const initial = saved ? JSON.parse(saved) : ['patients', 'agenda', 'financial', 'ai'];
+    // Deduplicate just in case
+    return Array.from(new Set(initial));
   });
   const { addSyncTask } = useSync();
   const navigate = useNavigate();
 
   const handleSaveQuickAccess = (links: string[]) => {
-    setSelectedQuickAccess(links);
-    localStorage.setItem('quickAccessLinks', JSON.stringify(links));
+    const uniqueLinks = Array.from(new Set(links));
+    setSelectedQuickAccess(uniqueLinks);
+    localStorage.setItem('quickAccessLinks', JSON.stringify(uniqueLinks));
     setIsQuickAccessModalOpen(false);
   };
 
@@ -178,7 +181,7 @@ export const Dashboard: React.FC = () => {
     const lastVisit = new Date(p.updatedAt || p.createdAt);
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-    return lastVisit < sixMonthsAgo && (p.status === 'Controlado' || p.status === 'Ativo');
+    return lastVisit < sixMonthsAgo && p.status === 'Controlado';
   }).sort((a, b) => {
     const dateA = new Date(a.updatedAt || a.createdAt).getTime();
     const dateB = new Date(b.updatedAt || b.createdAt).getTime();
@@ -186,7 +189,7 @@ export const Dashboard: React.FC = () => {
   }).slice(0, 5); // Show top 5 oldest
 
   const patientStatusData = [
-    { name: 'Controlado', value: patients.filter(p => p.status === 'Controlado' || p.status === 'Ativo').length },
+    { name: 'Controlado', value: patients.filter(p => p.status === 'Controlado').length },
     { name: 'Inativo', value: patients.filter(p => p.status === 'Inativo').length },
     { name: 'Em Tratamento', value: patients.filter(p => p.status === 'Em Tratamento').length },
   ].filter(d => d.value > 0);
@@ -283,7 +286,7 @@ export const Dashboard: React.FC = () => {
             </div>
             <button 
               onClick={() => navigate('/agenda')} 
-              className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 px-3 py-1.5 rounded-xl transition-colors uppercase tracking-wider"
+              className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 px-3 py-1.5 rounded-xl uppercase tracking-wider shadow-sm"
             >
               Ver Agenda Completa
             </button>
@@ -304,7 +307,7 @@ export const Dashboard: React.FC = () => {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    className="p-5 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-all group"
+                    className="p-5 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/30 group"
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex flex-col items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:scale-105 transition-transform">
@@ -356,7 +359,7 @@ export const Dashboard: React.FC = () => {
                 if (!link) return null;
                 const Icon = link.icon;
                 return (
-                  <button key={link.id} onClick={() => navigate(link.path)} className={`flex flex-col items-center justify-center gap-3 p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 hover:bg-${link.color}-50 dark:hover:bg-${link.color}-500/10 hover:border-${link.color}-200 dark:hover:border-${link.color}-500/30 transition-all border border-zinc-200 dark:border-zinc-700 group`}>
+                  <button key={link.id} onClick={() => navigate(link.path)} className={`flex flex-col items-center justify-center gap-3 p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 hover:bg-${link.color}-50 dark:hover:bg-${link.color}-500/10 hover:border-${link.color}-200 dark:hover:border-${link.color}-500/30 border border-zinc-200 dark:border-zinc-700 group`}>
                     <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
                       <Icon className={`w-5 h-5 text-${link.color}-600 dark:text-${link.color}-400`} />
                     </div>
@@ -558,7 +561,7 @@ export const Dashboard: React.FC = () => {
             <button 
               type="submit" 
               disabled={isAddingNote}
-              className="mt-3 w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all font-medium shadow-lg dark:shadow-none disabled:opacity-50"
+              className="mt-3 w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-2xl hover:bg-indigo-700 active:scale-[0.98] transition-all font-medium shadow-md dark:shadow-none disabled:opacity-50"
             >
               {isAddingNote ? (
                 <>

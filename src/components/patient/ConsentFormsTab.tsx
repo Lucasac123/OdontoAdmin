@@ -91,7 +91,16 @@ export const ConsentFormsTab = ({ patient }: { patient: Patient }) => {
     </div>
 
     <div className="print-only" style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <div style={{ pageBreakAfter: 'always', breakAfter: 'page', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+      <div style={{ 
+        pageBreakAfter: 'always', 
+        breakAfter: 'page', 
+        pageBreakInside: 'avoid', 
+        breakInside: 'avoid',
+        minHeight: '29.7cm',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative'
+      }}>
         <PrintHeader
           title={selectedTemplate === 'imageRelease' ? 'Autorização de Uso de Imagem' : 'Termo de Consentimento Livre e Esclarecido'}
           subtitle="Documento de Consentimento Informado — Leia com Atenção"
@@ -99,7 +108,17 @@ export const ConsentFormsTab = ({ patient }: { patient: Patient }) => {
           patientCpf={patient.cpf}
           patientDob={patient.dob ? new Date(patient.dob).toLocaleDateString('pt-BR') : undefined}
         />
-        <div style={{ fontFamily: '"Crimson Pro", serif', fontSize: '17px', lineHeight: '1.9', color: '#18181b', whiteSpace: 'pre-wrap', textAlign: 'justify', marginBottom: '32px' }}>
+        <div style={{ 
+          flex: 1,
+          fontFamily: '"Crimson Pro", serif', 
+          fontSize: '18px', 
+          lineHeight: '1.8', 
+          color: '#18181b', 
+          whiteSpace: 'pre-wrap', 
+          textAlign: 'justify', 
+          marginBottom: '60px',
+          padding: '20px 0'
+        }}>
           {customText || templates[selectedTemplate as keyof typeof templates]}
         </div>
         <PrintFooter signatureType="both" patientName={patient.name} />

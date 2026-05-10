@@ -192,7 +192,7 @@ const Laboratory = () => {
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="w-full sm:w-auto bg-indigo-600 text-white px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-lg dark:shadow-none dark:shadow-none active:scale-[0.98] font-bold"
+          className="w-full sm:w-auto bg-indigo-600 text-white px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-md dark:shadow-none dark:shadow-none active:scale-[0.98] font-bold"
         >
           <Plus size={20} />
           Novo Trabalho
@@ -463,7 +463,7 @@ const Laboratory = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-8 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-bold shadow-lg dark:shadow-none flex items-center gap-2"
+                  className="px-8 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-bold shadow-md dark:shadow-none flex items-center gap-2"
                 >
                   Salvar
                 </button>

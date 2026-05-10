@@ -13,17 +13,17 @@
 @import "tailwindcss";
 
 @theme {
-  --color-indigo-50: #f7f3f0;
-  --color-indigo-100: #f5f5f1;
-  --color-indigo-200: #e8d5c4;
-  --color-indigo-300: #c2a385;
-  --color-indigo-400: #e6ab3b;
-  --color-indigo-500: #c96520;
-  --color-indigo-600: #af571b;
-  --color-indigo-700: #8a4415;
-  --color-indigo-800: #6b3510;
-  --color-indigo-900: #4a240b;
-  --color-indigo-950: #2b1506;
+  --color-indigo-50: var(--accent-50);
+  --color-indigo-100: var(--accent-100);
+  --color-indigo-200: var(--accent-200);
+  --color-indigo-300: var(--accent-300);
+  --color-indigo-400: var(--accent-400);
+  --color-indigo-500: var(--accent-500);
+  --color-indigo-600: var(--accent-600);
+  --color-indigo-700: var(--accent-700);
+  --color-indigo-800: var(--accent-800);
+  --color-indigo-900: var(--accent-900);
+  --color-indigo-950: var(--accent-900);
   
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -35,6 +35,9 @@
   --shadow-premium-hover: var(--shadow-premium-hover);
 
   --font-serif: "Crimson Pro", serif;
+  
+  --default-transition-duration: 300ms;
+  --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @variant dark (&:where(.dark, .dark *));
@@ -47,42 +50,53 @@
   --accent: #af571b;
   --accent-hover: #8a4415;
   --border-subtle: rgba(0, 0, 0, 0.06);
-  --shadow-premium: 0 10px 30px -10px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
-  --shadow-premium-hover: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
+  --shadow-premium: 0 4px 20px -5px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.02);
+  --shadow-premium-hover: 0 8px 30px -10px rgba(0, 0, 0, 0.1);
   --line: rgba(0, 0, 0, 0.08);
 }
 
 .dark {
-  --bg: #020617;
-  --surface: #0f172a;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
+  --bg: #09090b;
+  --surface: #121214;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
   --accent: #e6ab3b;
-  --accent-hover: #c2a385;
+  --accent-hover: #d49a2a;
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --shadow-premium: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
-  --shadow-premium-hover: 0 20px 40px -12px rgba(0, 0, 0, 0.7);
-  --line: rgba(255, 255, 255, 0.08);
+  --shadow-premium: 0 4px 20px -5px rgba(0, 0, 0, 0.8), 0 2px 4px -2px rgba(0, 0, 0, 0.6);
+  --shadow-premium-hover: 0 8px 30px -10px rgba(0, 0, 0, 0.9);
+  --line: rgba(255, 255, 255, 0.06);
 }
 
-* {
-  -webkit-tap-highlight-color: transparent;
-  selection-background-color: var(--accent);
-  selection-color: white;
+/* Harmonic transitions for theme switching */
+body, 
+body *:not([class*="motion-"]):not([style*="transform-"]):not([style*="scale-"]) {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow, opacity;
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Explicitly disable transitions on elements that can break or should be instant */
+.logo-gradient, 
+.logo-gradient *,
+.no-transition,
+.no-transition * {
+  transition: none !important;
+}
+
+::selection {
+  background-color: var(--accent);
+  color: white;
 }
 
 html {
   font-size: 14px;
+  scroll-behavior: smooth;
 }
 
 body {
   background-color: var(--bg);
   color: var(--text-primary);
-  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-              color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              fill 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -94,10 +108,26 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+.logo-gradient {
+  background-image: linear-gradient(to right, var(--accent-500), var(--accent-400), var(--accent-300));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent !important;
+  display: inline-block;
+  transition: opacity 0.3s ease;
+}
+
+.dark .logo-gradient {
+  background-image: linear-gradient(to right, var(--accent-600), var(--accent-500), var(--accent-400));
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
 .dark .glass {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(18, 18, 20, 0.8);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .premium-card {
@@ -105,7 +135,6 @@ body {
   border: 1px solid var(--border-subtle);
   border-radius: 2rem;
   box-shadow: var(--shadow-premium);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .premium-card:hover {

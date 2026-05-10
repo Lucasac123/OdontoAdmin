@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useStorage } from '../context/StorageContext';
+import { useTheme } from '../context/ThemeContext';
 import { db, OperationType, handleFirestoreError } from '../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { motion } from 'motion/react';
-import { User, Mail, Phone, Calendar, Award, Save, Loader2, Camera, Lock, HardDrive, Download, Upload } from 'lucide-react';
+import { User, Mail, Phone, Calendar, Award, Save, Loader2, Camera, Lock, HardDrive, Download, Upload, Palette, Image as ImageIcon, RotateCcw } from 'lucide-react';
 import { storage } from '../firebase';
 import { getDriveAccessToken } from '../services/googleDriveService';
 import { backupToDrive, restoreFromDrive } from '../services/backupService';
@@ -14,12 +15,15 @@ import { backupToDrive, restoreFromDrive } from '../services/backupService';
 export const Profile: React.FC = () => {
   const { user } = useAuth();
   const { storageLocation, setStorageLocation } = useStorage();
+  const { accentColor, setAccentColor, colorHistory, customLogo, setCustomLogo, resetToDefaults } = useTheme();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [isAuthenticatingDrive, setIsAuthenticatingDrive] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [colorInput, setColorInput] = useState(accentColor);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -32,6 +36,82 @@ export const Profile: React.FC = () => {
     newPassword: '',
     confirmNewPassword: ''
   });
+
+  useEffect(() => {
+    setColorInput(accentColor);
+  }, [accentColor]);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    try {
+      setLogoUploading(true);
+      
+      const compressedBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target?.result as string;
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 512;
+            const MAX_HEIGHT = 512;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width *= MAX_HEIGHT / height;
+                height = MAX_HEIGHT;
+              }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx?.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/png', 0.9));
+          };
+          img.onerror = (error) => reject(error);
+        };
+        reader.onerror = (error) => reject(error);
+      });
+
+      let logoURL = compressedBase64;
+      try {
+        const storageRef = ref(storage, `app_logos/${user.uid}.png`);
+        const response = await fetch(compressedBase64);
+        const blob = await response.blob();
+        await uploadBytes(storageRef, blob);
+        logoURL = await getDownloadURL(storageRef);
+      } catch (storageError) {
+        console.warn("Storage upload failed, falling back to base64", storageError);
+      }
+
+      await setCustomLogo(logoURL);
+      alert('Logo atualizada com sucesso!');
+    } catch (error) {
+      console.error("Error uploading logo:", error);
+      alert('Erro ao atualizar logo do aplicativo.');
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+
+  const handleColorSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (/^#[0-9A-F]{6}$/i.test(colorInput)) {
+      setAccentColor(colorInput);
+    } else {
+      alert('Por favor, insira um código hexadecimal válido (ex: #af571b)');
+    }
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -496,6 +576,123 @@ export const Profile: React.FC = () => {
                 </>
               )}
             </form>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="bg-surface rounded-[24px] sm:rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+          >
+            <div className="p-6 sm:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+              <h2 className="text-lg sm:text-xl font-black text-text-primary tracking-tight">Identidade Visual</h2>
+              <Palette className="w-5 h-5" style={{ color: accentColor }} />
+            </div>
+
+            <div className="p-6 sm:p-8 space-y-8">
+              {/* Color Configuration */}
+              <div className="space-y-4">
+                <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Cor Base do Aplicativo</label>
+                <form onSubmit={handleColorSubmit} className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1 flex gap-3">
+                    <div className="relative group shrink-0">
+                      <div 
+                        className="w-12 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm transition-transform group-hover:scale-105" 
+                        style={{ backgroundColor: accentColor, height: '46px' }}
+                      />
+                      <input 
+                        type="color" 
+                        value={colorInput} 
+                        onChange={(e) => setColorInput(e.target.value)}
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      value={colorInput}
+                      onChange={(e) => setColorInput(e.target.value)}
+                      placeholder="#000000"
+                      className="flex-1 px-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 outline-none transition-all text-sm font-mono font-medium lowercase"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      className="px-6 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl sm:rounded-2xl font-bold text-xs uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all"
+                    >
+                      Aplicar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAccentColor('#af571b');
+                        setColorInput('#af571b');
+                      }}
+                      className="p-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 rounded-xl sm:rounded-2xl transition-all"
+                      title="Redefinir Cor"
+                    >
+                      <RotateCcw className="w-5 h-5" />
+                    </button>
+                  </div>
+                </form>
+
+                {colorHistory.length > 0 && (
+                  <div className="pt-2">
+                    <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-3 ml-1">Cores Recentes</p>
+                    <div className="flex flex-wrap gap-2">
+                      {colorHistory.map((color, i) => (
+                        <button
+                          key={`${color}-${i}`}
+                          onClick={() => setAccentColor(color)}
+                          className="w-8 h-8 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-sm transition-all hover:scale-110 active:scale-90"
+                          style={{ backgroundColor: color }}
+                          title={color}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Logo Configuration */}
+              <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 space-y-4">
+                <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Logotipo Personalizado</label>
+                <div className="flex flex-col sm:flex-row items-center gap-6 p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+                  <div 
+                    className="w-20 h-20 rounded-2xl border border-zinc-200 dark:border-zinc-700 flex items-center justify-center overflow-hidden shadow-sm transition-all duration-500"
+                    style={{ 
+                      background: customLogo ? 'white' : `linear-gradient(145deg, var(--accent) 0%, var(--accent-dark) 100%)`
+                    }}
+                  >
+                    <img 
+                      src={customLogo || "/icon.png"} 
+                      alt="Logo" 
+                      className={`w-full h-full object-cover transition-all duration-500 ${!customLogo ? 'mix-blend-luminosity opacity-90 brightness-110 grayscale contrast-125' : ''}`} 
+                    />
+                  </div>
+                  <div className="flex-1 space-y-3 text-center sm:text-left">
+                    <p className="text-xs font-medium text-text-secondary leading-relaxed">
+                      Substitua o dente padrão por sua própria logomarca. Recomendamos arquivos PNG transparentes de 512x512px.
+                    </p>
+                    <div className="flex flex-wrap justify-center sm:justify-start gap-3">
+                      <label className="flex items-center gap-2 px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:opacity-90 active:scale-95 transition-all">
+                        {logoUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImageIcon className="w-3.5 h-3.5" />}
+                        {logoUploading ? 'Enviando...' : 'Fazer Upload'}
+                        <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={logoUploading} />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setCustomLogo(null)}
+                        className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:text-zinc-900 dark:hover:text-zinc-100 active:scale-95 transition-all"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        Restaurar Original
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </motion.div>
 
           <motion.div

@@ -9,7 +9,7 @@ const Marketing = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'birthdays' | 'preventive' | 'inactive'>('all');
+  const [selectedFilters, setSelectedFilters] = useState<('birthdays' | 'preventive' | 'inactive')[]>([]);
   const [selectedPatients, setSelectedPatients] = useState<string[]>([]);
   const [messageTemplate, setMessageTemplate] = useState('');
 
@@ -17,7 +17,6 @@ const Marketing = () => {
     birthdays: "Olá {nome}! 🎉 A equipe da OdontoAdmin deseja um Feliz Aniversário! Que seu dia seja cheio de sorrisos. Como presente, você tem 15% de desconto em uma limpeza este mês. Agende seu horário!",
     preventive: "Olá {nome}, tudo bem? Notamos que já faz um tempo desde sua última visita. A prevenção é o melhor caminho para um sorriso saudável! Vamos agendar sua avaliação de rotina?",
     inactive: "Oi {nome}! Sentimos sua falta aqui na clínica. Temos novidades e tratamentos especiais esperando por você. Que tal marcar uma visita para conversarmos?",
-    custom: ""
   };
 
   useEffect(() => {
@@ -46,38 +45,58 @@ const Marketing = () => {
       filtered = filtered.filter(p => p.name.toLowerCase().includes(lowerSearch));
     }
 
+    if (selectedFilters.length === 0) return filtered;
+
     const today = new Date();
     const currentMonth = today.getMonth() + 1;
 
-    switch (selectedFilter) {
-      case 'birthdays':
-        filtered = filtered.filter(p => {
+    return filtered.filter(p => {
+      return selectedFilters.some(filter => {
+        if (filter === 'birthdays') {
           if (!p.dob) return false;
           const [, month] = p.dob.split('-').map(Number);
           return month === currentMonth;
-        });
-        break;
-      case 'preventive':
-        filtered = filtered.filter(p => {
+        }
+        if (filter === 'preventive') {
           if (!p.updatedAt && !p.createdAt) return false;
           const lastVisit = new Date(p.updatedAt || p.createdAt);
           const sixMonthsAgo = new Date();
           sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
           return lastVisit < sixMonthsAgo && p.status === 'Controlado';
-        });
-        break;
-      case 'inactive':
-        filtered = filtered.filter(p => p.status === 'Inativo');
-        break;
-    }
-
-    return filtered;
+        }
+        if (filter === 'inactive') {
+          return p.status === 'Inativo';
+        }
+        return false;
+      });
+    });
   };
 
-  const handleFilterChange = (filter: typeof selectedFilter) => {
-    setSelectedFilter(filter);
-    setMessageTemplate(templates[filter === 'all' ? 'custom' : filter]);
+  const toggleFilter = (filter: 'birthdays' | 'preventive' | 'inactive') => {
+    setSelectedFilters(prev => {
+      const isSelected = prev.includes(filter);
+      const newFilters = isSelected 
+        ? prev.filter(f => f !== filter) 
+        : [...prev, filter];
+      
+      // Update template based on the most recently added filter or clear if none
+      if (!isSelected) {
+        setMessageTemplate(templates[filter]);
+      } else if (newFilters.length > 0) {
+        setMessageTemplate(templates[newFilters[newFilters.length - 1]]);
+      } else {
+        setMessageTemplate('');
+      }
+      
+      return newFilters;
+    });
     setSelectedPatients([]); // Clear selection on filter change
+  };
+
+  const clearFilters = () => {
+    setSelectedFilters([]);
+    setMessageTemplate('');
+    setSelectedPatients([]);
   };
 
   const togglePatientSelection = (id: string) => {
@@ -153,29 +172,32 @@ const Marketing = () => {
 
               <div className="flex flex-wrap gap-2">
                 <button
-                  onClick={() => handleFilterChange('all')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'all' ? 'bg-indigo-600 text-white shadow-md' : 'bg-surface text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-border-subtle'}`}
-                >
-                  <Users size={14} /> Todos
-                </button>
-                <button
-                  onClick={() => handleFilterChange('birthdays')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'birthdays' ? 'bg-pink-600 text-white shadow-md' : 'bg-surface text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-border-subtle'}`}
+                  onClick={() => toggleFilter('birthdays')}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilters.includes('birthdays') ? 'bg-pink-600 text-white shadow-sm' : 'bg-surface text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-border-subtle'}`}
                 >
                   <Gift size={14} /> Aniversariantes
                 </button>
                 <button
-                  onClick={() => handleFilterChange('preventive')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'preventive' ? 'bg-amber-600 text-white shadow-md' : 'bg-surface text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-border-subtle'}`}
+                  onClick={() => toggleFilter('preventive')}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilters.includes('preventive') ? 'bg-amber-600 text-white shadow-sm' : 'bg-surface text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-border-subtle'}`}
                 >
                   <Calendar size={14} /> Preventivo
                 </button>
                 <button
-                  onClick={() => handleFilterChange('inactive')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilter === 'inactive' ? 'bg-red-600 text-white shadow-md' : 'bg-surface text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-border-subtle'}`}
+                  onClick={() => toggleFilter('inactive')}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${selectedFilters.includes('inactive') ? 'bg-red-600 text-white shadow-sm' : 'bg-surface text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-border-subtle'}`}
                 >
                   <Filter size={14} /> Inativos
                 </button>
+                
+                {selectedFilters.length > 0 && (
+                  <button
+                    onClick={clearFilters}
+                    className="px-3.5 py-2 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all uppercase tracking-tight"
+                  >
+                    Limpar
+                  </button>
+                )}
               </div>
             </div>
 
@@ -297,7 +319,7 @@ const Marketing = () => {
                   <button
                     onClick={handleSendMessages}
                     disabled={selectedPatients.length === 0 || !messageTemplate.trim()}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-accent text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-accent-hover transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg active:scale-[0.98]"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-accent text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-accent-hover transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md active:scale-[0.98]"
                   >
                     <Send className="w-4.5 h-4.5" />
                     {selectedPatients.length > 1 ? 'Enviar em Massa' : 'Enviar WhatsApp'}

@@ -21,57 +21,80 @@ const PAGE: React.CSSProperties = {
   pageBreakInside: 'avoid',
   breakInside: 'avoid',
   padding: '0',
-  marginBottom: '20px',
+  marginBottom: '40px',
+  minHeight: '100%',
+  position: 'relative',
+  display: 'flex',
+  flexDirection: 'column'
 };
 
 const SECTION_TITLE: React.CSSProperties = {
   fontFamily: '"Crimson Pro", serif',
-  fontSize: '9px',
+  fontSize: '11px',
   fontWeight: '900',
   textTransform: 'uppercase',
-  letterSpacing: '0.15em',
-  color: '#71717a',
-  borderBottom: '1.5px solid #18181b',
-  paddingBottom: '4px',
-  marginBottom: '12px',
+  letterSpacing: '0.2em',
+  color: '#18181b',
+  borderBottom: '2px solid #18181b',
+  paddingBottom: '6px',
+  marginBottom: '20px',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px'
 };
 
 const FIELD_LABEL: React.CSSProperties = {
-  fontSize: '7px',
-  fontWeight: '700',
+  fontSize: '8px',
+  fontWeight: '800',
   textTransform: 'uppercase',
-  letterSpacing: '0.12em',
+  letterSpacing: '0.15em',
   color: '#a1a1aa',
   display: 'block',
-  marginBottom: '1px',
+  marginBottom: '2px',
 };
 
 const FIELD_VALUE: React.CSSProperties = {
   fontFamily: '"Crimson Pro", serif',
-  fontSize: '13px',
-  fontWeight: '600',
+  fontSize: '15px',
+  fontWeight: '700',
   color: '#18181b',
-  lineHeight: 1.2,
+  lineHeight: 1.3,
 };
 
 const DOTTED_LINE: React.CSSProperties = {
-  borderBottom: '1px dashed #d4d4d8',
-  minHeight: '22px',
-  paddingBottom: '2px',
-  marginBottom: '2px',
+  borderBottom: '1px solid #e4e4e7',
+  minHeight: '26px',
+  paddingBottom: '4px',
+  marginBottom: '4px',
 };
 
 const CHECKBOX: React.CSSProperties = {
-  width: '12px',
-  height: '12px',
-  border: '1px solid #18181b',
-  borderRadius: '2px',
+  width: '14px',
+  height: '14px',
+  border: '1.5px solid #18181b',
+  borderRadius: '3px',
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  fontSize: '8px',
+  fontSize: '10px',
   fontWeight: '900',
   flexShrink: 0,
+};
+
+const TABLE_TH: React.CSSProperties = {
+  fontSize: '9px',
+  fontWeight: '900',
+  textTransform: 'uppercase',
+  letterSpacing: '0.12em',
+  color: '#71717a',
+  padding: '10px 8px',
+  textAlign: 'left',
+  borderBottom: '2px solid #18181b'
+};
+
+const CONTENT_AREA: React.CSSProperties = {
+  flex: 1,
+  marginBottom: '30px'
 };
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -100,45 +123,47 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
         patientDob={patientDob}
       />
 
-      <div style={{ marginBottom: '15px' }}>
-        <p style={SECTION_TITLE}>I. Dados Pessoais</p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '10px 20px' }}>
-          {[
-            { label: 'Nome Completo', value: patient.name, span: 3 },
-            { label: 'Data de Nascimento', value: patientDob || '___/___/______' },
-            { label: 'CPF', value: patient.cpf || '_________________' },
-            { label: 'RG / Órgão Emissor', value: `${patient.rg || '_______'} ${patient.issuingBody ? `/ ${patient.issuingBody}` : ''}` },
-            { label: 'Profissão', value: patient.profession || 'Não informada' },
-            { label: 'Estado Civil', value: patient.maritalStatus || 'Não informado' },
-            { label: 'Plano de Saúde', value: patient.healthInsurance || 'Não informado' },
-          ].map((f, i) => (
-            <div key={i} style={f.span ? { gridColumn: `span ${f.span}` } : {}}>
-              <span style={FIELD_LABEL}>{f.label}</span>
-              <div style={DOTTED_LINE}>
-                <span style={FIELD_VALUE}>{f.value}</span>
+      <div style={CONTENT_AREA}>
+        <div style={{ marginBottom: '25px' }}>
+          <p style={SECTION_TITLE}>I. Dados Pessoais</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '15px 25px' }}>
+            {[
+              { label: 'Nome Completo', value: patient.name, span: 3 },
+              { label: 'Data de Nascimento', value: patientDob || '___/___/______' },
+              { label: 'CPF', value: patient.cpf || '_________________' },
+              { label: 'RG / Órgão Emissor', value: `${patient.rg || '_______'} ${patient.issuingBody ? `/ ${patient.issuingBody}` : ''}` },
+              { label: 'Profissão', value: patient.profession || 'Não informada' },
+              { label: 'Estado Civil', value: patient.maritalStatus || 'Não informado' },
+              { label: 'Plano de Saúde', value: (patient as any).healthInsurance || 'Não informado' },
+            ].map((f, i) => (
+              <div key={i} style={f.span ? { gridColumn: `span ${f.span}` } : {}}>
+                <span style={FIELD_LABEL}>{f.label}</span>
+                <div style={DOTTED_LINE}>
+                  <span style={FIELD_VALUE}>{f.value}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
 
-      <div style={{ marginBottom: '15px' }}>
-        <p style={SECTION_TITLE}>II. Contato e Endereço</p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '10px 20px' }}>
-          {[
-            { label: 'Endereço Residencial', value: patient.address || 'Não informado', span: 3 },
-            { label: 'Cidade / Estado', value: `${patient.city || '_______'} / ${patient.state || '__'}` },
-            { label: 'CEP', value: patient.zipCode || '__________' },
-            { label: 'Telefone', value: patient.phone || 'Não informado' },
-            { label: 'E-mail', value: patient.email || 'Não informado', span: 2 },
-          ].map((f, i) => (
-            <div key={i} style={f.span ? { gridColumn: `span ${f.span}` } : {}}>
-              <span style={FIELD_LABEL}>{f.label}</span>
-              <div style={DOTTED_LINE}>
-                <span style={FIELD_VALUE}>{f.value}</span>
+        <div style={{ marginBottom: '25px' }}>
+          <p style={SECTION_TITLE}>II. Contato e Endereço</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '15px 25px' }}>
+            {[
+              { label: 'Endereço Residencial', value: patient.address || 'Não informado', span: 3 },
+              { label: 'Cidade / Estado', value: `${patient.city || '_______'} / ${patient.state || '__'}` },
+              { label: 'CEP', value: patient.zipCode || '__________' },
+              { label: 'Telefone', value: patient.phone || 'Não informado' },
+              { label: 'E-mail', value: patient.email || 'Não informado', span: 2 },
+            ].map((f, i) => (
+              <div key={i} style={f.span ? { gridColumn: `span ${f.span}` } : {}}>
+                <span style={FIELD_LABEL}>{f.label}</span>
+                <div style={DOTTED_LINE}>
+                  <span style={FIELD_VALUE}>{f.value}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
@@ -172,52 +197,54 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
           patientDob={patientDob}
         />
 
-        <div style={{ marginBottom: '12px' }}>
-          <p style={SECTION_TITLE}>I. Queixas e Histórico Clínico</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 20px' }}>
-            {[
-              { label: 'Queixa Principal', value: fd.mainComplaint },
-              { label: 'Histórico Médico', value: fd.medicalHistory },
-              { label: 'Alergias', value: fd.allergies },
-              { label: 'Medicamentos em Uso', value: fd.medications },
-            ].map((item, i) => (
-              <div key={i} style={{ marginBottom: '4px' }}>
-                <span style={FIELD_LABEL}>{item.label}</span>
-                <div style={{ borderBottom: '1px solid #d4d4d8', minHeight: '24px', paddingBottom: '2px' }}>
-                  <span style={{ ...FIELD_VALUE, fontSize: '11px' }}>
-                    {item.value || 'N/A'}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ marginBottom: '12px' }}>
-          <p style={SECTION_TITLE}>II. Questionário de Saúde</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px 20px' }}>
-            {conditions.map(([key, label]) => {
-              const checked = Boolean(fd[key]);
-              return (
-                <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px dashed #e4e4e7', padding: '2px 0' }}>
-                  <span style={{ fontSize: '9px', fontWeight: '500', color: '#3f3f46' }}>{label}</span>
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                    <span style={{ ...CHECKBOX, background: checked ? '#18181b' : 'white', color: checked ? 'white' : 'transparent' }}>✓</span>
-                    <span style={{ fontSize: '8px', fontWeight: '700' }}>S</span>
-                    <span style={{ ...CHECKBOX, background: !checked ? '#18181b' : 'white', color: !checked ? 'white' : 'transparent' }}>✓</span>
-                    <span style={{ fontSize: '8px', fontWeight: '700' }}>N</span>
+        <div style={CONTENT_AREA}>
+          <div style={{ marginBottom: '20px' }}>
+            <p style={SECTION_TITLE}>I. Queixas e Histórico Clínico</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px 30px' }}>
+              {[
+                { label: 'Queixa Principal', value: fd.mainComplaint },
+                { label: 'Histórico Médico', value: fd.medicalHistory },
+                { label: 'Alergias', value: fd.allergies },
+                { label: 'Medicamentos em Uso', value: fd.medications },
+              ].map((item, i) => (
+                <div key={i} style={{ marginBottom: '10px' }}>
+                  <span style={FIELD_LABEL}>{item.label}</span>
+                  <div style={{ borderBottom: '1px solid #e4e4e7', minHeight: '32px', paddingBottom: '4px' }}>
+                    <span style={{ ...FIELD_VALUE, fontSize: '13px' }}>
+                      {item.value || 'Não informado'}
+                    </span>
                   </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div style={{ pageBreakInside: 'avoid', breakInside: 'avoid', marginBottom: '15px', padding: '10px', borderLeft: '3px solid #18181b', background: '#fafafa' }}>
-          <p style={{ fontSize: '8px', fontWeight: '800', textTransform: 'uppercase', color: '#18181b', margin: '0 0 4px' }}>Declaração de Veracidade</p>
-          <p style={{ fontFamily: '"Crimson Pro", serif', fontSize: '10px', color: '#3f3f46', lineHeight: '1.4', margin: 0, textAlign: 'justify' }}>
-            Declaro que as informações prestadas nesta ficha de anamnese são a expressão da verdade, não tendo omitido qualquer dado relativo ao meu estado de saúde. Comprometo-me a informar qualquer alteração relevante.
-          </p>
+          <div style={{ marginBottom: '20px' }}>
+            <p style={SECTION_TITLE}>II. Questionário de Saúde</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px 25px' }}>
+              {conditions.map(([key, label]) => {
+                const checked = Boolean(fd[key]);
+                return (
+                  <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px dashed #f4f4f5', padding: '4px 0' }}>
+                    <span style={{ fontSize: '10px', fontWeight: '500', color: '#3f3f46' }}>{label}</span>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span style={{ ...CHECKBOX, background: checked ? '#18181b' : 'white', color: checked ? 'white' : 'transparent' }}>✓</span>
+                      <span style={{ fontSize: '9px', fontWeight: '800' }}>S</span>
+                      <span style={{ ...CHECKBOX, background: !checked ? '#18181b' : 'white', color: !checked ? 'white' : 'transparent' }}>✓</span>
+                      <span style={{ fontSize: '9px', fontWeight: '800' }}>N</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={{ pageBreakInside: 'avoid', breakInside: 'avoid', marginBottom: '20px', padding: '15px', borderLeft: '4px solid #18181b', background: '#fafafa', borderRadius: '0 8px 8px 0' }}>
+            <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', color: '#18181b', letterSpacing: '0.1em', margin: '0 0 6px' }}>Declaração de Veracidade</p>
+            <p style={{ fontFamily: '"Crimson Pro", serif', fontSize: '13px', color: '#3f3f46', lineHeight: '1.6', margin: 0, textAlign: 'justify' }}>
+              Declaro que as informações prestadas nesta ficha de anamnese são a expressão da verdade, não tendo omitido qualquer dado relativo ao meu estado de saúde. Comprometo-me a informar qualquer alteração relevante ao profissional responsável pelo meu tratamento.
+            </p>
+          </div>
         </div>
 
         <PrintFooter signatureType="both" patientName={patient.name} />
@@ -260,35 +287,46 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
       <div style={PAGE}>
         <PrintHeader title="Odontograma Clínico" patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
         
-        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <svg viewBox="0 0 800 240" style={{ width: '100%', height: 'auto', maxWidth: '600px' }}>
-            <g transform="translate(40, 20)">
-              {adultTeeth[0].map((id, index) => (
-                <g key={id} transform={`translate(${index * 44}, 0)`}>
-                  <ToothIcon id={id} status={teethState[id]?.status || 'healthy'} />
-                </g>
-              ))}
-              <text x="350" y="70" textAnchor="middle" fontSize="8" fill="#71717a" fontWeight="900" opacity="0.5">ARCADA SUPERIOR</text>
-            </g>
-            <g transform="translate(40, 140)">
-              {adultTeeth[1].map((id, index) => (
-                <g key={id} transform={`translate(${index * 44}, 0)`}>
-                  <ToothIcon id={id} status={teethState[id]?.status || 'healthy'} />
-                </g>
-              ))}
-              <text x="350" y="70" textAnchor="middle" fontSize="8" fill="#71717a" fontWeight="900" opacity="0.5">ARCADA INFERIOR</text>
-            </g>
-          </svg>
-        </div>
+        <div style={CONTENT_AREA}>
+          <div style={{ textAlign: 'center', marginBottom: '30px', background: '#fafafa', padding: '20px', borderRadius: '12px', border: '1px solid #e4e4e7' }}>
+            <svg viewBox="0 0 800 240" style={{ width: '100%', height: 'auto', maxWidth: '600px' }}>
+              <g transform="translate(40, 20)">
+                {adultTeeth[0].map((id, index) => (
+                  <g key={id} transform={`translate(${index * 44}, 0)`}>
+                    <ToothIcon id={id} status={teethState[id]?.status || 'healthy'} />
+                  </g>
+                ))}
+                <text x="350" y="70" textAnchor="middle" fontSize="9" fill="#18181b" fontWeight="900" opacity="0.6" letterSpacing="0.2em">ARCADA SUPERIOR</text>
+              </g>
+              <g transform="translate(40, 140)">
+                {adultTeeth[1].map((id, index) => (
+                  <g key={id} transform={`translate(${index * 44}, 0)`}>
+                    <ToothIcon id={id} status={teethState[id]?.status || 'healthy'} />
+                  </g>
+                ))}
+                <text x="350" y="70" textAnchor="middle" fontSize="9" fill="#18181b" fontWeight="900" opacity="0.6" letterSpacing="0.2em">ARCADA INFERIOR</text>
+              </g>
+            </svg>
+          </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 40px' }}>
-          {Object.values(teethState).filter((t: any) => t.notes || t.status !== 'healthy').map((t: any) => (
-            <div key={t.id} style={{ borderBottom: '1px solid #f4f4f5', padding: '4px 0' }}>
-              <span style={{ ...FIELD_LABEL, display: 'inline', marginRight: '8px' }}>DENTE {t.id}:</span>
-              <span style={{ ...FIELD_VALUE, fontSize: '11px' }}>{t.status.toUpperCase()}</span>
-              {t.notes && <p style={{ fontSize: '10px', color: '#52525b', margin: '2px 0 0', fontStyle: 'italic' }}>{t.notes}</p>}
+          <div style={{ marginBottom: '20px' }}>
+            <p style={SECTION_TITLE}>Detalhamento Clínico</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px 40px' }}>
+              {Object.values(teethState).filter((t: any) => t.notes || t.status !== 'healthy').length === 0 ? (
+                <p style={{ gridColumn: 'span 2', textAlign: 'center', fontStyle: 'italic', color: '#a1a1aa', fontSize: '12px' }}>Nenhuma alteração registrada em dentes isolados.</p>
+              ) : (
+                Object.values(teethState).filter((t: any) => t.notes || t.status !== 'healthy').map((t: any) => (
+                  <div key={t.id} style={{ borderBottom: '1px solid #f4f4f5', padding: '8px 0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <span style={{ ...FIELD_LABEL, marginBottom: 0 }}>Dente {t.id}</span>
+                      <span style={{ fontSize: '10px', padding: '2px 8px', background: '#18181b', color: 'white', borderRadius: '4px', fontWeight: '900' }}>{t.status.toUpperCase()}</span>
+                    </div>
+                    {t.notes && <p style={{ ...FIELD_VALUE, fontSize: '12px', color: '#52525b', fontWeight: '500', fontStyle: 'italic' }}>"{t.notes}"</p>}
+                  </div>
+                ))
+              )}
             </div>
-          ))}
+          </div>
         </div>
 
         <PrintFooter signatureType="dentist" />
@@ -300,26 +338,40 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
   const renderEvolution = () => (
     <div style={PAGE}>
       <PrintHeader title="Evolução Clínica" patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
-      {evolutions.length === 0 ? (
-        <p style={{ textAlign: 'center', fontStyle: 'italic', color: '#a1a1aa' }}>Sem evoluções registradas.</p>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {evolutions.map((note, idx) => (
-            <div key={note.id} style={{ pageBreakInside: 'avoid', borderBottom: '1px solid #e4e4e7', paddingBottom: '8px', marginBottom: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                <div>
-                  <span style={{ fontSize: '12px', fontWeight: '700' }}>{note.procedure || 'Consulta'}</span>
-                  <span style={{ fontSize: '8px', color: note.status === 'realizado' ? '#16a34a' : '#ea580c', fontWeight: '900', marginLeft: '10px' }}>
-                    {note.status?.toUpperCase() || 'N/A'}
-                  </span>
+      
+      <div style={CONTENT_AREA}>
+        <p style={SECTION_TITLE}>Histórico de Procedimentos e Observações</p>
+        {evolutions.length === 0 ? (
+          <p style={{ textAlign: 'center', fontStyle: 'italic', color: '#a1a1aa', fontSize: '13px', marginTop: '40px' }}>Nenhum registro de evolução encontrado para este paciente.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {evolutions.map((note, idx) => (
+              <div key={note.id} style={{ pageBreakInside: 'avoid', borderBottom: '1px solid #e4e4e7', padding: '12px 0', position: 'relative' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#18181b' }} />
+                    <span style={{ fontSize: '15px', fontWeight: '800', fontFamily: '"Crimson Pro", serif', color: '#18181b' }}>{note.procedure || 'Consulta de Rotina'}</span>
+                    <span style={{ 
+                      fontSize: '8px', 
+                      background: note.status === 'realizado' ? '#18181b' : '#f4f4f5', 
+                      color: note.status === 'realizado' ? 'white' : '#71717a', 
+                      padding: '2px 8px', 
+                      borderRadius: '4px', 
+                      fontWeight: '900',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.1em'
+                    }}>
+                      {note.status || 'N/A'}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '10px', fontWeight: '700', color: '#a1a1aa' }}>{new Date(note.createdAt).toLocaleDateString('pt-BR')}</span>
                 </div>
-                <span style={{ fontSize: '8px', color: '#a1a1aa' }}>{new Date(note.createdAt).toLocaleDateString()}</span>
+                <p style={{ fontSize: '13px', color: '#3f3f46', lineHeight: '1.7', textAlign: 'justify', paddingLeft: '20px', borderLeft: '1.5px solid #f4f4f5' }}>{note.content}</p>
               </div>
-              <p style={{ fontSize: '11px', color: '#3f3f46', lineHeight: '1.4' }}>{note.content}</p>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
       <PrintFooter signatureType="dentist" />
     </div>
   );
@@ -341,31 +393,46 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     return (
       <div style={PAGE}>
         <PrintHeader title={planTitle} patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '10px' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #18181b' }}>
-              {['Procedimento', 'Dente', 'Qtd', 'Total'].map(h => (
-                <th key={h} style={{ fontSize: '9px', fontWeight: '900', color: '#71717a', padding: '6px', textAlign: h === 'Procedimento' ? 'left' : 'center' }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {procs.map((p, i) => (
-              <tr key={p.id} style={{ borderBottom: '1px solid #f4f4f5', background: i % 2 === 0 ? 'transparent' : '#fafafa' }}>
-                <td style={{ padding: '6px', fontSize: '11px', fontWeight: '600' }}>{p.name}</td>
-                <td style={{ padding: '6px', textAlign: 'center', fontSize: '11px' }}>{p.tooth || '—'}</td>
-                <td style={{ padding: '6px', textAlign: 'center', fontSize: '11px' }}>{p.quantity || 1}</td>
-                <td style={{ padding: '6px', textAlign: 'center', fontSize: '11px', fontWeight: '700' }}>{fmt(p.totalPrice || p.cost)}</td>
+        
+        <div style={CONTENT_AREA}>
+          <p style={SECTION_TITLE}>Procedimentos Propostos e Orçamento</p>
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+            <thead>
+              <tr>
+                <th style={TABLE_TH}>Procedimento</th>
+                <th style={{ ...TABLE_TH, textAlign: 'center' }}>Dente</th>
+                <th style={{ ...TABLE_TH, textAlign: 'center' }}>Qtd</th>
+                <th style={{ ...TABLE_TH, textAlign: 'right' }}>Total</th>
               </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr style={{ borderTop: '2px solid #18181b' }}>
-              <td colSpan={3} style={{ padding: '8px', textAlign: 'right', fontSize: '9px', fontWeight: '900' }}>TOTAL ESTIMADO</td>
-              <td style={{ padding: '8px', textAlign: 'center', fontSize: '16px', fontWeight: '900', color: '#18181b' }}>{fmt(total)}</td>
-            </tr>
-          </tfoot>
-        </table>
+            </thead>
+            <tbody>
+              {procs.map((p, i) => (
+                <tr key={p.id} style={{ borderBottom: '1px solid #f4f4f5', background: i % 2 === 0 ? 'transparent' : '#fafafa' }}>
+                  <td style={{ padding: '12px 8px', fontSize: '13px', fontWeight: '700', fontFamily: '"Crimson Pro", serif' }}>{p.name}</td>
+                  <td style={{ padding: '12px 8px', textAlign: 'center', fontSize: '12px', fontWeight: '600' }}>{p.tooth || '—'}</td>
+                  <td style={{ padding: '12px 8px', textAlign: 'center', fontSize: '12px', fontWeight: '600' }}>{p.quantity || 1}</td>
+                  <td style={{ padding: '12px 8px', textAlign: 'right', fontSize: '13px', fontWeight: '800' }}>{fmt(p.totalPrice || p.cost)}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr style={{ borderTop: '2.5px solid #18181b' }}>
+                <td colSpan={3} style={{ padding: '15px 8px', textAlign: 'right', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Investimento Total Estimado</td>
+                <td style={{ padding: '15px 8px', textAlign: 'right', fontSize: '20px', fontWeight: '900', color: '#18181b', fontFamily: '"Crimson Pro", serif' }}>{fmt(total)}</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <div style={{ padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+            <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', color: '#64748b', marginBottom: '8px' }}>Observações do Plano</p>
+            <p style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.6', margin: 0 }}>
+              * Os valores acima são estimativas baseadas no diagnóstico clínico atual.
+              Alterações no plano podem ocorrer durante a execução conforme necessidade clínica.
+              Valores válidos por 30 dias a partir da data de emissão.
+            </p>
+          </div>
+        </div>
+
         <PrintFooter signatureType="both" patientName={patient.name} />
       </div>
     );
@@ -379,31 +446,37 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     return (
       <div style={PAGE}>
         <PrintHeader title="Extrato Financeiro" patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '10px' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #18181b' }}>
-              {['Data', 'Descrição', 'Status', 'Valor'].map(h => (
-                <th key={h} style={{ fontSize: '9px', fontWeight: '900', color: '#71717a', padding: '6px', textAlign: 'left' }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {payments.map((p, i) => (
-              <tr key={p.id} style={{ borderBottom: '1px solid #f4f4f5', background: i % 2 === 0 ? 'transparent' : '#fafafa' }}>
-                <td style={{ padding: '6px', fontSize: '11px' }}>{new Date(p.date).toLocaleDateString()}</td>
-                <td style={{ padding: '6px', fontSize: '11px' }}>{p.description}</td>
-                <td style={{ padding: '6px', fontSize: '9px', fontWeight: '900', color: p.paymentStatus === 'pendente' ? '#ea580c' : '#16a34a' }}>{p.paymentStatus?.toUpperCase() || 'PAGO'}</td>
-                <td style={{ padding: '6px', fontSize: '11px', fontWeight: '700' }}>{fmt(p.amount)}</td>
+        
+        <div style={CONTENT_AREA}>
+          <p style={SECTION_TITLE}>Histórico de Recebimentos e Conciliação</p>
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+            <thead>
+              <tr>
+                <th style={TABLE_TH}>Data</th>
+                <th style={TABLE_TH}>Descrição do Lançamento</th>
+                <th style={TABLE_TH}>Status</th>
+                <th style={{ ...TABLE_TH, textAlign: 'right' }}>Valor</th>
               </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr style={{ borderTop: '2px solid #18181b' }}>
-              <td colSpan={3} style={{ padding: '8px', textAlign: 'right', fontSize: '9px', fontWeight: '900' }}>TOTAL PAGO</td>
-              <td style={{ padding: '8px', fontSize: '14px', fontWeight: '900' }}>{fmt(total)}</td>
-            </tr>
-          </tfoot>
-        </table>
+            </thead>
+            <tbody>
+              {payments.map((p, i) => (
+                <tr key={p.id} style={{ borderBottom: '1px solid #f4f4f5', background: i % 2 === 0 ? 'transparent' : '#fafafa' }}>
+                  <td style={{ padding: '12px 8px', fontSize: '12px', fontWeight: '600' }}>{new Date(p.date).toLocaleDateString('pt-BR')}</td>
+                  <td style={{ padding: '12px 8px', fontSize: '13px', fontWeight: '600', fontFamily: '"Crimson Pro", serif' }}>{p.description}</td>
+                  <td style={{ padding: '12px 8px', fontSize: '10px', fontWeight: '900', color: p.paymentStatus === 'pendente' ? '#f59e0b' : '#059669', textTransform: 'uppercase' }}>{p.paymentStatus || 'RECEBIDO'}</td>
+                  <td style={{ padding: '12px 8px', textAlign: 'right', fontSize: '13px', fontWeight: '800' }}>{fmt(p.amount)}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr style={{ borderTop: '2.5px solid #18181b' }}>
+                <td colSpan={3} style={{ padding: '15px 8px', textAlign: 'right', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Total Acumulado Pago</td>
+                <td style={{ padding: '15px 8px', textAlign: 'right', fontSize: '18px', fontWeight: '900', color: '#18181b', fontFamily: '"Crimson Pro", serif' }}>{fmt(total)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
         <PrintFooter signatureType="patient" patientName={patient.name} />
       </div>
     );

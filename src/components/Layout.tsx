@@ -50,6 +50,8 @@ const SidebarContent = ({
   isCollapsed,
   setIsCollapsed,
   toggleCalculator,
+  isCalculatorMinimized,
+  calculatorButtonRef,
   isSearchOpen,
   setIsSearchOpen
 }: any) => {
@@ -57,7 +59,19 @@ const SidebarContent = ({
   const { storageLocation, setStorageLocation } = useStorage();
 
   return (
-  <div className={`flex flex-col h-full bg-surface border-r border-border-subtle transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${isCollapsed ? 'w-20' : 'w-full md:w-64'}`}>
+  <motion.div 
+    initial={false}
+    animate={{ 
+      width: isCollapsed ? 80 : 256,
+    }}
+    transition={{ 
+      type: 'spring', 
+      stiffness: 400, 
+      damping: 40,
+      mass: 0.8
+    }}
+    className="flex flex-col h-full bg-surface border-r border-border-subtle overflow-hidden"
+  >
     <div className={`p-4 md:p-6 pb-4 flex items-center justify-between gap-2 ${isCollapsed ? 'flex-col px-2 items-center' : ''}`}>
       <div className={`${isCollapsed ? '' : 'flex-1 min-w-0'}`}>
         {!isCollapsed ? (
@@ -87,11 +101,11 @@ const SidebarContent = ({
         to="/ai-assistant"
         onClick={() => setIsMobileMenuOpen(false)}
         className={({ isActive }) =>
-          `flex items-center rounded-2xl transition-[background-color,border-color,color] duration-200 ${
+          `flex items-center rounded-2xl ${
             isActive 
-              ? 'bg-indigo-600 text-white shadow-premium border-l-4 border-indigo-400' 
+              ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold border-l-4 border-indigo-500 shadow-premium dark:shadow-none' 
               : 'text-text-secondary hover:text-indigo-600 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5'
-          } ${isCollapsed ? 'w-12 h-12 justify-center mx-auto' : 'px-4 py-3.5 w-full gap-3'}`
+          } ${isCollapsed ? 'w-10 h-10 justify-center mx-auto' : 'px-4 py-3.5 w-full gap-3'}`
         }
         title="IA Assistente"
       >
@@ -109,7 +123,7 @@ const SidebarContent = ({
           to={item.to}
           onClick={() => setIsMobileMenuOpen(false)}
           className={({ isActive }) =>
-            `flex items-center rounded-2xl transition-[background-color,border-color,color] duration-200 ${
+            `flex items-center rounded-2xl ${
               isActive 
                 ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold border-l-4 border-indigo-500 shadow-premium dark:shadow-none' 
                 : 'text-text-secondary hover:text-indigo-600 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5'
@@ -126,61 +140,82 @@ const SidebarContent = ({
     </nav>
 
     <div className="p-4 border-t border-border-subtle">
-      <div className={`flex items-center gap-2 ${isCollapsed ? 'flex-col' : 'flex-row px-2'}`}>
-        {/* Theme Toggle (Segmented Control) */}
-        <div className={`bg-zinc-100 dark:bg-black/20 p-1 rounded-xl relative flex ${isCollapsed ? 'flex-col w-10' : 'flex-1 flex-row'}`}>
-          {!isCollapsed && (
-            <motion.div 
-              className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-zinc-800 rounded-lg shadow-sm"
-              initial={false}
-              animate={{
-                x: theme === 'light' ? '0%' : '100%'
-              }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            />
-          )}
+      <div className={`flex gap-3 ${isCollapsed ? 'flex-col items-center' : 'flex-col'}`}>
+        {/* Row 1: Theme & Utils */}
+        <div className={`flex items-center gap-2 ${isCollapsed ? 'flex-col' : 'flex-row px-2'}`}>
+          {/* Theme Toggle (Segmented Control) */}
+          <div className={`bg-zinc-100 dark:bg-black/20 p-1 rounded-xl relative flex ${isCollapsed ? 'flex-col w-10' : 'flex-1 flex-row'}`}>
+            {!isCollapsed && (
+              <motion.div 
+                className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-zinc-800 rounded-lg shadow-sm"
+                initial={false}
+                animate={{
+                  x: theme === 'light' ? '0%' : '100%'
+                }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              />
+            )}
+            <button 
+              onClick={() => setTheme('light')}
+              className={`flex-1 flex items-center justify-center p-1.5 rounded-lg transition-colors relative z-10 ${theme === 'light' ? 'text-indigo-600 dark:text-white bg-white dark:bg-zinc-800 shadow-sm md:bg-transparent md:shadow-none' : 'text-text-secondary hover:text-indigo-600 dark:hover:text-white'}`}
+              title="Modo Claro"
+              aria-label="Ativar modo claro"
+            >
+              <Sun className="w-3.5 h-3.5" />
+            </button>
+            <button 
+              onClick={() => setTheme('dark')}
+              className={`flex-1 flex items-center justify-center p-1.5 rounded-lg transition-colors relative z-10 ${theme === 'dark' ? 'text-indigo-600 dark:text-white bg-white dark:bg-zinc-800 shadow-sm md:bg-transparent md:shadow-none' : 'text-text-secondary hover:text-indigo-600 dark:hover:text-white'}`}
+              title="Modo Escuro"
+              aria-label="Ativar modo escuro"
+            >
+              <Moon className="w-3.5 h-3.5" />
+            </button>
+          </div>
+  
+          {/* Individual Round Buttons */}
           <button 
-            onClick={() => setTheme('light')}
-            className={`flex-1 flex items-center justify-center p-1.5 rounded-lg transition-colors relative z-10 ${theme === 'light' ? 'text-indigo-600 dark:text-white bg-white dark:bg-zinc-800 shadow-sm md:bg-transparent md:shadow-none' : 'text-text-secondary hover:text-indigo-600 dark:hover:text-white'}`}
-            title="Modo Claro"
-            aria-label="Ativar modo claro"
+            ref={calculatorButtonRef}
+            onClick={toggleCalculator}
+            className={`flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-900 text-text-secondary hover:text-indigo-600 dark:hover:text-indigo-400 transition-all border shrink-0 ${
+              isCollapsed ? 'w-8 h-8' : 'w-10 h-10'
+            } ${
+              isCalculatorMinimized 
+                ? 'ring-2 ring-indigo-300 ring-offset-2 dark:ring-offset-zinc-950 border-indigo-300 shadow-[0_0_12px_rgba(var(--accent-rgb),0.2)]' 
+                : 'border-border-subtle'
+            }`}
+            title="Calculadora"
+            aria-label="Abrir calculadora"
           >
-            <Sun className="w-3.5 h-3.5" />
+            <Calculator className={isCollapsed ? "w-3.5 h-3.5" : "w-4.5 h-4.5"} />
           </button>
-          <button 
-            onClick={() => setTheme('dark')}
-            className={`flex-1 flex items-center justify-center p-1.5 rounded-lg transition-colors relative z-10 ${theme === 'dark' ? 'text-indigo-600 dark:text-white bg-white dark:bg-zinc-800 shadow-sm md:bg-transparent md:shadow-none' : 'text-text-secondary hover:text-indigo-600 dark:hover:text-white'}`}
-            title="Modo Escuro"
-            aria-label="Ativar modo escuro"
+          <NavLink 
+            to="/trash"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={`flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-900 text-text-secondary hover:text-indigo-600 dark:hover:text-indigo-400 transition-all border border-border-subtle shrink-0 ${
+              isCollapsed ? 'w-8 h-8' : 'w-10 h-10'
+            }`}
+            title="Lixeira"
           >
-            <Moon className="w-3.5 h-3.5" />
-          </button>
+            <Trash2 className={isCollapsed ? "w-3.5 h-3.5" : "w-4.5 h-4.5"} />
+          </NavLink>
         </div>
-
-        {/* Individual Round Buttons */}
-        <button 
-          onClick={toggleCalculator}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-900 text-text-secondary hover:text-indigo-600 dark:hover:text-white transition-all border border-zinc-200 dark:border-white/5 shrink-0"
-          title="Calculadora"
-          aria-label="Abrir calculadora"
-        >
-          <Calculator className="w-4 h-4" />
-        </button>
-        <NavLink 
-          to="/trash"
-          onClick={() => setIsMobileMenuOpen(false)}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-900 text-text-secondary hover:text-indigo-600 dark:hover:text-white transition-all border border-zinc-200 dark:border-white/5 shrink-0"
-          title="Lixeira"
-        >
-          <Trash2 className="w-4 h-4" />
-        </NavLink>
-      </div>
-
-          <div className="relative flex items-center">
+  
+        {/* Row 2: Account & Settings */}
+        <div className={`flex items-center gap-2 ${isCollapsed ? 'flex-col' : 'flex-row'}`}>
+          <NavLink 
+            to="/profile"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={`flex items-center justify-center rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-text-secondary ${isCollapsed ? 'w-10 h-10' : 'p-2.5'}`}
+            title="Configurações"
+          >
+            <Settings className={isCollapsed ? "w-4 h-4" : "w-5 h-5"} />
+          </NavLink>
+  
           <button 
             onClick={() => setShowSettings(!showSettings)}
-            className={`flex items-center gap-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-300 ${isCollapsed ? 'w-10 h-10 justify-center mx-auto' : 'flex-1 p-2'}`}
-            aria-label="Configurações do usuário"
+            className={`flex items-center gap-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 relative ${isCollapsed ? 'w-10 h-10 justify-center' : 'flex-1 p-2 min-w-0'}`}
+            aria-label="Menu do usuário"
             aria-expanded={showSettings}
           >
             {user?.photoURL && (
@@ -196,48 +231,41 @@ const SidebarContent = ({
                 {user?.displayName || user?.email}
               </span>
             )}
+            
+            <AnimatePresence>
+              {showSettings && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  className={`absolute bottom-full mb-2 bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg overflow-hidden z-50 p-1 min-w-[160px] ${isCollapsed ? 'left-full ml-4 bottom-0' : 'left-0 right-0'}`}
+                >
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors text-sm font-medium"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sair da conta
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </button>
           
           {deferredPrompt && (
             <button
               onClick={handleInstallPWA}
-              className={`p-3 rounded-xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600/20 transition-all border border-indigo-500/20 flex items-center justify-center ${isCollapsed ? 'w-10 h-10' : 'w-10 h-10 ml-auto'}`}
+              className={`rounded-xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600/20 transition-all border border-indigo-500/20 flex items-center justify-center shrink-0 ${isCollapsed ? 'w-10 h-10' : 'w-10 h-10 ml-auto'}`}
               title="Instalar App"
               aria-label="Instalar aplicativo"
             >
-              <Download className="w-5 h-5 shrink-0" />
+              <Download className={isCollapsed ? "w-4 h-4" : "w-5 h-5"} />
             </button>
           )}
-          
-          <AnimatePresence>
-            {showSettings && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className={`absolute bottom-full left-0 right-0 mb-2 bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg overflow-hidden z-50 p-1 ${isCollapsed ? 'w-48 left-full ml-2 bottom-0' : ''}`}
-              >
-                <NavLink
-                  to="/profile"
-                  onClick={() => setShowSettings(false)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary hover:text-indigo-600 dark:hover:text-white hover:bg-indigo-50 dark:hover:bg-white/5 transition-colors text-sm font-medium mb-1"
-                >
-                  <User className="w-4 h-4" />
-                  Perfil
-                </NavLink>
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors text-sm font-medium"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Sair da conta
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       </div>
     </div>
+  </motion.div>
   );
 };
 
@@ -250,6 +278,8 @@ export const Layout: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = React.useState(false);
+  const [isCalculatorMinimized, setIsCalculatorMinimized] = React.useState(false);
+  const calculatorButtonRef = React.useRef<HTMLButtonElement>(null);
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
   const [deferredPrompt, setDeferredPrompt] = React.useState<any>(null);
 
@@ -308,7 +338,16 @@ export const Layout: React.FC = () => {
           handleInstallPWA={handleInstallPWA}
           isCollapsed={isCollapsed}
           setIsCollapsed={setIsCollapsed}
-          toggleCalculator={() => setIsCalculatorOpen(!isCalculatorOpen)}
+          toggleCalculator={() => {
+            if (!isCalculatorOpen) {
+              setIsCalculatorOpen(true);
+              setIsCalculatorMinimized(false);
+            } else {
+              setIsCalculatorMinimized(!isCalculatorMinimized);
+            }
+          }}
+          isCalculatorMinimized={isCalculatorMinimized}
+          calculatorButtonRef={calculatorButtonRef}
           isSearchOpen={isSearchOpen}
           setIsSearchOpen={setIsSearchOpen}
         />
@@ -375,7 +414,10 @@ export const Layout: React.FC = () => {
                     navigate={navigate}
                     deferredPrompt={deferredPrompt}
                     handleInstallPWA={handleInstallPWA}
-                    toggleCalculator={() => setIsCalculatorOpen(!isCalculatorOpen)}
+                    toggleCalculator={() => {
+                      setIsCalculatorOpen(!isCalculatorOpen);
+                      if (!isCalculatorOpen) setIsCalculatorMinimized(false);
+                    }}
                     isSearchOpen={isSearchOpen}
                     setIsSearchOpen={setIsSearchOpen}
                   />
@@ -386,7 +428,16 @@ export const Layout: React.FC = () => {
         </AnimatePresence>
 
         {/* Main Content */}
-        <CalculatorPopup isOpen={isCalculatorOpen} onClose={() => setIsCalculatorOpen(false)} />
+        <CalculatorPopup 
+          isOpen={isCalculatorOpen} 
+          onClose={() => {
+            setIsCalculatorOpen(false);
+            setIsCalculatorMinimized(false);
+          }}
+          isMinimized={isCalculatorMinimized}
+          onMinimize={() => setIsCalculatorMinimized(true)}
+          triggerRef={calculatorButtonRef}
+        />
         <main className="flex-1 overflow-y-auto relative bg-bg scroll-smooth">
           <SyncIndicator variant="floating" />
           {firestoreError && (

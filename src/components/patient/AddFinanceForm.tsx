@@ -26,7 +26,7 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
     <div className="w-full sm:w-auto">
       <button
         onClick={() => setIsAdding(true)}
-        className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-2xl hover:bg-indigo-700 transition-all font-bold shadow-lg dark:shadow-none active:scale-95 w-full sm:w-auto max-w-full whitespace-nowrap"
+        className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-2xl hover:bg-indigo-700 transition-all font-bold shadow-md dark:shadow-none active:scale-95 w-full sm:w-auto max-w-full whitespace-nowrap"
       >
         <Plus className="w-5 h-5" />
         Novo Lançamento
@@ -71,7 +71,7 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
                       <button
                         type="button"
                         onClick={() => setNewFinance({ ...newFinance, type: 'income' })}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newFinance.type === 'income' ? 'bg-surface text-emerald-600 shadow-md' : 'text-text-secondary hover:text-text-primary'}`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newFinance.type === 'income' ? 'bg-surface text-emerald-600 shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
                       >
                         <TrendingUp className="w-4 h-4" />
                         Receita
@@ -79,7 +79,7 @@ export const AddFinanceForm: React.FC<AddFinanceFormProps> = ({
                       <button
                         type="button"
                         onClick={() => setNewFinance({ ...newFinance, type: 'expense' })}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newFinance.type === 'expense' ? 'bg-surface text-red-600 shadow-md' : 'text-text-secondary hover:text-text-primary'}`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newFinance.type === 'expense' ? 'bg-surface text-red-600 shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
                       >
                         <TrendingDown className="w-4 h-4" />
                         Despesa

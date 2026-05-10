@@ -360,7 +360,7 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
             onClick={() => setFilterType(type.id)}
             className={`px-5 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap border ${
               filterType === type.id
-                ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border-zinc-900 dark:border-white shadow-lg'
+                ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border-zinc-900 dark:border-white shadow-md'
                 : 'bg-surface text-text-secondary border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
             }`}
           >

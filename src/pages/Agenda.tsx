@@ -371,14 +371,14 @@ export const Agenda: React.FC = () => {
                 <h3 className="text-lg font-medium text-text-primary">Agendar para {format(selectedDate, 'dd/MM/yyyy')}</h3>
                 <div>
                   <label className="block text-sm font-medium text-text-secondary mb-1">Paciente</label>
-                  <select required value={newAppt.patientId} onChange={e => setNewAppt({...newAppt, patientId: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500">
+                  <select required value={newAppt.patientId} onChange={e => setNewAppt({...newAppt, patientId: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500">
                     <option value="">Selecione um paciente...</option>
                     {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-text-secondary mb-1">Dentista Responsável</label>
-                  <select required value={newAppt.responsibleDentistId} onChange={e => setNewAppt({...newAppt, responsibleDentistId: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500">
+                  <select required value={newAppt.responsibleDentistId} onChange={e => setNewAppt({...newAppt, responsibleDentistId: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500">
                     <option value="">Selecione um dentista...</option>
                     {dentists.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
@@ -386,16 +386,16 @@ export const Agenda: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-text-secondary mb-1">Horário</label>
-                    <input type="time" required value={newAppt.time} onChange={e => setNewAppt({...newAppt, time: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" />
+                    <input type="time" required value={newAppt.time} onChange={e => setNewAppt({...newAppt, time: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-text-secondary mb-1">Duração (min)</label>
-                    <input type="number" step="15" required value={newAppt.duration} onChange={e => setNewAppt({...newAppt, duration: e.target.value === '' ? '' : parseInt(e.target.value)})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" />
+                    <input type="number" step="15" required value={newAppt.duration} onChange={e => setNewAppt({...newAppt, duration: e.target.value === '' ? '' : parseInt(e.target.value)})} className="w-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-text-secondary mb-1">Observações</label>
-                  <textarea value={newAppt.notes} onChange={e => setNewAppt({...newAppt, notes: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-20" />
+                  <textarea value={newAppt.notes} onChange={e => setNewAppt({...newAppt, notes: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-20" />
                 </div>
                 <div className="flex justify-end gap-3 pt-2">
                   <button type="button" onClick={() => setIsAdding(false)} className="px-4 py-2 rounded-xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button>
