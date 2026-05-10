@@ -71,6 +71,17 @@ jobs:
                 print(f"  ✅ {folder}: {size}x{size}")
             except Exception as e:
                 print(f"  ❌ Error generating {folder}: {e}")
+          
+          # Generate splash screen (1280x720 standard Android splash size)
+          try:
+              png_data = cairosvg.svg2png(url=svg_path, output_width=1280, output_height=720)
+              splash_img = Image.open(io.BytesIO(png_data)).convert("RGBA")
+              splash_dir = os.path.join(base, "drawable")
+              os.makedirs(splash_dir, exist_ok=True)
+              splash_img.save(os.path.join(splash_dir, "splash.png"))
+              print(f"  ✅ splash.png: 1280x720")
+          except Exception as e:
+              print(f"  ⚠️ Warning: Could not generate splash.png: {e}")
           EOF
 
       - name: Capacitor Sync
