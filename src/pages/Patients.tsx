@@ -18,7 +18,7 @@ export const Patients: React.FC = () => {
   const [newPatient, setNewPatient] = useState({
     name: '',
     source: '',
-    status: 'Ativo' as const,
+    status: 'Controlado' as const,
     responsibleDentistId: '',
     phone: ''
   });
@@ -98,7 +98,7 @@ export const Patients: React.FC = () => {
     });
     
     addSyncTask(savePromise);
-    setNewPatient({ name: '', source: '', status: 'Ativo', responsibleDentistId: '', phone: '' });
+    setNewPatient({ name: '', source: '', status: 'Controlado', responsibleDentistId: '', phone: '' });
     setIsAdding(false);
   };
 
@@ -164,7 +164,7 @@ export const Patients: React.FC = () => {
               <button 
                 onClick={() => {
                   setIsAdding(false);
-                  setNewPatient({ name: '', source: '', status: 'Ativo', responsibleDentistId: '', phone: '' });
+                  setNewPatient({ name: '', source: '', status: 'Controlado', responsibleDentistId: '', phone: '' });
                   setError(null);
                 }}
                 className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 text-text-secondary hover:text-red-500 transition-all"
@@ -227,7 +227,7 @@ export const Patients: React.FC = () => {
                   onChange={(e) => setNewPatient({...newPatient, status: e.target.value as any})}
                   className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer disabled:opacity-50"
                 >
-                  <option value="Ativo">Ativo</option>
+                  <option value="Controlado">Controlado</option>
                   <option value="Inativo">Inativo</option>
                   <option value="Em Tratamento">Em Tratamento</option>
                 </select>
@@ -254,7 +254,7 @@ export const Patients: React.FC = () => {
                   disabled={isSaving}
                   onClick={() => {
                     setIsAdding(false);
-                    setNewPatient({ name: '', source: '', status: 'Ativo', responsibleDentistId: '', phone: '' });
+                    setNewPatient({ name: '', source: '', status: 'Controlado', responsibleDentistId: '', phone: '' });
                     setError(null);
                   }} 
                   className="px-6 py-2.5 rounded-2xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors font-medium disabled:opacity-50"
@@ -309,7 +309,7 @@ export const Patients: React.FC = () => {
                           ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400'
                           : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
                       }`}>
-                        {patient.status || 'Ativo'}
+                        {patient.status || 'Controlado'}
                       </span>
                     </div>
                   </div>

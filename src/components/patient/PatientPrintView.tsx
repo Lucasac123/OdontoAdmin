@@ -282,9 +282,10 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
                     <p style={{ fontFamily: '"Crimson Pro", serif', fontSize: '17px', fontWeight: '700', color: '#18181b', margin: '0 0 2px' }}>
                       {note.procedure || 'Procedimento Clínico'}
                     </p>
-                    <p style={{ fontSize: '9px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#4f46e5', margin: 0 }}>
+                    <p style={{ fontSize: '9px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.12em', color: note.status === 'realizado' ? '#16a34a' : '#ea580c', margin: 0 }}>
                       Dentista: {note.authorName}
                       {note.tooth && ` · Dente/Região: ${note.tooth}`}
+                      {` · Status: ${note.status === 'realizado' ? 'REALIZADO' : 'NÃO REALIZADO'}`}
                     </p>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '16px' }}>
@@ -309,19 +310,24 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
   /* ── 4. Plano de Tratamento e Orçamento ─────────────────────────────────── */
   const renderTreatmentPlan = () => {
     let procs: any[] = [];
-    if (patient.odontogram) {
+    let planTitle = 'Plano de Tratamento';
+    if (patient.treatmentProposals) {
       try {
-        const parsed = JSON.parse(patient.odontogram);
-        if (parsed.treatmentPlan) procs = parsed.treatmentPlan;
+        const proposals = JSON.parse(patient.treatmentProposals);
+        const selected = proposals.find((p: any) => p.status === 'selected') || proposals[0];
+        if (selected) {
+          procs = selected.procedures;
+          planTitle = selected.title;
+        }
       } catch (_) {}
     }
-    const total = procs.reduce((s, p) => s + p.cost, 0);
+    const total = procs.reduce((s, p) => s + (p.totalPrice || p.cost || 0), 0);
     const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
     return (
       <div style={PAGE}>
         <PrintHeader
-          title="Plano de Tratamento e Orçamento"
+          title={planTitle}
           subtitle="Proposta Clínica — Sujeita à Aprovação do Paciente"
           patientName={patient.name}
           patientCpf={patient.cpf}
@@ -367,7 +373,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
                 <td style={{ padding: '10px 6px', textAlign: 'center', fontFamily: '"Crimson Pro", serif', fontSize: '14px', color: '#52525b' }}>{p.tooth || '—'}</td>
                 <td style={{ padding: '10px 6px', textAlign: 'center', fontFamily: '"Crimson Pro", serif', fontSize: '14px', color: '#52525b' }}>{p.quantity || 1}</td>
                 <td style={{ padding: '10px 6px', textAlign: 'center', fontFamily: '"Crimson Pro", serif', fontSize: '14px', color: '#52525b' }}>{fmt(p.unitPrice || p.cost)}</td>
-                <td style={{ padding: '10px 6px', textAlign: 'center', fontFamily: '"Crimson Pro", serif', fontSize: '15px', fontWeight: '700', color: '#18181b' }}>{fmt(p.cost)}</td>
+                <td style={{ padding: '10px 6px', textAlign: 'center', fontFamily: '"Crimson Pro", serif', fontSize: '15px', fontWeight: '700', color: '#18181b' }}>{fmt(p.totalPrice || p.cost)}</td>
               </tr>
             ))}
           </tbody>

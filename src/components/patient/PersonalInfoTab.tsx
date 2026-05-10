@@ -27,7 +27,7 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
     state: patient.state || '',
     zipCode: patient.zipCode || '',
     source: patient.source || '',
-    status: patient.status || 'Ativo',
+    status: patient.status || 'Controlado',
     responsibleDentistId: patient.responsibleDentistId || '',
     sex: patient.sex || '',
     nationality: patient.nationality || '',
@@ -267,7 +267,7 @@ export const PersonalInfoTab: React.FC<{ patient: Patient }> = ({ patient }) => 
                 onChange={handleChange}
                 className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none"
               >
-                <option value="Ativo">Ativo</option>
+                <option value="Controlado">Controlado</option>
                 <option value="Inativo">Inativo</option>
                 <option value="Em Tratamento">Em Tratamento</option>
               </select>

@@ -63,7 +63,7 @@ const Marketing = () => {
           const lastVisit = new Date(p.updatedAt || p.createdAt);
           const sixMonthsAgo = new Date();
           sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-          return lastVisit < sixMonthsAgo && p.status === 'Ativo';
+          return lastVisit < sixMonthsAgo && p.status === 'Controlado';
         });
         break;
       case 'inactive':

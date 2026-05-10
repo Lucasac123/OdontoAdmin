@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, orderBy, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, orderBy, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, auth, storage, handleFirestoreError, OperationType, moveToTrash } from '../../firebase';
 import { Patient, Finance } from '../../types';
-import { Plus, Trash2, DollarSign, Calendar, CreditCard, Wallet, QrCode, ArrowRightLeft, Loader2, AlertCircle, Upload, FileText, Image as ImageIcon, X, Edit2 } from 'lucide-react';
+import { Plus, Trash2, DollarSign, Calendar, CreditCard, Wallet, QrCode, ArrowRightLeft, Loader2, AlertCircle, Upload, FileText, Image as ImageIcon, X, Edit2, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from '../ConfirmModal';
 import { useSync } from '../../context/SyncContext';
@@ -81,7 +81,6 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
         receiptUrl = await getDownloadURL(fileRef);
       } catch (error) {
         console.error("Error uploading receipt:", error);
-        // Continue saving even if upload fails
       }
     }
 
@@ -93,6 +92,7 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
       description: formData.description,
       type: 'income',
       paymentMethod: formData.paymentMethod,
+      paymentStatus: 'pago',
       ...(receiptUrl ? { receiptUrl } : {})
     };
 
@@ -126,6 +126,17 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
     });
   };
 
+  const handleMarkAsPaid = (paymentId: string) => {
+    const savePromise = updateDoc(doc(db, 'finances', paymentId), {
+      paymentStatus: 'pago',
+      date: new Date().toISOString().split('T')[0], // Update to current date when paid
+      updatedAt: serverTimestamp()
+    }).catch(error => {
+      handleFirestoreError(error, OperationType.UPDATE, `finances/${paymentId}`);
+    });
+    addSyncTask(savePromise);
+  };
+
   const handleDelete = async (id: string) => {
     setPaymentToDelete(id);
   };
@@ -142,14 +153,24 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
     setPaymentToDelete(null);
   };
 
-  const totalPaid = payments.reduce((acc, p) => acc + p.amount, 0);
+  const totalPaid = payments.filter(p => p.paymentStatus !== 'pendente').reduce((acc, p) => acc + p.amount, 0);
+  const totalPending = payments.filter(p => p.paymentStatus === 'pendente').reduce((acc, p) => acc + p.amount, 0);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold text-text-primary">Histórico de Pagamentos</h2>
-          <p className="text-sm text-text-secondary">Total recebido deste paciente: <span className="font-bold text-emerald-600">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPaid)}</span></p>
+          <h2 className="text-xl font-bold text-text-primary">Histórico Financeiro</h2>
+          <div className="flex flex-wrap gap-4 mt-1">
+            <p className="text-sm text-text-secondary">
+              Total Pago: <span className="font-bold text-emerald-600">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPaid)}</span>
+            </p>
+            {totalPending > 0 && (
+              <p className="text-sm text-text-secondary">
+                Total Pendente: <span className="font-bold text-amber-600">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPending)}</span>
+              </p>
+            )}
+          </div>
         </div>
         <button
           onClick={() => {
@@ -163,10 +184,10 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
             });
             setIsAdding(true);
           }}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm font-bold"
         >
           <Plus className="w-5 h-5" />
-          Novo Pagamento
+          Registrar Pagamento
         </button>
       </div>
 
@@ -220,7 +241,7 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2 font-bold"
                 >
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   {isSaving ? 'Salvando...' : (editingPayment ? 'Salvar' : 'Adicionar')}
@@ -232,14 +253,8 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
                     setIsAdding(false);
                     setEditingPayment(null);
                     setReceiptFile(null);
-                    setFormData({
-                      amount: '',
-                      date: new Date().toISOString().split('T')[0],
-                      description: 'Pagamento de tratamento',
-                      paymentMethod: 'pix'
-                    });
                   }}
-                  className="px-4 py-2.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
+                  className="px-4 py-2.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50 font-bold"
                 >
                   Cancelar
                 </button>
@@ -252,48 +267,8 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
                   value={formData.description}
                   onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   className="w-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
-                  placeholder="Ex: Pagamento da primeira parcela do implante"
+                  placeholder="Ex: Pagamento de tratamento"
                 />
-              </div>
-              <div className="md:col-span-2 lg:col-span-2">
-                <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">Comprovante (Opcional)</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="file"
-                    id="receipt-upload"
-                    className="hidden"
-                    accept="image/*,.pdf"
-                    disabled={isSaving}
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) {
-                        setReceiptFile(e.target.files[0]);
-                      }
-                    }}
-                  />
-                  <label
-                    htmlFor="receipt-upload"
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed cursor-pointer transition-colors ${
-                      receiptFile 
-                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' 
-                        : 'border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 text-text-secondary'
-                    } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <Upload className="w-4 h-4" />
-                    <span className="text-sm font-medium truncate">
-                      {receiptFile ? receiptFile.name : 'Anexar foto ou PDF'}
-                    </span>
-                  </label>
-                  {receiptFile && !isSaving && (
-                    <button
-                      type="button"
-                      onClick={() => setReceiptFile(null)}
-                      className="p-2.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors"
-                      title="Remover anexo"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  )}
-                </div>
               </div>
             </form>
           </motion.div>
@@ -305,79 +280,91 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-surface border-b border-zinc-200 dark:border-zinc-800">
-                <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Data</th>
-                <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Descrição</th>
-                <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Método</th>
-                <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Valor</th>
-                <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider text-right">Ações</th>
+                <th className="px-6 py-4 text-xs font-bold text-text-secondary uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-xs font-bold text-text-secondary uppercase tracking-wider">Data</th>
+                <th className="px-6 py-4 text-xs font-bold text-text-secondary uppercase tracking-wider">Descrição</th>
+                <th className="px-6 py-4 text-xs font-bold text-text-secondary uppercase tracking-wider">Método</th>
+                <th className="px-6 py-4 text-xs font-bold text-text-secondary uppercase tracking-wider">Valor</th>
+                <th className="px-6 py-4 text-xs font-bold text-text-secondary uppercase tracking-wider text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {payments.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-text-secondary">
-                    <div className="flex flex-col items-center gap-2">
-                      <DollarSign className="w-8 h-8 opacity-20" />
-                      <p>Nenhum pagamento registrado para este paciente.</p>
-                    </div>
+                  <td colSpan={6} className="px-6 py-12 text-center text-text-secondary italic">
+                    Nenhum registro financeiro.
                   </td>
                 </tr>
               ) : (
                 payments.map((payment) => {
                   const method = paymentMethodConfig[payment.paymentMethod || 'other'];
+                  const isPending = payment.paymentStatus === 'pendente';
+                  
                   return (
                     <motion.tr 
                       key={payment.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="hover:bg-surface transition-colors"
+                      className={`hover:bg-zinc-50 dark:hover:bg-zinc-900/30 transition-colors ${isPending ? 'bg-zinc-50/30 dark:bg-zinc-900/10' : ''}`}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2 text-sm text-text-primary">
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest ${
+                          isPending ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                        }`}>
+                          {isPending ? 'Pendente' : 'Pago'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2 text-sm text-text-primary font-medium">
                           <Calendar className="w-4 h-4 text-text-secondary" />
                           {new Date(payment.date).toLocaleDateString()}
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col gap-1">
-                          <p className="text-sm text-text-primary font-medium">{payment.description}</p>
+                          <p className={`text-sm font-bold ${isPending ? 'text-text-secondary italic' : 'text-text-primary'}`}>{payment.description}</p>
                           {payment.receiptUrl && (
-                            <a 
-                              href={payment.receiptUrl} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
-                            >
-                              <FileText className="w-3 h-3" />
-                              Ver comprovante
+                            <a href={payment.receiptUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline">
+                              <FileText className="w-3 h-3" /> Ver comprovante
                             </a>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${method.bg} ${method.color}`}>
-                          <method.icon className="w-3.5 h-3.5" />
-                          {method.label}
-                        </div>
+                        {!isPending && (
+                          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${method.bg} ${method.color}`}>
+                            <method.icon className="w-3.5 h-3.5" />
+                            {method.label}
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-bold text-emerald-600">
+                        <span className={`text-sm font-black ${isPending ? 'text-amber-600' : 'text-emerald-600'}`}>
                           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(payment.amount)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleEdit(payment)}
-                            className="p-2 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-xl transition-all disabled:opacity-50"
-                            title="Editar"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
+                          {isPending && (
+                            <button
+                              onClick={() => handleMarkAsPaid(payment.id)}
+                              className="flex items-center gap-1.5 bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition-all text-xs font-bold shadow-sm"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              Baixar
+                            </button>
+                          )}
+                          {!isPending && (
+                            <button
+                              onClick={() => handleEdit(payment)}
+                              className="p-2 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => handleDelete(payment.id)}
-                            className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all disabled:opacity-50"
-                            title="Excluir"
+                            className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -391,21 +378,11 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
           </table>
         </div>
       </div>
-
-      <div className="p-4 bg-surface rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-start gap-3">
-        <AlertCircle className="w-5 h-5 text-text-secondary shrink-0 mt-0.5" />
-        <p className="text-xs text-text-secondary leading-relaxed">
-          Os pagamentos registrados aqui também aparecem no seu fluxo de caixa geral em "Financeiro". 
-          Utilize esta aba para acompanhar especificamente o acerto financeiro deste paciente.
-        </p>
-      </div>
-
+      
       <ConfirmModal
         isOpen={!!paymentToDelete}
-        title="Excluir Pagamento"
-        message="Tem certeza que deseja excluir este registro de pagamento? Ele será movido para a lixeira."
-        confirmLabel="Excluir"
-        cancelLabel="Cancelar"
+        title="Excluir Registro"
+        message="Deseja excluir este registro financeiro? Ele será movido para a lixeira."
         onConfirm={confirmDelete}
         onCancel={() => setPaymentToDelete(null)}
         variant="danger"

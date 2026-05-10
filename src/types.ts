@@ -27,17 +27,36 @@ export interface Patient {
   state?: string;
   zipCode?: string;
   source?: string;
-  status?: 'Ativo' | 'Inativo' | 'Em Tratamento';
+  status?: 'Controlado' | 'Inativo' | 'Em Tratamento';
   tcleStatus?: 'nao_impresso' | 'nao_assinado' | 'assinado';
   tcleSignedAt?: string;
   tcleSignatureUrl?: string;
   anamnesis?: string; // JSON string
   odontogram?: string; // JSON string
-  treatmentStatus?: 'Planejado' | 'Em Andamento' | 'Concluído';
-  treatmentStartDate?: string;
-  treatmentEndDate?: string;
+  treatmentProposals?: string; // JSON string of TreatmentProposal[]
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface TreatmentProcedure {
+  id: string;
+  name: string;
+  tooth?: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  status: 'realizado' | 'não_realizado';
+  executionDate?: string;
+  paymentStatus: 'pago' | 'pendente';
+}
+
+export interface TreatmentProposal {
+  id: string;
+  title: string;
+  procedures: TreatmentProcedure[];
+  totalValue: number;
+  status: 'proposed' | 'selected' | 'rejected';
+  createdAt: string;
 }
 
 export interface Appointment {
@@ -73,6 +92,7 @@ export interface Finance {
   paymentMethod?: 'money' | 'card' | 'pix' | 'transfer' | 'other';
   percentages?: string; // JSON string
   receiptUrl?: string;
+  paymentStatus?: 'pago' | 'pendente';
   createdAt: string;
 }
 

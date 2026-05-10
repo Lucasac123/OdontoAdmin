@@ -176,7 +176,7 @@ export const Dashboard: React.FC = () => {
     const lastVisit = new Date(p.updatedAt || p.createdAt);
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-    return lastVisit < sixMonthsAgo && p.status === 'Ativo';
+    return lastVisit < sixMonthsAgo && p.status === 'Controlado';
   }).sort((a, b) => {
     const dateA = new Date(a.updatedAt || a.createdAt).getTime();
     const dateB = new Date(b.updatedAt || b.createdAt).getTime();
@@ -184,7 +184,7 @@ export const Dashboard: React.FC = () => {
   }).slice(0, 5); // Show top 5 oldest
 
   const patientStatusData = [
-    { name: 'Ativo', value: patients.filter(p => p.status === 'Ativo').length },
+    { name: 'Controlado', value: patients.filter(p => p.status === 'Controlado').length },
     { name: 'Inativo', value: patients.filter(p => p.status === 'Inativo').length },
     { name: 'Em Tratamento', value: patients.filter(p => p.status === 'Em Tratamento').length },
   ].filter(d => d.value > 0);
