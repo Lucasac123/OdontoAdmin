@@ -24,6 +24,7 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
   const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
   const [isPrinting, setIsPrinting] = useState(false);
   const [evolutions, setEvolutions] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
 
   useEffect(() => {
     if (preSelectedTab && isOpen) {
@@ -60,9 +61,23 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
       setEvolutions(data);
     });
 
+    // Fetch payments
+    const qPayments = query(
+      collection(db, 'finances'),
+      where('patientId', '==', patient.id),
+      where('type', '==', 'income')
+    );
+
+    const unsubPayments = onSnapshot(qPayments, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setPayments(data);
+    });
+
     return () => {
       unsubTemplates();
       unsubEvolutions();
+      unsubPayments();
     };
   }, [isOpen, patient.id]);
 
@@ -98,8 +113,10 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
   const baseSections = [
     { id: 'personal', label: 'Dados Pessoais' },
     { id: 'anamnesis', label: 'Anamnese' },
+    { id: 'odontogram', label: 'Odontograma' },
     { id: 'evolution', label: 'Evolução Clínica' },
     { id: 'treatment', label: 'Plano de Tratamento' },
+    { id: 'payments', label: 'Histórico Financeiro' },
   ];
 
   return (
@@ -222,6 +239,7 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
         selectedSections={selectedSections}
         selectedTemplates={templates.filter(t => selectedTemplates.includes(t.id))}
         evolutions={evolutions}
+        payments={payments}
       />
     </AnimatePresence>
   );

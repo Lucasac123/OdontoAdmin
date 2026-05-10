@@ -38,13 +38,14 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
       collection(db, 'finances'),
       where('dentistId', '==', auth.currentUser.uid),
       where('patientId', '==', patient.id),
-      where('type', '==', 'income'),
-      orderBy('date', 'desc')
+      where('type', '==', 'income')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Finance));
-      setPayments(data);
+      // Sort client-side to avoid index requirement
+      const sortedData = data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setPayments(sortedData);
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'finances');
     });

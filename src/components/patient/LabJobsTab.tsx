@@ -150,11 +150,11 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Enviado': return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'Em Confecção': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
-      case 'Recebido': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'Instalado': return 'bg-indigo-50 text-indigo-700 border-indigo-200';
-      default: return 'bg-gray-50 text-gray-700 border-gray-200';
+      case 'Enviado': return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20';
+      case 'Em Confecção': return 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-500/10 dark:text-yellow-400 dark:border-yellow-500/20';
+      case 'Recebido': return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20';
+      case 'Instalado': return 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20';
+      default: return 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-zinc-500/10 dark:text-zinc-400 dark:border-zinc-500/20';
     }
   };
 

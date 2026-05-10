@@ -82,7 +82,9 @@ export const Dashboard: React.FC = () => {
     );
 
     const unsubAppointments = onSnapshot(qAppointments, (snapshot) => {
-      setAppointments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Appointment)));
+      const sortedData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Appointment))
+        .sort((a, b) => a.date.localeCompare(b.date));
+      setAppointments(sortedData);
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'appointments'));
 
     const unsubFinances = onSnapshot(qFinances, (snapshot) => {
@@ -176,7 +178,7 @@ export const Dashboard: React.FC = () => {
     const lastVisit = new Date(p.updatedAt || p.createdAt);
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-    return lastVisit < sixMonthsAgo && p.status === 'Controlado';
+    return lastVisit < sixMonthsAgo && (p.status === 'Controlado' || p.status === 'Ativo');
   }).sort((a, b) => {
     const dateA = new Date(a.updatedAt || a.createdAt).getTime();
     const dateB = new Date(b.updatedAt || b.createdAt).getTime();
@@ -184,7 +186,7 @@ export const Dashboard: React.FC = () => {
   }).slice(0, 5); // Show top 5 oldest
 
   const patientStatusData = [
-    { name: 'Controlado', value: patients.filter(p => p.status === 'Controlado').length },
+    { name: 'Controlado', value: patients.filter(p => p.status === 'Controlado' || p.status === 'Ativo').length },
     { name: 'Inativo', value: patients.filter(p => p.status === 'Inativo').length },
     { name: 'Em Tratamento', value: patients.filter(p => p.status === 'Em Tratamento').length },
   ].filter(d => d.value > 0);
