@@ -83,6 +83,7 @@ jobs:
               ("drawable-land-hdpi", 1536, 900),
               ("drawable-land-xhdpi", 2048, 1200),
               ("drawable-land-xxhdpi", 3072, 1800),
+              ("drawable-land-xxxhdpi", 4096, 2400),
           ]
           
           for splash_dir_name, width, height in splash_configs:
