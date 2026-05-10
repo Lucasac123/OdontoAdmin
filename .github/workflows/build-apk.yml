@@ -72,8 +72,13 @@ jobs:
             except Exception as e:
                 print(f"  ❌ Error generating {folder}: {e}")
           
-          # Generate splash screens for all landscape densities
+          # Generate splash screens for all densities
           splash_configs = [
+              ("drawable-mdpi", 512, 512),
+              ("drawable-hdpi", 768, 768),
+              ("drawable-xhdpi", 1024, 1024),
+              ("drawable-xxhdpi", 1536, 1536),
+              ("drawable-xxxhdpi", 2048, 2048),
               ("drawable-land-mdpi", 1024, 600),
               ("drawable-land-hdpi", 1536, 900),
               ("drawable-land-xhdpi", 2048, 1200),
