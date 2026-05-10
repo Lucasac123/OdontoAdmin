@@ -67,5 +67,3 @@ export const PrintFooter: React.FC<PrintFooterProps> = ({
     </div>
   );
 };
-  );
-};
