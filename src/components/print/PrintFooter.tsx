@@ -1,12 +1,12 @@
 import React from 'react';
 
-
 interface PrintFooterProps {
   dentistName?: string;
   cro?: string;
   date?: Date;
   signatureType?: 'dentist' | 'patient' | 'both';
   patientName?: string;
+  showDate?: boolean;
 }
 
 export const PrintFooter: React.FC<PrintFooterProps> = ({ 
@@ -14,7 +14,8 @@ export const PrintFooter: React.FC<PrintFooterProps> = ({
   cro = "CRO XXXXX", 
   date = new Date(),
   signatureType = 'dentist',
-  patientName = "Paciente"
+  patientName = "Paciente",
+  showDate = true
 }) => {
   const formattedDate = date.toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -23,48 +24,71 @@ export const PrintFooter: React.FC<PrintFooterProps> = ({
   });
 
   const govBrUrl = "https://assinador.iti.br/";
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(govBrUrl)}`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(govBrUrl)}`;
 
   return (
-    <div className="print-only print-footer mt-16 pt-8 border-t border-zinc-200 avoid-break">
-      {/* Signature Section */}
-      <div className="flex justify-between items-end gap-8 mb-12">
-        <div className="flex-1 flex flex-col gap-20">
+    <div className="print-only print-footer avoid-break" style={{ marginTop: '40px', paddingTop: '32px', borderTop: '2px solid #e4e4e7' }}>
+
+      {/* Local e Data */}
+      {showDate && (
+        <p className="font-serif text-sm text-zinc-600 mb-10" style={{ fontSize: '12px' }}>
+          {/* Location placeholder – filled by dentist */}
+          ________________________________, {formattedDate}.
+        </p>
+      )}
+
+      {/* Signature Grid */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '32px' }}>
+        
+        {/* Left: Signature lines */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: signatureType === 'both' ? '40px' : '0' }}>
+
+          {/* Patient signature */}
           {signatureType === 'both' && (
-            <div className="text-center">
-              <div className="border-b-2 border-zinc-900 w-full mb-2 h-16"></div>
-              <p className="font-bold text-zinc-900 text-sm">{patientName}</p>
-              <p className="text-zinc-600 text-[10px] uppercase tracking-wider font-medium">Assinatura do Paciente / Responsável</p>
+            <div style={{ textAlign: 'center' }}>
+              {/* blank space for manual signature */}
+              <div style={{ height: '72px', borderBottom: '2px solid #18181b', marginBottom: '6px' }} />
+              <p style={{ fontWeight: '700', fontSize: '11px', color: '#18181b', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{patientName}</p>
+              <p style={{ fontSize: '9px', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: '600', margin: '2px 0 0' }}>Assinatura do Paciente / Responsável Legal</p>
             </div>
           )}
-          
-          <div className="text-center">
-            <div className="border-b-2 border-zinc-900 w-full mb-2 h-16"></div>
-            <p className="font-bold text-zinc-900 text-sm">{dentistName}</p>
-            <p className="text-zinc-600 text-[10px] uppercase tracking-wider font-medium">{cro} - Cirurgião-Dentista</p>
-          </div>
+
+          {/* Dentist signature */}
+          {(signatureType === 'dentist' || signatureType === 'both') && (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ height: '72px', borderBottom: '2px solid #18181b', marginBottom: '6px' }} />
+              <p style={{ fontWeight: '700', fontSize: '11px', color: '#18181b', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{dentistName}</p>
+              <p style={{ fontSize: '9px', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: '600', margin: '2px 0 0' }}>{cro} · Cirurgião-Dentista</p>
+            </div>
+          )}
+
+          {/* Patient-only */}
+          {signatureType === 'patient' && (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ height: '72px', borderBottom: '2px solid #18181b', marginBottom: '6px' }} />
+              <p style={{ fontWeight: '700', fontSize: '11px', color: '#18181b', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{patientName}</p>
+              <p style={{ fontSize: '9px', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: '600', margin: '2px 0 0' }}>Assinatura do Paciente / Responsável Legal</p>
+            </div>
+          )}
         </div>
 
-        {/* QR Code Section */}
-        <div className="shrink-0 flex flex-col items-center gap-2 p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
+        {/* Right: QR Code digital signature */}
+        <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '10px', border: '1px solid #e4e4e7', borderRadius: '10px', background: '#fafafa' }}>
           <img 
             src={qrCodeUrl} 
-            alt="QR Code Assinatura Digital" 
-            className="w-24 h-24"
+            alt="QR Assinatura Digital gov.br" 
+            style={{ width: '72px', height: '72px' }}
           />
-          <div className="text-center">
-            <p className="text-[9px] font-black text-zinc-900 uppercase tracking-tighter leading-none">Assine Digitalmente</p>
-            <p className="text-[8px] text-zinc-500 font-medium">Portal gov.br</p>
-          </div>
+          <p style={{ fontSize: '7px', fontWeight: '800', color: '#18181b', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0, textAlign: 'center' }}>Assine Digitalmente</p>
+          <p style={{ fontSize: '7px', color: '#71717a', fontWeight: '600', margin: 0 }}>Portal gov.br · ICP-Brasil</p>
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-[10px] text-zinc-400 font-medium">
-        <span>Documento oficial gerado via OdontoAdmin</span>
-        <span>{formattedDate}</span>
+      {/* Footer bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', paddingTop: '8px', borderTop: '1px solid #f4f4f5' }}>
+        <span style={{ fontSize: '8px', color: '#a1a1aa', fontWeight: '500' }}>Documento oficial – OdontoAdmin · Sistema de Gestão Clínica</span>
+        <span style={{ fontSize: '8px', color: '#a1a1aa', fontWeight: '500' }}>{formattedDate}</span>
       </div>
-
-
     </div>
   );
 };

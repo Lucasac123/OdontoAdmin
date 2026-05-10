@@ -90,17 +90,20 @@ export const ConsentFormsTab = ({ patient }: { patient: Patient }) => {
       )}
     </div>
 
-    <div className="print-only max-w-4xl mx-auto font-sans w-full" style={{ padding: '0 40px' }}>
-      <PrintHeader 
-        title={selectedTemplate === 'imageRelease' ? "Autorização de Uso de Imagem" : "Termo de Consentimento Livre e Esclarecido"} 
-        patientName={patient.name} 
-      />
-      
-      <div className="mb-16 whitespace-pre-wrap font-serif text-xl leading-relaxed text-zinc-900 text-justify px-4">
-        {customText || templates[selectedTemplate as keyof typeof templates]}
+    <div className="print-only" style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <div style={{ pageBreakAfter: 'always', breakAfter: 'page', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+        <PrintHeader
+          title={selectedTemplate === 'imageRelease' ? 'Autorização de Uso de Imagem' : 'Termo de Consentimento Livre e Esclarecido'}
+          subtitle="Documento de Consentimento Informado — Leia com Atenção"
+          patientName={patient.name}
+          patientCpf={patient.cpf}
+          patientDob={patient.dob ? new Date(patient.dob).toLocaleDateString('pt-BR') : undefined}
+        />
+        <div style={{ fontFamily: '"Crimson Pro", serif', fontSize: '17px', lineHeight: '1.9', color: '#18181b', whiteSpace: 'pre-wrap', textAlign: 'justify', marginBottom: '32px' }}>
+          {customText || templates[selectedTemplate as keyof typeof templates]}
+        </div>
+        <PrintFooter signatureType="both" patientName={patient.name} />
       </div>
-
-      <PrintFooter signatureType="both" patientName={patient.name} />
     </div>
     </>
   );

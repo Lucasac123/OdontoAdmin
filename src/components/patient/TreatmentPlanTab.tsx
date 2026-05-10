@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { doc, updateDoc, collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType } from '../../firebase';
 import { Patient, ProcedureTemplate } from '../../types';
@@ -25,7 +25,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
   const [newProcedure, setNewProcedure] = useState({ name: '', tooth: '', quantity: '1', unitPrice: '' });
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   
-  const [treatmentStatus, setTreatmentStatus] = useState<'Planejado' | 'Em Andamento' | 'Concluído'>(patient.treatmentStatus || 'Planejado');
+  const [treatmentStatus, setTreatmentStatus] = useState<'Planejado' | 'Em Andamento' | 'ConcluÃ­do'>(patient.treatmentStatus || 'Planejado');
   const [startDate, setStartDate] = useState(patient.treatmentStartDate || '');
   const [endDate, setEndDate] = useState(patient.treatmentEndDate || '');
   const [hasChanges, setHasChanges] = useState(false);
@@ -159,7 +159,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                   <Save className="w-5 h-5 animate-pulse" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-amber-900 dark:text-amber-300">Alterações Não Salvas</p>
+                  <p className="text-sm font-bold text-amber-900 dark:text-amber-300">AlteraÃ§Ãµes NÃ£o Salvas</p>
                   <p className="text-xs text-amber-700 dark:text-amber-400/80">Lembre-se de salvar antes de sair desta aba.</p>
                 </div>
               </div>
@@ -204,7 +204,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
           </div>
 
           <div className="bg-surface rounded-3xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm">
-            <h3 className="text-sm font-semibold text-text-primary mb-4">Informações do Plano</h3>
+            <h3 className="text-sm font-semibold text-text-primary mb-4">InformaÃ§Ãµes do Plano</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wider">Status do Tratamento</label>
@@ -216,11 +216,11 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                 >
                   <option value="Planejado">Planejado</option>
                   <option value="Em Andamento">Em Andamento</option>
-                  <option value="Concluído">Concluído</option>
+                  <option value="ConcluÃ­do">ConcluÃ­do</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wider">Data de Início</label>
+                <label className="block text-xs font-medium text-text-secondary mb-1 uppercase tracking-wider">Data de InÃ­cio</label>
                 <input 
                   type="date"
                   value={startDate}
@@ -252,7 +252,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                   onChange={handleTemplateSelect}
                   className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
                 >
-                  <option value="">-- Selecione um procedimento pré-definido --</option>
+                  <option value="">-- Selecione um procedimento prÃ©-definido --</option>
                   {templates.map(t => (
                     <option key={t.id} value={t.id}>{t.name} - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.finalPriceWithDifficulty)}</option>
                   ))}
@@ -267,12 +267,12 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                     disabled={isSaving}
                     value={newProcedure.name} 
                     onChange={e => setNewProcedure({...newProcedure, name: e.target.value})} 
-                    placeholder="Ex: Restauração Resina MOD"
+                    placeholder="Ex: RestauraÃ§Ã£o Resina MOD"
                     className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50" 
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">Dente/Região</label>
+                  <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">Dente/RegiÃ£o</label>
                   <input 
                     type="text" 
                     disabled={isSaving}
@@ -295,7 +295,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                   />
                 </div>
                 <div className="md:col-span-3">
-                  <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">V. Unitário (R$)</label>
+                  <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">V. UnitÃ¡rio (R$)</label>
                   <input 
                     type="number" 
                     step="0.01" 
@@ -333,7 +333,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                       <div className="flex-1">
                         <p className="font-medium text-text-primary">{proc.name}</p>
                         <div className="flex gap-4 text-sm text-text-secondary">
-                          {proc.tooth && <span>Dente/Região: {proc.tooth}</span>}
+                          {proc.tooth && <span>Dente/RegiÃ£o: {proc.tooth}</span>}
                           <span>Qtd: {proc.quantity || 1}</span>
                           <span>Unit: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(proc.unitPrice || proc.cost)}</span>
                         </div>
@@ -360,7 +360,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
 
         <div className="lg:w-80">
           <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-3xl border border-emerald-100 dark:border-emerald-800/30 p-6 h-fit">
-            <h3 className="text-lg font-bold text-emerald-900 dark:text-emerald-100 mb-6">Resumo do Orçamento</h3>
+            <h3 className="text-lg font-bold text-emerald-900 dark:text-emerald-100 mb-6">Resumo do OrÃ§amento</h3>
             <div className="space-y-4">
               <div className="flex justify-between text-sm">
                 <span className="text-emerald-800 dark:text-emerald-200">Total de Procedimentos:</span>
@@ -397,7 +397,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
                 <Trash2 className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-bold text-text-primary text-center mb-2">Excluir Procedimento?</h3>
-              <p className="text-sm text-text-secondary text-center mb-6">Esta alteração será permanente após você salvar o plano.</p>
+              <p className="text-sm text-text-secondary text-center mb-6">Esta alteraÃ§Ã£o serÃ¡ permanente apÃ³s vocÃª salvar o plano.</p>
               <div className="flex gap-3">
                 <button 
                   onClick={() => setDeleteConfirmId(null)}
@@ -418,66 +418,78 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
       </AnimatePresence>
     </div>
 
-    <div className="print-only max-w-4xl mx-auto font-sans w-full" style={{ padding: '0 40px' }}>
-      <PrintHeader title="Planejamento de Tratamento Odontológico" patientName={patient.name} />
-      
-      <div className="mb-10 grid grid-cols-2 gap-y-2 gap-x-12 p-6 border border-zinc-100 rounded-2xl bg-zinc-50/30">
-        <div className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Status do Plano</div>
-        <div className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Data de Emissão</div>
-        <div className="font-serif text-lg text-zinc-900">{treatmentStatus}</div>
-        <div className="font-serif text-lg text-zinc-900">{new Date().toLocaleDateString('pt-BR')}</div>
-        
-        {startDate && (
-          <>
-            <div className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mt-4">Previsão de Início</div>
-            <div className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mt-4">Previsão de Conclusão</div>
-            <div className="font-serif text-lg text-zinc-900">{new Date(startDate).toLocaleDateString('pt-BR')}</div>
-            <div className="font-serif text-lg text-zinc-900">{endDate ? new Date(endDate).toLocaleDateString('pt-BR') : 'A definir'}</div>
-          </>
-        )}
-      </div>
+    <div className="print-only" style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <div style={{ pageBreakAfter: 'always', breakAfter: 'page', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+        <PrintHeader
+          title="Plano de Tratamento e OrÃ§amento"
+          subtitle="Proposta ClÃ­nica â€” Sujeita Ã  AprovaÃ§Ã£o do Paciente"
+          patientName={patient.name}
+          patientCpf={patient.cpf}
+          patientDob={patient.dob ? new Date(patient.dob).toLocaleDateString('pt-BR') : undefined}
+        />
 
-      <div className="mb-12">
-        <table className="w-full text-left border-collapse">
+        {/* Plan meta */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '24px', padding: '14px 18px', border: '2px solid #18181b', borderRadius: '10px' }}>
+          {[
+            { label: 'Status do Plano',        value: treatmentStatus || 'Em Planejamento' },
+            { label: 'PrevisÃ£o de InÃ­cio',      value: startDate ? new Date(startDate).toLocaleDateString('pt-BR') : 'A definir' },
+            { label: 'PrevisÃ£o de ConclusÃ£o',   value: endDate   ? new Date(endDate).toLocaleDateString('pt-BR')   : 'A definir' },
+          ].map(f => (
+            <div key={f.label}>
+              <p style={{ fontSize: '8px', fontWeight: '700', textTransform: 'uppercase' as const, letterSpacing: '0.15em', color: '#a1a1aa', margin: '0 0 4px' }}>{f.label}</p>
+              <p style={{ fontFamily: '"Crimson Pro", serif', fontSize: '15px', fontWeight: '700', color: '#18181b', margin: 0 }}>{f.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Procedures table */}
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
           <thead>
-            <tr className="border-b-2 border-zinc-900">
-              <th className="py-3 font-serif text-xs uppercase tracking-widest text-zinc-500">Procedimento / Descrição</th>
-              <th className="py-3 text-center font-serif text-xs uppercase tracking-widest text-zinc-500">Região</th>
-              <th className="py-3 text-center font-serif text-xs uppercase tracking-widest text-zinc-500">Qtd</th>
-              <th className="py-3 text-right font-serif text-xs uppercase tracking-widest text-zinc-500">Valor Total</th>
+            <tr style={{ borderBottom: '3px solid #18181b' }}>
+              {['Procedimento / DescriÃ§Ã£o', 'Dente / RegiÃ£o', 'Qtd', 'Valor Unit.', 'Total'].map((h, i) => (
+                <th key={h} style={{ fontFamily: '"Crimson Pro", serif', fontSize: '9px', fontWeight: '900', textTransform: 'uppercase' as const, letterSpacing: '0.12em', color: '#71717a', padding: '8px 6px', textAlign: i === 0 ? 'left' as const : 'center' as const }}>
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100">
-            {procedures.map(p => (
-              <tr key={p.id} className="avoid-break">
-                <td className="py-4 font-serif text-lg text-zinc-900 pr-4">{p.name}</td>
-                <td className="py-4 text-center font-serif text-lg text-zinc-700">{p.tooth || '-'}</td>
-                <td className="py-4 text-center font-serif text-lg text-zinc-700">{p.quantity || 1}</td>
-                <td className="py-4 text-right font-serif text-lg font-bold text-zinc-900">
-                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.cost)}
-                </td>
+          <tbody>
+            {procedures.length === 0 && (
+              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '24px', fontFamily: '"Crimson Pro", serif', fontStyle: 'italic', color: '#a1a1aa' }}>Nenhum procedimento incluÃ­do.</td></tr>
+            )}
+            {procedures.map((p, i) => (
+              <tr key={p.id} style={{ borderBottom: '1px solid #f4f4f5', pageBreakInside: 'avoid', breakInside: 'avoid', background: i % 2 === 0 ? 'transparent' : '#fafafa' }}>
+                <td style={{ padding: '9px 6px', fontFamily: '"Crimson Pro", serif', fontSize: '15px', fontWeight: '600', color: '#18181b' }}>{p.name}</td>
+                <td style={{ padding: '9px 6px', textAlign: 'center', fontFamily: '"Crimson Pro", serif', fontSize: '14px', color: '#52525b' }}>{p.tooth || 'â€”'}</td>
+                <td style={{ padding: '9px 6px', textAlign: 'center', fontFamily: '"Crimson Pro", serif', fontSize: '14px', color: '#52525b' }}>{p.quantity || 1}</td>
+                <td style={{ padding: '9px 6px', textAlign: 'center', fontFamily: '"Crimson Pro", serif', fontSize: '14px', color: '#52525b' }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.unitPrice || p.cost)}</td>
+                <td style={{ padding: '9px 6px', textAlign: 'center', fontFamily: '"Crimson Pro", serif', fontSize: '15px', fontWeight: '700', color: '#18181b' }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.cost)}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
-            <tr className="border-t-4 border-zinc-900 font-bold">
-              <td colSpan={3} className="py-6 text-right font-serif text-xl uppercase tracking-widest text-zinc-500">Investimento Total:</td>
-              <td className="py-6 text-right font-serif text-2xl text-indigo-700">
+            <tr style={{ borderTop: '3px solid #18181b' }}>
+              <td colSpan={4} style={{ padding: '14px 6px', textAlign: 'right', fontFamily: '"Crimson Pro", serif', fontSize: '11px', fontWeight: '900', textTransform: 'uppercase' as const, letterSpacing: '0.12em', color: '#71717a' }}>
+                Investimento Total Estimado
+              </td>
+              <td style={{ padding: '14px 6px', textAlign: 'center', fontFamily: '"Crimson Pro", serif', fontSize: '22px', fontWeight: '900', color: '#4f46e5' }}>
                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalCost)}
               </td>
             </tr>
           </tfoot>
         </table>
-      </div>
 
-      <div className="mb-16 p-6 border-l-4 border-zinc-200 bg-zinc-50/50 rounded-r-2xl avoid-break">
-        <p className="font-serif text-sm text-zinc-600 leading-relaxed italic">
-          * Este orçamento tem validade de 30 dias. O plano de tratamento pode sofrer alterações conforme a resposta biológica do paciente ou necessidade de procedimentos complementares identificados durante a execução.
-        </p>
-      </div>
+        {/* Validity note */}
+        <div style={{ pageBreakInside: 'avoid', breakInside: 'avoid', marginBottom: '24px', padding: '12px 16px', border: '1px solid #e4e4e7', borderRadius: '8px', background: '#fafafa' }}>
+          <p style={{ fontFamily: '"Crimson Pro", serif', fontSize: '12px', color: '#71717a', lineHeight: '1.6', margin: 0, fontStyle: 'italic' }}>
+            * Este orÃ§amento tem validade de 30 dias a partir da data de emissÃ£o. O inÃ­cio do tratamento estÃ¡ condicionado Ã  aprovaÃ§Ã£o deste plano e Ã  assinatura do Termo de Consentimento Livre e Esclarecido. Valores podem ser revisados em caso de procedimentos adicionais identificados durante o tratamento.
+          </p>
+        </div>
 
-      <PrintFooter signatureType="both" patientName={patient.name} />
+        <PrintFooter signatureType="both" patientName={patient.name} />
+      </div>
     </div>
     </>
   );
 };
+

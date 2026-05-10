@@ -157,38 +157,101 @@ body {
 
 @media print {
   @page {
-    size: A4;
-    margin: 15mm;
+    size: A4 portrait;
+    margin: 14mm 16mm 16mm 16mm;
   }
 
-  /* Aggressive reset to ensure no clipping occurs during print */
-  html, body, #root, #root > div, main, .flex-1, .overflow-hidden, .overflow-y-auto {
+  /* ── 1. Full reset: kill all heights / overflows that cause clipping ──── */
+  html, body {
+    width: 100% !important;
     height: auto !important;
-    min-height: auto !important;
+    min-height: 0 !important;
     max-height: none !important;
     overflow: visible !important;
-    position: static !important; /* Fixed/Absolute positions often cause clipping */
-    display: block !important;
-    background-color: white !important;
+    background: #ffffff !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    font-size: 12px !important;
   }
 
-  .no-print, nav, aside, header, footer:not(.print-footer), button, .sidebar, [role="button"], .fixed:not(.print-only *):not(.unified-print-only *), .absolute:not(.print-only *):not(.unified-print-only *) {
+  /* Kill every scrollable / fixed / absolute / flex container that can clip */
+  #root,
+  #root > *,
+  main,
+  [class*="flex-1"],
+  [class*="overflow-hidden"],
+  [class*="overflow-y-auto"],
+  [class*="overflow-x-auto"],
+  [class*="h-full"],
+  [class*="max-h-"],
+  [class*="min-h-screen"] {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+    display: block !important;
+    flex: none !important;
+    background: transparent !important;
+  }
+
+  /* ── 2. Hide everything that must not print ─────────────────────────── */
+  .no-print,
+  nav,
+  aside,
+  header:not([class*="print"]),
+  footer:not([class*="print"]),
+  button,
+  [role="button"],
+  [role="dialog"],
+  .sidebar,
+  .modal,
+  .fixed,
+  .sticky,
+  [class*="toast"],
+  [class*="tooltip"],
+  [class*="dropdown"],
+  [class*="popover"] {
     display: none !important;
   }
 
-  /* Ensure print containers are visible and full-width */
-  .print-only, .unified-print-only {
+  /* ── 3. Make print containers visible and full-width ─────────────────── */
+  .print-only,
+  .unified-print-only {
     display: block !important;
     position: relative !important;
     width: 100% !important;
     height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     overflow: visible !important;
     margin: 0 !important;
     padding: 0 !important;
+    background: white !important;
   }
 
+  /* ── 4. Page-break helpers ───────────────────────────────────────────── */
+  .page-break {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  .page-break-after {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  /* Critical: never break inside these elements */
+  .avoid-break,
+  .print-footer,
+  table tr,
+  thead,
+  tfoot {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* ── 5. Suppress card chrome in print ───────────────────────────────── */
   .premium-card {
     box-shadow: none !important;
     border: none !important;
@@ -198,23 +261,6 @@ body {
     margin: 0 !important;
   }
 
-  /* Improved page break handling */
-  .page-break {
-    page-break-before: always;
-    break-before: page;
-    clear: both;
-  }
-  
-  .page-break-after {
-    page-break-after: always;
-    break-after: page;
-    clear: both;
-  }
-
-  .avoid-break {
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
 
   /* Special case for unified printing class on body */
   body.is-unified-printing .print-only {
