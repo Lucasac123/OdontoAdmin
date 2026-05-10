@@ -29,7 +29,11 @@ export const Profile: React.FC = () => {
     email: '',
     phone: '',
     birthDate: '',
-    cro: ''
+    cro: '',
+    type: 'consultorio',
+    address: '',
+    epao: '',
+    responsibleTechnician: ''
   });
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -126,7 +130,11 @@ export const Profile: React.FC = () => {
             email: data.email || user.email || '',
             phone: data.phone || '',
             birthDate: data.birthDate || '',
-            cro: data.cro || ''
+            cro: data.cro || '',
+            type: data.type || 'consultorio',
+            address: data.address || '',
+            epao: data.epao || '',
+            responsibleTechnician: data.responsibleTechnician || ''
           });
         } else {
           setFormData(prev => ({
@@ -161,7 +169,11 @@ export const Profile: React.FC = () => {
         name: formData.name,
         phone: formData.phone,
         birthDate: formData.birthDate,
-        cro: formData.cro
+        cro: formData.cro,
+        type: formData.type,
+        address: formData.address,
+        epao: formData.epao,
+        responsibleTechnician: formData.responsibleTechnician
       });
       alert('Perfil atualizado com sucesso!');
     } catch (error) {
@@ -498,6 +510,55 @@ export const Profile: React.FC = () => {
                     />
                   </div>
                 </div>
+
+                <div className="space-y-2">
+                  <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Tipo de Ambiente</label>
+                  <select
+                    name="type"
+                    value={formData.type}
+                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as 'clinica' | 'consultorio' }))}
+                    className="w-full pl-4 pr-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
+                  >
+                    <option value="consultorio">Consultório Odontológico</option>
+                    <option value="clinica">Clínica Odontológica</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Endereço</label>
+                    <input
+                      type="text"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                      className="w-full pl-4 pr-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
+                    />
+                </div>
+
+                {formData.type === 'clinica' && (
+                  <>
+                  <div className="space-y-2">
+                      <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Número EPAO</label>
+                      <input
+                        type="text"
+                        name="epao"
+                        value={formData.epao}
+                        onChange={handleChange}
+                        className="w-full pl-4 pr-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
+                      />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Responsável Técnico</label>
+                    <input
+                      type="text"
+                      name="responsibleTechnician"
+                      value={formData.responsibleTechnician}
+                      onChange={handleChange}
+                      className="w-full pl-4 pr-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
+                    />
+                  </div>
+                  </>
+                )}
               </div>
 
               <div className="pt-4 flex justify-end">

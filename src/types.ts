@@ -241,6 +241,11 @@ export interface ProcedureTemplate {
 export interface ClinicSettings {
   id?: string;
   dentistId: string;
+  type: 'clinica' | 'consultorio';
+  address?: string;
+  cro?: string;
+  epao?: string; // only if clinical
+  responsibleTechnician?: string; // only if clinical
   workHoursPerDay: number;
   workDaysPerWeek: number;
   assetsValue?: number;
