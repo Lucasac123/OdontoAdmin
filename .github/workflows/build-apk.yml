@@ -44,8 +44,7 @@ jobs:
           python3 - <<'EOF'
           import cairosvg
           from PIL import Image
-          import io, os
-          import sys
+          import io, os, sys
 
           svg_path = "public/logo.svg"
           if not os.path.exists(svg_path):
@@ -60,10 +59,16 @@ jobs:
             "mipmap-xxxhdpi": 192,
           }
           base = "android/app/src/main/res"
+
           for folder, size in sizes.items():
             try:
                 png_data = cairosvg.svg2png(url=svg_path, output_width=size, output_height=size)
                 img = Image.open(io.BytesIO(png_data)).convert("RGBA")
+                
+                # Validate image
+                if img.size != (size, size):
+                    raise ValueError(f"Generated image size {img.size} doesn't match expected {(size, size)}")
+                
                 out_dir = os.path.join(base, folder)
                 os.makedirs(out_dir, exist_ok=True)
                 img.save(os.path.join(out_dir, "ic_launcher.png"))
@@ -71,7 +76,8 @@ jobs:
                 print(f"  ✅ {folder}: {size}x{size}")
             except Exception as e:
                 print(f"  ❌ Error generating {folder}: {e}")
-          
+                sys.exit(1)
+
           # Generate splash screens for all densities
           splash_configs = [
               ("drawable-mdpi", 512, 512),
@@ -85,7 +91,7 @@ jobs:
               ("drawable-land-xxhdpi", 3072, 1800),
               ("drawable-land-xxxhdpi", 4096, 2400),
           ]
-          
+
           for splash_dir_name, width, height in splash_configs:
               try:
                   png_data = cairosvg.svg2png(url=svg_path, output_width=width, output_height=height)
@@ -96,6 +102,7 @@ jobs:
                   print(f"  ✅ {splash_dir_name}/splash.png: {width}x{height}")
               except Exception as e:
                   print(f"  ❌ Error generating {splash_dir_name}: {e}")
+                  sys.exit(1)
           EOF
 
       - name: Capacitor Sync
