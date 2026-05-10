@@ -122,54 +122,7 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
   };
 
   const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Evolução Clínica - ${patient.name}</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 40px; line-height: 1.6; }
-              .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 40px; }
-              .evolution-item { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
-              .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
-              .status-realizado { background: #dcfce7; color: #166534; }
-              .status-pendente { background: #fee2e2; color: #991b1b; }
-              .evolution-date { font-weight: bold; color: #555; margin-bottom: 10px; }
-              .evolution-content { white-space: pre-wrap; }
-              .footer { text-align: center; margin-top: 100px; font-size: 14px; color: #666; }
-              .signature-line { margin-top: 50px; text-align: center; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>EVOLUÇÃO CLÍNICA</h1>
-              <p>Paciente: ${patient.name}</p>
-              <p>Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}</p>
-            </div>
-            <div class="evolutions">
-              ${notes.map(note => `
-                <div class="evolution-item">
-                  <div class="status-badge ${note.status === 'realizado' ? 'status-realizado' : 'status-pendente'}">
-                    ${note.status === 'realizado' ? 'Realizado' : 'Não Realizado'}
-                  </div>
-                  <div class="evolution-date">${formatDate(note.createdAt)} - Dr(a). ${note.authorName}</div>
-                  ${note.procedure ? `<p><strong>Procedimento:</strong> ${note.procedure}</p>` : ''}
-                  ${note.tooth ? `<p><strong>Dente/Região:</strong> ${note.tooth}</p>` : ''}
-                  <div class="evolution-content">${note.content}</div>
-                </div>
-              `).join('')}
-            </div>
-            <div class="signature-line">
-              <p>_________________________________________________</p>
-              <p>Assinatura do(a) Cirurgião(ã)-Dentista</p>
-            </div>
-            <script>window.print(); window.close();</script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-    }
+    window.print();
   };
 
   return (
@@ -343,6 +296,27 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
         title="Excluir Evolução"
         message="Tem certeza que deseja excluir este registro?"
       />
+
+      {/* ─── PRINT VIEW ─── */}
+      <div className="print-only" style={{ maxWidth: '800px', margin: '0 auto', fontSize: '10px' }}>
+        <div style={{ padding: '20px' }}>
+           <h1 className='text-center text-xl font-bold border-b border-black pb-4 mb-6'>EVOLUÇÃO CLÍNICA</h1>
+           <p><strong>Paciente:</strong> {patient.name}</p>
+           <p><strong>Data de Emissão:</strong> {new Date().toLocaleDateString('pt-BR')}</p>
+           
+           <div style={{ marginTop: '20px' }}>
+             {notes.map(note => (
+               <div key={note.id} style={{ marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+                 <p style={{ fontWeight: 'bold' }}>{formatDate(note.createdAt)} - Dr(a). {note.authorName}</p>
+                 <p>{note.procedure ? <strong>Procedimento: {note.procedure}</strong> : ''}</p>
+                 <p>{note.tooth ? <strong>Dente/Região: {note.tooth}</strong> : ''}</p>
+                 <p style={{ whiteSpace: 'pre-wrap' }}>{note.content}</p>
+                 <p style={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase' }}>Status: {note.status === 'realizado' ? 'Realizado' : 'Não Realizado'}</p>
+               </div>
+             ))}
+           </div>
+        </div>
+      </div>
     </div>
   );
 };

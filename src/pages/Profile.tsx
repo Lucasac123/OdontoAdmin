@@ -33,7 +33,8 @@ export const Profile: React.FC = () => {
     type: 'consultorio',
     address: '',
     epao: '',
-    responsibleTechnician: ''
+    responsibleTechnician: '',
+    clinicName: ''
   });
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -134,7 +135,8 @@ export const Profile: React.FC = () => {
             type: data.type || 'consultorio',
             address: data.address || '',
             epao: data.epao || '',
-            responsibleTechnician: data.responsibleTechnician || ''
+            responsibleTechnician: data.responsibleTechnician || '',
+            clinicName: data.clinicName || ''
           });
         } else {
           setFormData(prev => ({
@@ -173,7 +175,8 @@ export const Profile: React.FC = () => {
         type: formData.type,
         address: formData.address,
         epao: formData.epao,
-        responsibleTechnician: formData.responsibleTechnician
+        responsibleTechnician: formData.responsibleTechnician,
+        clinicName: formData.clinicName
       });
       alert('Perfil atualizado com sucesso!');
     } catch (error) {
@@ -530,6 +533,17 @@ export const Profile: React.FC = () => {
                       type="text"
                       name="address"
                       value={formData.address}
+                      onChange={handleChange}
+                      className="w-full pl-4 pr-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nome da Clínica/Consultório</label>
+                    <input
+                      type="text"
+                      name="clinicName"
+                      value={formData.clinicName}
                       onChange={handleChange}
                       className="w-full pl-4 pr-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
                     />

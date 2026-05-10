@@ -90,7 +90,7 @@ service cloud.firestore {
              isValidOptionalString('treatmentStartDate', 0, 50) &&
              isValidOptionalString('treatmentEndDate', 0, 50) &&
              isValidOptionalString('source', 0, 200) &&
-             (!( 'status' in data ) || data.status in ['Ativo', 'Inativo', 'Em Tratamento']) &&
+             (!( 'status' in data ) || data.status in ['Controlado', 'Ativo', 'Inativo', 'Em Tratamento']) &&
              isValidOptionalString('sex', 0, 20) &&
              isValidOptionalString('nationality', 0, 100) &&
              isValidOptionalString('placeOfBirth', 0, 100) &&

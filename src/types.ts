@@ -241,6 +241,7 @@ export interface ProcedureTemplate {
 export interface ClinicSettings {
   id?: string;
   dentistId: string;
+  clinicName?: string;
   type: 'clinica' | 'consultorio';
   address?: string;
   cro?: string;
