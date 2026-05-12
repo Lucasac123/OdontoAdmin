@@ -13,7 +13,7 @@ export const Pricing: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'hour' | 'procedures'>('hour');
   
   // Clinical Hour State
-  const [settings, setSettings] = useState<ClinicSettings>({ dentistId: '', workHoursPerDay: 8, workDaysPerWeek: 5, updatedAt: '' });
+  const [settings, setSettings] = useState<ClinicSettings>({ dentistId: '', workHoursPerDay: 8, workDaysPerWeek: 5, type: 'consultorio', updatedAt: '' });
   const [expenses, setExpenses] = useState<FixedExpense[]>([]);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<FixedExpense | null>(null);
@@ -45,7 +45,7 @@ export const Pricing: React.FC = () => {
       if (docSnap.exists()) {
         setSettings({ id: docSnap.id, ...docSnap.data() } as ClinicSettings);
       } else {
-        setSettings({ dentistId: uid, workHoursPerDay: 8, workDaysPerWeek: 5, updatedAt: new Date().toISOString() });
+        setSettings({ dentistId: uid, workHoursPerDay: 8, workDaysPerWeek: 5, type: 'consultorio', updatedAt: new Date().toISOString() });
       }
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'clinic_settings');

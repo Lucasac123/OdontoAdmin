@@ -69,7 +69,7 @@ export const PaymentsTab: React.FC<{ patient: Patient }> = ({ patient }) => {
     e.preventDefault();
     if (!auth.currentUser) return;
 
-    const amount = parseFloat(formData.amount);
+    const amount = parseFloat(formData.amount.replace(',', '.'));
     if (isNaN(amount) || amount <= 0) return;
 
     setIsSaving(true);

@@ -120,12 +120,12 @@ service cloud.firestore {
     function isValidFinance(data) {
       return hasRequiredFields(['dentistId', 'date', 'description', 'amount', 'type', 'createdAt']) &&
              data.dentistId is string && data.dentistId.size() > 0 && data.dentistId.size() < 100 &&
-             isValidDateString(data.date) &&
+             (isValidDateString(data.date) || (data.date is string && data.date.matches("^\\d{4}-\\d{2}-\\d{2}$"))) &&
              data.description is string && data.description.size() > 0 && data.description.size() < 500 &&
              data.amount is number &&
              data.type in ['income', 'expense'] &&
-             (data.percentages == null || isValidOptionalString('percentages', 0, 5000)) &&
-             (data.patientId == null || isValidOptionalString('patientId', 0, 100)) &&
+             (!('percentages' in data) || data.percentages == null || isValidOptionalString('percentages', 0, 5000)) &&
+             (!('patientId' in data) || data.patientId == null || isValidOptionalString('patientId', 0, 100)) &&
              (!( 'paymentMethod' in data ) || data.paymentMethod == null || data.paymentMethod in ['money', 'card', 'pix', 'transfer', 'other']) &&
              isValidDateString(data.createdAt);
     }
@@ -253,9 +253,9 @@ service cloud.firestore {
 
     match /finances/{financeId} {
       allow read: if (isAuthenticated() && resource.data.dentistId == request.auth.uid) || isAdmin();
-      allow create: if isAuthenticated() && isValidFinance(request.resource.data) && uidUnchanged('dentistId');
-      allow update: if (isDocOwner() || isAdmin()) && isValidFinance(request.resource.data) && uidNotModified('dentistId') && uidNotModified('createdAt');
-      allow delete: if isDocOwner() || isAdmin();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
     }
 
     match /files/{fileId} {

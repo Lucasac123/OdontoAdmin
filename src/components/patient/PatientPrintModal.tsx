@@ -117,6 +117,8 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
     { id: 'evolution', label: 'Evolução Clínica' },
     { id: 'treatment', label: 'Plano de Tratamento' },
     { id: 'payments', label: 'Histórico Financeiro' },
+    { id: 'atestado', label: 'Atestado Odontológico' },
+    { id: 'recomendacoes', label: 'Recomendações Pós-Op' },
   ];
 
   return (

@@ -197,13 +197,13 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
           <section>
             <h3 className="text-sm font-bold bg-slate-100 p-2 border-l-4 border-slate-800 uppercase">Detalhamento Clínico</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 text-xs p-2">
-              {Object.values(teethState).filter((t: any) => t.notes || t.status !== 'healthy').length === 0 ? (
+              {Object.entries(teethState).filter(([_, t]: any) => t.notes || t.status !== 'healthy').length === 0 ? (
                 <p className="col-span-2 text-center italic text-slate-400">Nenhuma alteração registrada em dentes isolados.</p>
               ) : (
-                Object.values(teethState).filter((t: any) => t.notes || t.status !== 'healthy').map((t: any) => (
-                  <div key={t.id} className="border-b border-slate-200 pb-2 print:break-inside-avoid">
+                Object.entries(teethState).filter(([_, t]: any) => t.notes || t.status !== 'healthy').map(([toothId, t]: any) => (
+                  <div key={toothId} className="border-b border-slate-200 pb-2 print:break-inside-avoid">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-bold text-slate-700">Dente {t.id}</span>
+                      <span className="font-bold text-slate-700">Dente {toothId}</span>
                       <span className="text-[9px] px-2 py-0.5 bg-slate-800 text-white rounded font-bold uppercase tracking-wider">{t.status}</span>
                     </div>
                     {t.notes && <p className="text-slate-600 italic">"{t.notes}"</p>}
@@ -381,6 +381,65 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     );
   };
 
+  /* ── Atestado Odontológico ─────────────────────────────────────────────── */
+  const renderAtestado = () => (
+    <div className="flex flex-col h-full print:break-after-page mb-10">
+      <PrintHeader
+        title="Atestado Odontológico"
+        patientName={patient.name}
+        patientCpf={patient.cpf}
+        patientDob={patientDob}
+      />
+      <div className="flex-grow text-sm leading-8 text-slate-800 text-justify space-y-4 pt-10">
+        <p>
+          Atesto para os devidos fins que o(a) paciente <strong>{patient.name}</strong>, portador(a) do CPF nº <strong>{patient.cpf || '_________________'}</strong>, esteve sob meus cuidados profissionais no dia {new Date().toLocaleDateString('pt-BR')}, das ___:___ às ___:___ horas, necessitando de <strong>_______</strong> dias de repouso por motivo de tratamento odontológico.
+        </p>
+        <p className="mt-8 font-bold">
+          CID: _______
+        </p>
+      </div>
+      <PrintFooter signatureType="dentist" />
+    </div>
+  );
+
+  /* ── Recomendações Pós-Operatórias ─────────────────────────────────────── */
+  const renderRecomendacoes = () => (
+    <div className="flex flex-col h-full print:break-after-page mb-10">
+      <PrintHeader
+        title="Recomendações Pós-Operatórias"
+        patientName={patient.name}
+        patientCpf={patient.cpf}
+        patientDob={patientDob}
+      />
+      <div className="flex-grow text-sm text-slate-800 leading-relaxed text-justify mt-6">
+        <ul className="space-y-4">
+          <li className="print:break-inside-avoid">
+            <strong>1. Alimentação:</strong> Líquida e pastosa, fria ou gelada nas primeiras 24 horas. Evitar alimentos quentes, duros ou condimentados.
+          </li>
+          <li className="print:break-inside-avoid">
+            <strong>2. Repouso:</strong> Evitar esforço físico, sol e calor por 48 horas. Dormir com a cabeça mais elevada que o resto do corpo.
+          </li>
+          <li className="print:break-inside-avoid">
+            <strong>3. Higiene:</strong> Não bochechar vigorosamente nas primeiras 24 horas para não remover o coágulo. Escovar os dentes normalmente, mas com muito cuidado na área operada.
+          </li>
+          <li className="print:break-inside-avoid">
+            <strong>4. Sangramento:</strong> É normal um leve sangramento (saliva rosada) nas primeiras horas. Em caso de hemorragia, dobre uma gaze limpa e morda em cima do local por 30 minutos.
+          </li>
+          <li className="print:break-inside-avoid">
+            <strong>5. Inchaço:</strong> Aplicar bolsa de gelo no rosto (lado operado) nas primeiras 24 horas (20 minutos aplica, 20 minutos descansa) para minimizar o edema.
+          </li>
+          <li className="print:break-inside-avoid">
+            <strong>6. Medicação:</strong> Tomar rigorosamente os medicamentos prescritos no receituário nos horários indicados.
+          </li>
+        </ul>
+        <p className="mt-8 font-bold text-center border p-3 rounded bg-slate-50 text-red-600 print:text-black print:border-black">
+          Em caso de dor intensa, sangramento abundante ou dúvidas, entre em contato com a clínica imediatamente.
+        </p>
+      </div>
+      <PrintFooter signatureType="dentist" />
+    </div>
+  );
+
   /* ── 7. Document Templates ─────────────────────────────────────────────── */
   const renderTemplate = (template: DocumentTemplate) => {
     let content = template.content
@@ -410,6 +469,8 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
       {selectedSections.includes('evolution')  && renderEvolution()}
       {selectedSections.includes('treatment')  && renderTreatmentPlan()}
       {selectedSections.includes('payments')   && renderPayments()}
+      {selectedSections.includes('atestado')   && renderAtestado()}
+      {selectedSections.includes('recomendacoes') && renderRecomendacoes()}
       {selectedTemplates.map(renderTemplate)}
     </div>
   );
