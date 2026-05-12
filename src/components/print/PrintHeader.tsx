@@ -1,82 +1,97 @@
 import React from 'react';
-import { Logo } from '../Logo';
+
+interface ClinicInfo {
+  name: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  epao?: string;
+}
 
 interface PrintHeaderProps {
-  title: string;
+  clinic?: ClinicInfo;
+  title?: string;
   subtitle?: string;
   patientName?: string;
   patientCpf?: string;
   patientDob?: string;
-  via?: string;   // e.g. "1ª Via – Farmácia"
+  via?: string;
 }
 
-export const PrintHeader: React.FC<PrintHeaderProps> = ({ title, subtitle, patientName, patientCpf, patientDob, via }) => {
+export const PrintHeader: React.FC<PrintHeaderProps> = ({ 
+  clinic = {
+    name: 'Clínica Odontológica',
+    address: 'Endereço da Clínica, S/N',
+    phone: '(00) 0000-0000',
+    email: 'contato@clinica.com'
+  }, 
+  title, 
+  subtitle,
+  patientName,
+  patientCpf,
+  patientDob,
+  via
+}) => {
   return (
-    <div className="print-only avoid-break" style={{ marginBottom: '24px', position: 'relative' }}>
-
-      {/* Via badge (top-right) */}
-      {via && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
-          <span style={{
-            fontSize: '7px', fontWeight: '900', textTransform: 'uppercase',
-            letterSpacing: '0.2em', color: '#18181b',
-            border: '1px solid #18181b', borderRadius: '4px',
-            padding: '2px 8px', background: '#fafafa'
-          }}>{via}</span>
+    <div className="print-only avoid-break w-full mb-6">
+      <div className="border-b-2 border-slate-800 pb-4 mb-6 flex justify-between items-start">
+        <div className="flex flex-col">
+          <h1 className="text-xl font-bold text-slate-800 uppercase tracking-wider">{clinic.name}</h1>
+          <p className="text-xs text-slate-600 mt-1">{clinic.address}</p>
+          <div className="flex gap-4 mt-1">
+            <p className="text-xs text-slate-600">{clinic.phone}</p>
+            <p className="text-xs text-slate-600">{clinic.email}</p>
+          </div>
+        </div>
+        <div className="text-right flex flex-col items-end gap-2">
+          {clinic.epao && (
+            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded font-medium border border-slate-200">
+              {clinic.epao}
+            </span>
+          )}
+          {via && (
+            <span className="text-xs font-black uppercase text-slate-900 border border-slate-900 rounded px-2 py-1 bg-slate-50 tracking-widest">
+              {via}
+            </span>
+          )}
+        </div>
+      </div>
+      
+      {/* Optional Title Section - some components might pass title directly */}
+      {(title || subtitle) && (
+        <div style={{ textAlign: 'center', padding: '16px 0 16px' }}>
+          {title && (
+            <h1 className="font-sans text-xl font-bold uppercase tracking-wide text-slate-900 m-0 leading-none">
+              {title}
+            </h1>
+          )}
+          {subtitle && (
+            <div className="inline-block border-t border-slate-300 mt-2 mt-2">
+              <p className="font-sans text-xs text-slate-500 m-0 pt-1 tracking-widest uppercase">{subtitle}</p>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Clinic header row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: '1.5px solid #18181b' }}>
-        <div></div>
-
-        {/* Clinic contact info */}
-        <div style={{ textAlign: 'right', fontSize: '9px', color: '#18181b', lineHeight: '1.4', fontWeight: '600' }}>
-          <p style={{ margin: 0, color: '#52525b' }}>Endereço do consultório vai aqui</p>
-          <p style={{ margin: 0, color: '#52525b' }}>Cidade · SP · CEP 00000-000</p>
-        </div>
-      </div>
-
-      {/* Document title */}
-      <div style={{ textAlign: 'center', padding: '16px 0 16px' }}>
-        <h1 style={{
-          fontFamily: 'sans-serif',
-          fontSize: '24px', fontWeight: '800',
-          textTransform: 'uppercase', letterSpacing: '0.04em',
-          color: '#18181b', margin: 0, lineHeight: 1
-        }}>{title}</h1>
-        {subtitle && (
-          <div style={{ display: 'inline-block', borderTop: '0.5px solid #d4d4d8', marginTop: '6px', paddingTop: '6px' }}>
-            <p style={{ fontFamily: 'sans-serif', fontSize: '12px', color: '#52525b', margin: 0 }}>{subtitle}</p>
-          </div>
-        )}
-      </div>
-
-      {/* Patient identification bar */}
+      {/* Patient Info Bar */}
       {patientName && (
-        <div style={{
-          display: 'grid', gridTemplateColumns: '2fr 1fr 1fr',
-          background: '#ffffff', border: '1px solid #18181b', borderRadius: '3px',
-          padding: '8px 16px', marginTop: '4px', gap: '16px'
-        }}>
-          <div>
-            <p style={{ fontSize: '7px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#a1a1aa', margin: '0 0 2px' }}>Paciente</p>
-            <p style={{ fontFamily: 'sans-serif', fontSize: '14px', fontWeight: '700', color: '#18181b', textTransform: 'uppercase', margin: 0 }}>{patientName}</p>
+        <div className="bg-slate-50 p-3 rounded-md mb-6 border border-slate-200 print:border-slate-300 print:bg-transparent flex flex-wrap gap-x-6 gap-y-2">
+          <div className="flex flex-col">
+            <span className="text-[10px] text-slate-500 font-semibold uppercase">Paciente</span>
+            <span className="text-sm font-bold text-slate-800">{patientName}</span>
           </div>
-          <div>
-            <p style={{ fontSize: '7px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#a1a1aa', margin: '0 0 2px' }}>Identificação</p>
-            <p style={{ fontSize: '10px', fontWeight: '700', color: '#18181b', margin: 0 }}>
-              {patientCpf ? `CPF: ${patientCpf}` : 'CPF: ————'}
-            </p>
-            <p style={{ fontSize: '9px', color: '#52525b', margin: '1px 0 0', fontWeight: '500' }}>
-              {patientDob ? `Nasc: ${patientDob}` : 'Nasc: ————'}
-            </p>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: '7px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#a1a1aa', margin: '0 0 2px' }}>Emissão</p>
-            <p style={{ fontSize: '11px', fontWeight: '700', color: '#18181b', margin: 0 }}>{new Date().toLocaleDateString('pt-BR')}</p>
-            <p style={{ fontSize: '9px', color: '#52525b', margin: '1px 0 0', fontWeight: '500' }}>{new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
-          </div>
+          {patientCpf && (
+            <div className="flex flex-col">
+              <span className="text-[10px] text-slate-500 font-semibold uppercase">CPF</span>
+              <span className="text-sm text-slate-700">{patientCpf}</span>
+            </div>
+          )}
+          {patientDob && (
+            <div className="flex flex-col">
+              <span className="text-[10px] text-slate-500 font-semibold uppercase">Data de Nasc.</span>
+              <span className="text-sm text-slate-700">{patientDob}</span>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -2,7 +2,6 @@ import React from 'react';
 import { Patient, DocumentTemplate } from '../../types';
 import { PrintHeader } from '../print/PrintHeader';
 import { PrintFooter } from '../print/PrintFooter';
-import { TWO_COPY_MEDICATIONS } from '../../data/clinicalData';
 
 interface PatientPrintViewProps {
   patient: Patient;
@@ -12,94 +11,6 @@ interface PatientPrintViewProps {
   payments: any[];
 }
 
-/* ─────────────────────────────────────────────────────────────────────────── */
-/*  Shared style helpers (inline styles for guaranteed print fidelity)         */
-/* ─────────────────────────────────────────────────────────────────────────── */
-const PAGE: React.CSSProperties = {
-  pageBreakAfter: 'always',
-  breakAfter: 'page',
-  pageBreakInside: 'avoid',
-  breakInside: 'avoid',
-  padding: '0',
-  marginBottom: '40px',
-  minHeight: '100%',
-  position: 'relative',
-  display: 'flex',
-  flexDirection: 'column'
-};
-
-const SECTION_TITLE: React.CSSProperties = {
-  fontFamily: '"Crimson Pro", serif',
-  fontSize: '11px',
-  fontWeight: '900',
-  textTransform: 'uppercase',
-  letterSpacing: '0.2em',
-  color: '#18181b',
-  borderBottom: '2px solid #18181b',
-  paddingBottom: '6px',
-  marginBottom: '20px',
-  display: 'flex',
-  alignItems: 'center',
-  gap: '10px'
-};
-
-const FIELD_LABEL: React.CSSProperties = {
-  fontSize: '8px',
-  fontWeight: '800',
-  textTransform: 'uppercase',
-  letterSpacing: '0.15em',
-  color: '#a1a1aa',
-  display: 'block',
-  marginBottom: '2px',
-};
-
-const FIELD_VALUE: React.CSSProperties = {
-  fontFamily: '"Crimson Pro", serif',
-  fontSize: '15px',
-  fontWeight: '700',
-  color: '#18181b',
-  lineHeight: 1.3,
-};
-
-const DOTTED_LINE: React.CSSProperties = {
-  borderBottom: '1px solid #e4e4e7',
-  minHeight: '26px',
-  paddingBottom: '4px',
-  marginBottom: '4px',
-};
-
-const CHECKBOX: React.CSSProperties = {
-  width: '14px',
-  height: '14px',
-  border: '1.5px solid #18181b',
-  borderRadius: '3px',
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontSize: '10px',
-  fontWeight: '900',
-  flexShrink: 0,
-};
-
-const TABLE_TH: React.CSSProperties = {
-  fontSize: '9px',
-  fontWeight: '900',
-  textTransform: 'uppercase',
-  letterSpacing: '0.12em',
-  color: '#71717a',
-  padding: '10px 8px',
-  textAlign: 'left',
-  borderBottom: '2px solid #18181b'
-};
-
-const CONTENT_AREA: React.CSSProperties = {
-  flex: 1,
-  marginBottom: '30px'
-};
-
-/* ─────────────────────────────────────────────────────────────────────────── */
-/*  Component                                                                   */
-/* ─────────────────────────────────────────────────────────────────────────── */
 export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
   patient,
   selectedSections,
@@ -115,7 +26,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
 
   /* ── 1. Dados Pessoais ──────────────────────────────────────────────────── */
   const renderPersonal = () => (
-    <div style={PAGE}>
+    <div className="flex flex-col h-full print:break-after-page mb-10">
       <PrintHeader
         title="Ficha de Identificação"
         patientName={patient.name}
@@ -123,48 +34,33 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
         patientDob={patientDob}
       />
 
-      <div style={CONTENT_AREA}>
-        <div style={{ marginBottom: '25px' }}>
-          <p style={SECTION_TITLE}>I. Dados Pessoais</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '15px 25px' }}>
-            {[
-              { label: 'Nome Completo', value: patient.name, span: 3 },
-              { label: 'Data de Nascimento', value: patientDob || '___/___/______' },
-              { label: 'CPF', value: patient.cpf || '_________________' },
-              { label: 'RG / Órgão Emissor', value: `${patient.rg || '_______'} ${patient.issuingBody ? `/ ${patient.issuingBody}` : ''}` },
-              { label: 'Profissão', value: patient.profession || 'Não informada' },
-              { label: 'Estado Civil', value: patient.maritalStatus || 'Não informado' },
-              { label: 'Plano de Saúde', value: (patient as any).healthInsurance || 'Não informado' },
-            ].map((f, i) => (
-              <div key={i} style={f.span ? { gridColumn: `span ${f.span}` } : {}}>
-                <span style={FIELD_LABEL}>{f.label}</span>
-                <div style={DOTTED_LINE}>
-                  <span style={FIELD_VALUE}>{f.value}</span>
-                </div>
-              </div>
-            ))}
+      <div className="flex-grow space-y-6">
+        <section>
+          <h3 className="text-sm font-bold bg-slate-100 p-2 border-l-4 border-slate-800 uppercase">I. Dados Pessoais</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-3 text-xs p-2">
+            <div className="col-span-2 md:col-span-3">
+              <span className="font-semibold text-slate-500 block">Nome Completo:</span> 
+              <span className="text-sm font-bold">{patient.name}</span>
+            </div>
+            <div><span className="font-semibold text-slate-500 block">Data de Nascimento:</span> {patientDob || '___/___/______'}</div>
+            <div><span className="font-semibold text-slate-500 block">CPF:</span> {patient.cpf || '_________________'}</div>
+            <div><span className="font-semibold text-slate-500 block">RG / Órgão:</span> {patient.rg || '_______'} {patient.issuingBody ? `/ ${patient.issuingBody}` : ''}</div>
+            <div><span className="font-semibold text-slate-500 block">Profissão:</span> {patient.profession || 'Não informada'}</div>
+            <div><span className="font-semibold text-slate-500 block">Estado Civil:</span> {patient.maritalStatus || 'Não informado'}</div>
+            <div><span className="font-semibold text-slate-500 block">Plano de Saúde:</span> {(patient as any).healthInsurance || 'Não informado'}</div>
           </div>
-        </div>
+        </section>
 
-        <div style={{ marginBottom: '25px' }}>
-          <p style={SECTION_TITLE}>II. Contato e Endereço</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '15px 25px' }}>
-            {[
-              { label: 'Endereço Residencial', value: patient.address || 'Não informado', span: 3 },
-              { label: 'Cidade / Estado', value: `${patient.city || '_______'} / ${patient.state || '__'}` },
-              { label: 'CEP', value: patient.zipCode || '__________' },
-              { label: 'Telefone', value: patient.phone || 'Não informado' },
-              { label: 'E-mail', value: patient.email || 'Não informado', span: 2 },
-            ].map((f, i) => (
-              <div key={i} style={f.span ? { gridColumn: `span ${f.span}` } : {}}>
-                <span style={FIELD_LABEL}>{f.label}</span>
-                <div style={DOTTED_LINE}>
-                  <span style={FIELD_VALUE}>{f.value}</span>
-                </div>
-              </div>
-            ))}
+        <section>
+          <h3 className="text-sm font-bold bg-slate-100 p-2 border-l-4 border-slate-800 uppercase">II. Contato e Endereço</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-3 text-xs p-2">
+            <div className="col-span-2 md:col-span-3"><span className="font-semibold text-slate-500 block">Endereço Residencial:</span> {patient.address || 'Não informado'}</div>
+            <div><span className="font-semibold text-slate-500 block">Cidade / Estado:</span> {patient.city || '_______'} / {patient.state || '__'}</div>
+            <div><span className="font-semibold text-slate-500 block">CEP:</span> {patient.zipCode || '__________'}</div>
+            <div><span className="font-semibold text-slate-500 block">Telefone:</span> {patient.phone || 'Não informado'}</div>
+            <div className="col-span-2"><span className="font-semibold text-slate-500 block">E-mail:</span> {patient.email || 'Não informado'}</div>
           </div>
-        </div>
+        </section>
       </div>
 
       <PrintFooter signatureType="patient" patientName={patient.name} />
@@ -188,7 +84,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     ];
 
     return (
-      <div style={PAGE}>
+      <div className="flex flex-col h-full print:break-after-page mb-10">
         <PrintHeader
           title="Ficha de Anamnese"
           subtitle="Histórico de Saúde do Paciente"
@@ -197,54 +93,43 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
           patientDob={patientDob}
         />
 
-        <div style={CONTENT_AREA}>
-          <div style={{ marginBottom: '20px' }}>
-            <p style={SECTION_TITLE}>I. Queixas e Histórico Clínico</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px 30px' }}>
-              {[
-                { label: 'Queixa Principal', value: fd.mainComplaint },
-                { label: 'Histórico Médico', value: fd.medicalHistory },
-                { label: 'Alergias', value: fd.allergies },
-                { label: 'Medicamentos em Uso', value: fd.medications },
-              ].map((item, i) => (
-                <div key={i} style={{ marginBottom: '10px' }}>
-                  <span style={FIELD_LABEL}>{item.label}</span>
-                  <div style={{ borderBottom: '1px solid #e4e4e7', minHeight: '32px', paddingBottom: '4px' }}>
-                    <span style={{ ...FIELD_VALUE, fontSize: '13px' }}>
-                      {item.value || 'Não informado'}
-                    </span>
-                  </div>
-                </div>
-              ))}
+        <div className="flex-grow space-y-6">
+          <section>
+            <h3 className="text-sm font-bold bg-slate-100 p-2 border-l-4 border-slate-800 uppercase">I. Queixas e Histórico Clínico</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 text-xs p-2">
+              <div className="border-b border-slate-200 pb-2"><span className="font-semibold text-slate-500 block mb-1">Queixa Principal:</span> {fd.mainComplaint || 'Não informado'}</div>
+              <div className="border-b border-slate-200 pb-2"><span className="font-semibold text-slate-500 block mb-1">Histórico Médico:</span> {fd.medicalHistory || 'Não informado'}</div>
+              <div className="border-b border-slate-200 pb-2"><span className="font-semibold text-slate-500 block mb-1">Alergias:</span> {fd.allergies || 'Não informado'}</div>
+              <div className="border-b border-slate-200 pb-2"><span className="font-semibold text-slate-500 block mb-1">Medicamentos em Uso:</span> {fd.medications || 'Não informado'}</div>
             </div>
-          </div>
+          </section>
 
-          <div style={{ marginBottom: '20px' }}>
-            <p style={SECTION_TITLE}>II. Questionário de Saúde</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px 25px' }}>
+          <section>
+            <h3 className="text-sm font-bold bg-slate-100 p-2 border-l-4 border-slate-800 uppercase">II. Questionário de Saúde</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 mt-3 text-xs p-2">
               {conditions.map(([key, label]) => {
                 const checked = Boolean(fd[key]);
                 return (
-                  <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px dashed #f4f4f5', padding: '4px 0' }}>
-                    <span style={{ fontSize: '10px', fontWeight: '500', color: '#3f3f46' }}>{label}</span>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <span style={{ ...CHECKBOX, background: checked ? '#18181b' : 'white', color: checked ? 'white' : 'transparent' }}>✓</span>
-                      <span style={{ fontSize: '9px', fontWeight: '800' }}>S</span>
-                      <span style={{ ...CHECKBOX, background: !checked ? '#18181b' : 'white', color: !checked ? 'white' : 'transparent' }}>✓</span>
-                      <span style={{ fontSize: '9px', fontWeight: '800' }}>N</span>
+                  <div key={key} className="flex justify-between items-center border-b border-dashed border-slate-200 py-1">
+                    <span className="font-medium text-slate-700">{label}</span>
+                    <div className="flex gap-2 items-center">
+                      <span className={`w-3 h-3 flex items-center justify-center border border-slate-800 rounded-sm text-[8px] font-bold ${checked ? 'bg-slate-800 text-white' : 'bg-white text-transparent'}`}>✓</span>
+                      <span>S</span>
+                      <span className={`w-3 h-3 flex items-center justify-center border border-slate-800 rounded-sm text-[8px] font-bold ${!checked ? 'bg-slate-800 text-white' : 'bg-white text-transparent'}`}>✓</span>
+                      <span>N</span>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
+          </section>
 
-          <div style={{ pageBreakInside: 'avoid', breakInside: 'avoid', marginBottom: '20px', padding: '15px', borderLeft: '4px solid #18181b', background: '#fafafa', borderRadius: '0 8px 8px 0' }}>
-            <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', color: '#18181b', letterSpacing: '0.1em', margin: '0 0 6px' }}>Declaração de Veracidade</p>
-            <p style={{ fontFamily: '"Crimson Pro", serif', fontSize: '13px', color: '#3f3f46', lineHeight: '1.6', margin: 0, textAlign: 'justify' }}>
+          <section className="bg-slate-50 p-4 border-l-4 border-slate-800 rounded-r-lg mt-6 print:break-inside-avoid">
+            <p className="text-[10px] font-black uppercase text-slate-800 tracking-wider mb-2">Declaração de Veracidade</p>
+            <p className="text-xs text-slate-600 leading-relaxed text-justify">
               Declaro que as informações prestadas nesta ficha de anamnese são a expressão da verdade, não tendo omitido qualquer dado relativo ao meu estado de saúde. Comprometo-me a informar qualquer alteração relevante ao profissional responsável pelo meu tratamento.
             </p>
-          </div>
+          </section>
         </div>
 
         <PrintFooter signatureType="both" patientName={patient.name} />
@@ -273,7 +158,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
             strokeWidth="1"
             fillOpacity={status === 'healthy' ? 0.1 : 0.8}
           />
-          <text x="20" y="30" textAnchor="middle" fontSize="10" fontWeight="bold" fill={status === 'extracted' ? 'white' : '#18181b'}>{id}</text>
+          <text x="20" y="30" textAnchor="middle" fontSize="10" fontFamily="sans-serif" fontWeight="bold" fill={status === 'extracted' ? 'white' : '#18181b'}>{id}</text>
         </g>
       );
     };
@@ -284,19 +169,19 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     ];
 
     return (
-      <div style={PAGE}>
+      <div className="flex flex-col h-full print:break-after-page mb-10">
         <PrintHeader title="Odontograma Clínico" patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
         
-        <div style={CONTENT_AREA}>
-          <div style={{ textAlign: 'center', marginBottom: '30px', background: '#fafafa', padding: '20px', borderRadius: '12px', border: '1px solid #e4e4e7' }}>
-            <svg viewBox="0 0 800 240" style={{ width: '100%', height: 'auto', maxWidth: '600px' }}>
+        <div className="flex-grow space-y-6">
+          <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 print:bg-transparent print:border-slate-300 text-center">
+            <svg viewBox="0 0 800 240" className="w-full h-auto max-w-2xl mx-auto">
               <g transform="translate(40, 20)">
                 {adultTeeth[0].map((id, index) => (
                   <g key={id} transform={`translate(${index * 44}, 0)`}>
                     <ToothIcon id={id} status={teethState[id]?.status || 'healthy'} />
                   </g>
                 ))}
-                <text x="350" y="70" textAnchor="middle" fontSize="9" fill="#18181b" fontWeight="900" opacity="0.6" letterSpacing="0.2em">ARCADA SUPERIOR</text>
+                <text x="350" y="70" textAnchor="middle" fontSize="9" fill="#18181b" fontFamily="sans-serif" fontWeight="900" opacity="0.6" letterSpacing="0.2em">ARCADA SUPERIOR</text>
               </g>
               <g transform="translate(40, 140)">
                 {adultTeeth[1].map((id, index) => (
@@ -304,29 +189,29 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
                     <ToothIcon id={id} status={teethState[id]?.status || 'healthy'} />
                   </g>
                 ))}
-                <text x="350" y="70" textAnchor="middle" fontSize="9" fill="#18181b" fontWeight="900" opacity="0.6" letterSpacing="0.2em">ARCADA INFERIOR</text>
+                <text x="350" y="70" textAnchor="middle" fontSize="9" fill="#18181b" fontFamily="sans-serif" fontWeight="900" opacity="0.6" letterSpacing="0.2em">ARCADA INFERIOR</text>
               </g>
             </svg>
           </div>
 
-          <div style={{ marginBottom: '20px' }}>
-            <p style={SECTION_TITLE}>Detalhamento Clínico</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px 40px' }}>
+          <section>
+            <h3 className="text-sm font-bold bg-slate-100 p-2 border-l-4 border-slate-800 uppercase">Detalhamento Clínico</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 text-xs p-2">
               {Object.values(teethState).filter((t: any) => t.notes || t.status !== 'healthy').length === 0 ? (
-                <p style={{ gridColumn: 'span 2', textAlign: 'center', fontStyle: 'italic', color: '#a1a1aa', fontSize: '12px' }}>Nenhuma alteração registrada em dentes isolados.</p>
+                <p className="col-span-2 text-center italic text-slate-400">Nenhuma alteração registrada em dentes isolados.</p>
               ) : (
                 Object.values(teethState).filter((t: any) => t.notes || t.status !== 'healthy').map((t: any) => (
-                  <div key={t.id} style={{ borderBottom: '1px solid #f4f4f5', padding: '8px 0' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                      <span style={{ ...FIELD_LABEL, marginBottom: 0 }}>Dente {t.id}</span>
-                      <span style={{ fontSize: '10px', padding: '2px 8px', background: '#18181b', color: 'white', borderRadius: '4px', fontWeight: '900' }}>{t.status.toUpperCase()}</span>
+                  <div key={t.id} className="border-b border-slate-200 pb-2 print:break-inside-avoid">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-bold text-slate-700">Dente {t.id}</span>
+                      <span className="text-[9px] px-2 py-0.5 bg-slate-800 text-white rounded font-bold uppercase tracking-wider">{t.status}</span>
                     </div>
-                    {t.notes && <p style={{ ...FIELD_VALUE, fontSize: '12px', color: '#52525b', fontWeight: '500', fontStyle: 'italic' }}>"{t.notes}"</p>}
+                    {t.notes && <p className="text-slate-600 italic">"{t.notes}"</p>}
                   </div>
                 ))
               )}
             </div>
-          </div>
+          </section>
         </div>
 
         <PrintFooter signatureType="dentist" />
@@ -336,41 +221,46 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
 
   /* ── 4. Evolução Clínica ────────────────────────────────────────────────── */
   const renderEvolution = () => (
-    <div style={PAGE}>
+    <div className="flex flex-col h-full print:break-after-page mb-10">
       <PrintHeader title="Evolução Clínica" patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
       
-      <div style={CONTENT_AREA}>
-        <p style={SECTION_TITLE}>Histórico de Procedimentos e Observações</p>
-        {evolutions.length === 0 ? (
-          <p style={{ textAlign: 'center', fontStyle: 'italic', color: '#a1a1aa', fontSize: '13px', marginTop: '40px' }}>Nenhum registro de evolução encontrado para este paciente.</p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {evolutions.map((note, idx) => (
-              <div key={note.id} style={{ pageBreakInside: 'avoid', borderBottom: '1px solid #e4e4e7', padding: '12px 0', position: 'relative' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#18181b' }} />
-                    <span style={{ fontSize: '15px', fontWeight: '800', fontFamily: '"Crimson Pro", serif', color: '#18181b' }}>{note.procedure || 'Consulta de Rotina'}</span>
-                    <span style={{ 
-                      fontSize: '8px', 
-                      background: note.status === 'realizado' ? '#18181b' : '#f4f4f5', 
-                      color: note.status === 'realizado' ? 'white' : '#71717a', 
-                      padding: '2px 8px', 
-                      borderRadius: '4px', 
-                      fontWeight: '900',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.1em'
-                    }}>
-                      {note.status || 'N/A'}
+      <div className="flex-grow">
+        <table className="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr className="bg-slate-100 print:bg-slate-100 border-b-2 border-slate-300">
+              <th className="p-2 font-bold w-24">Data</th>
+              <th className="p-2 font-bold">Procedimento</th>
+              <th className="p-2 font-bold w-1/2">Notas Clínicas</th>
+              <th className="p-2 font-bold w-24 text-right">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {evolutions.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="p-4 text-center italic text-slate-400">Nenhum registro de evolução encontrado.</td>
+              </tr>
+            ) : (
+              evolutions.map((evo) => (
+                <tr key={evo.id} className="border-b border-slate-200 print:break-inside-avoid">
+                  <td className="p-2 align-top text-slate-600">
+                    {new Date(evo.createdAt).toLocaleDateString('pt-BR')}
+                  </td>
+                  <td className="p-2 align-top font-bold text-slate-800">
+                    {evo.procedure || 'Consulta'}
+                  </td>
+                  <td className="p-2 align-top text-slate-700 text-justify">
+                    {evo.content}
+                  </td>
+                  <td className="p-2 align-top text-right">
+                    <span className={`inline-block px-2 py-1 rounded-[4px] text-[10px] font-medium uppercase tracking-wider ${evo.status?.toLowerCase() === 'realizado' ? 'bg-green-100 text-green-700 print:border print:border-green-300' : 'bg-slate-100 text-slate-700 print:border print:border-slate-300'}`}>
+                      {evo.status || 'Registrado'}
                     </span>
-                  </div>
-                  <span style={{ fontSize: '10px', fontWeight: '700', color: '#a1a1aa' }}>{new Date(note.createdAt).toLocaleDateString('pt-BR')}</span>
-                </div>
-                <p style={{ fontSize: '13px', color: '#3f3f46', lineHeight: '1.7', textAlign: 'justify', paddingLeft: '20px', borderLeft: '1.5px solid #f4f4f5' }}>{note.content}</p>
-              </div>
-            ))}
-          </div>
-        )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
       <PrintFooter signatureType="dentist" />
     </div>
@@ -391,45 +281,43 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
     return (
-      <div style={PAGE}>
-        <PrintHeader title={planTitle} patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
+      <div className="flex flex-col h-full print:break-after-page mb-10">
+        <PrintHeader title={planTitle || 'Plano de Tratamento'} patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
         
-        <div style={CONTENT_AREA}>
-          <p style={SECTION_TITLE}>Procedimentos Propostos e Orçamento</p>
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+        <div className="flex-grow">
+          <table className="w-full text-left text-xs border-collapse mb-6">
             <thead>
-              <tr>
-                <th style={TABLE_TH}>Procedimento</th>
-                <th style={{ ...TABLE_TH, textAlign: 'center' }}>Dente</th>
-                <th style={{ ...TABLE_TH, textAlign: 'center' }}>Qtd</th>
-                <th style={{ ...TABLE_TH, textAlign: 'right' }}>Total</th>
+              <tr className="bg-slate-100 border-y-2 border-slate-300">
+                <th className="p-3 font-bold w-1/2">Procedimento</th>
+                <th className="p-3 font-bold text-center">Dente/Região</th>
+                <th className="p-3 font-bold text-center">Qtd</th>
+                <th className="p-3 font-bold text-right">Valor (R$)</th>
               </tr>
             </thead>
             <tbody>
-              {procs.map((p, i) => (
-                <tr key={p.id} style={{ borderBottom: '1px solid #f4f4f5', background: i % 2 === 0 ? 'transparent' : '#fafafa' }}>
-                  <td style={{ padding: '12px 8px', fontSize: '13px', fontWeight: '700', fontFamily: '"Crimson Pro", serif' }}>{p.name}</td>
-                  <td style={{ padding: '12px 8px', textAlign: 'center', fontSize: '12px', fontWeight: '600' }}>{p.tooth || '—'}</td>
-                  <td style={{ padding: '12px 8px', textAlign: 'center', fontSize: '12px', fontWeight: '600' }}>{p.quantity || 1}</td>
-                  <td style={{ padding: '12px 8px', textAlign: 'right', fontSize: '13px', fontWeight: '800' }}>{fmt(p.totalPrice || p.cost)}</td>
-                </tr>
-              ))}
+              {procs.length === 0 ? (
+                <tr><td colSpan={4} className="p-4 text-center italic text-slate-400">Nenhum procedimento proposto.</td></tr>
+              ) : (
+                procs.map((p, index) => (
+                  <tr key={index} className="border-b border-slate-200 print:break-inside-avoid">
+                    <td className="p-3 font-medium text-slate-800">{p.name}</td>
+                    <td className="p-3 text-center text-slate-600">{p.tooth || '—'}</td>
+                    <td className="p-3 text-center text-slate-600">{p.quantity || 1}</td>
+                    <td className="p-3 text-right whitespace-nowrap font-semibold">{fmt(p.totalPrice || p.cost)}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
             <tfoot>
-              <tr style={{ borderTop: '2.5px solid #18181b' }}>
-                <td colSpan={3} style={{ padding: '15px 8px', textAlign: 'right', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Investimento Total Estimado</td>
-                <td style={{ padding: '15px 8px', textAlign: 'right', fontSize: '20px', fontWeight: '900', color: '#18181b', fontFamily: '"Crimson Pro", serif' }}>{fmt(total)}</td>
+              <tr className="bg-slate-50 font-bold border-t-2 border-slate-800">
+                <td colSpan={3} className="p-3 text-right uppercase text-sm">Valor Total Estimado:</td>
+                <td className="p-3 text-right text-sm">{fmt(total)}</td>
               </tr>
             </tfoot>
           </table>
 
-          <div style={{ padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-            <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', color: '#64748b', marginBottom: '8px' }}>Observações do Plano</p>
-            <p style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.6', margin: 0 }}>
-              * Os valores acima são estimativas baseadas no diagnóstico clínico atual.
-              Alterações no plano podem ocorrer durante a execução conforme necessidade clínica.
-              Valores válidos por 30 dias a partir da data de emissão.
-            </p>
+          <div className="text-[10px] text-slate-500 border border-slate-200 p-3 rounded bg-slate-50">
+            <p><strong>Atenção:</strong> Os valores acima são uma estimativa baseada na avaliação clínica inicial e em radiografias prévias. O plano de tratamento pode sofrer alterações durante a execução dos procedimentos, caso novas necessidades sejam identificadas. Este orçamento é válido por 30 dias.</p>
           </div>
         </div>
 
@@ -444,34 +332,45 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     const total = payments.filter(p => p.paymentStatus !== 'pendente').reduce((s, p) => s + p.amount, 0);
 
     return (
-      <div style={PAGE}>
+      <div className="flex flex-col h-full print:break-after-page mb-10">
         <PrintHeader title="Extrato Financeiro" patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
         
-        <div style={CONTENT_AREA}>
-          <p style={SECTION_TITLE}>Histórico de Recebimentos e Conciliação</p>
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+        <div className="flex-grow">
+          <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr>
-                <th style={TABLE_TH}>Data</th>
-                <th style={TABLE_TH}>Descrição do Lançamento</th>
-                <th style={TABLE_TH}>Status</th>
-                <th style={{ ...TABLE_TH, textAlign: 'right' }}>Valor</th>
+              <tr className="bg-slate-100 border-y-2 border-slate-300">
+                <th className="p-3 font-bold w-28">Data</th>
+                <th className="p-3 font-bold">Descrição do Lançamento</th>
+                <th className="p-3 font-bold">Status</th>
+                <th className="p-3 font-bold text-right">Valor</th>
               </tr>
             </thead>
             <tbody>
-              {payments.map((p, i) => (
-                <tr key={p.id} style={{ borderBottom: '1px solid #f4f4f5', background: i % 2 === 0 ? 'transparent' : '#fafafa' }}>
-                  <td style={{ padding: '12px 8px', fontSize: '12px', fontWeight: '600' }}>{new Date(p.date).toLocaleDateString('pt-BR')}</td>
-                  <td style={{ padding: '12px 8px', fontSize: '13px', fontWeight: '600', fontFamily: '"Crimson Pro", serif' }}>{p.description}</td>
-                  <td style={{ padding: '12px 8px', fontSize: '10px', fontWeight: '900', color: p.paymentStatus === 'pendente' ? '#f59e0b' : '#059669', textTransform: 'uppercase' }}>{p.paymentStatus || 'RECEBIDO'}</td>
-                  <td style={{ padding: '12px 8px', textAlign: 'right', fontSize: '13px', fontWeight: '800' }}>{fmt(p.amount)}</td>
-                </tr>
-              ))}
+              {payments.length === 0 ? (
+                <tr><td colSpan={4} className="p-4 text-center italic text-slate-400">Nenhum lançamento encontrado.</td></tr>
+              ) : (
+                payments.map((p, i) => (
+                  <tr key={p.id} className={`border-b border-slate-200 ${i % 2 !== 0 ? 'bg-slate-50 print:bg-transparent' : ''}`}>
+                    <td className="p-3 text-slate-600">{new Date(p.date).toLocaleDateString('pt-BR')}</td>
+                    <td className="p-3 font-medium text-slate-800">{p.description}</td>
+                    <td className="p-3">
+                      <span className={`px-2 py-1 rounded-[4px] text-[10px] font-bold uppercase tracking-wider ${
+                        p.paymentStatus === 'pendente' 
+                          ? 'bg-amber-100 text-amber-700 print:border print:border-amber-300' 
+                          : 'bg-emerald-100 text-emerald-700 print:border print:border-emerald-300'
+                      }`}>
+                        {p.paymentStatus || 'RECEBIDO'}
+                      </span>
+                    </td>
+                    <td className="p-3 text-right font-semibold">{fmt(p.amount)}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
             <tfoot>
-              <tr style={{ borderTop: '2.5px solid #18181b' }}>
-                <td colSpan={3} style={{ padding: '15px 8px', textAlign: 'right', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Total Acumulado Pago</td>
-                <td style={{ padding: '15px 8px', textAlign: 'right', fontSize: '18px', fontWeight: '900', color: '#18181b', fontFamily: '"Crimson Pro", serif' }}>{fmt(total)}</td>
+              <tr className="bg-slate-50 font-bold border-t-2 border-slate-800">
+                <td colSpan={3} className="p-3 text-right uppercase text-xs tracking-wider">Total Acumulado Pago:</td>
+                <td className="p-3 text-right text-sm">{fmt(total)}</td>
               </tr>
             </tfoot>
           </table>
@@ -493,9 +392,9 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     const sigType = (template.type === 'tcle' || template.type === 'image-release') ? 'both' : 'dentist';
 
     return (
-      <div key={template.id} style={PAGE}>
+      <div key={template.id} className="flex flex-col h-full print:break-after-page mb-10">
         <PrintHeader title={title} patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
-        <div style={{ fontFamily: '"Crimson Pro", serif', fontSize: '14px', lineHeight: '1.6', color: '#18181b', whiteSpace: 'pre-wrap', textAlign: 'justify', marginBottom: '20px' }}>
+        <div className="flex-grow text-sm text-slate-800 leading-relaxed text-justify space-y-4 whitespace-pre-wrap">
           {content}
         </div>
         <PrintFooter signatureType={sigType} patientName={patient.name} />
@@ -504,7 +403,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
   };
 
   return (
-    <div className="unified-print-only" style={{ maxWidth: '800px', margin: '0 auto' }}>
+    <div className="unified-print-only w-full max-w-4xl mx-auto bg-white p-6 print:p-0">
       {selectedSections.includes('personal')   && renderPersonal()}
       {selectedSections.includes('anamnesis')  && renderAnamnesis()}
       {selectedSections.includes('odontogram') && renderOdontogram()}

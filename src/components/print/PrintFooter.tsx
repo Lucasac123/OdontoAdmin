@@ -1,116 +1,92 @@
 import React from 'react';
 
+interface PatientInfo {
+  name: string;
+  cpf?: string;
+  rg?: string;
+  dob?: string;
+}
+
+interface DentistInfo {
+  name: string;
+  cro?: string;
+  specialty?: string;
+}
+
 interface PrintFooterProps {
+  patient?: PatientInfo;
+  dentist?: DentistInfo;
+  date?: string;
+  showPatientSignature?: boolean;
+  showDentistSignature?: boolean;
+  dentistLabelOverride?: string;
+  // Legacy props
   dentistName?: string;
   cro?: string;
-  date?: Date;
   signatureType?: 'dentist' | 'patient' | 'both';
   patientName?: string;
   showDate?: boolean;
 }
 
 export const PrintFooter: React.FC<PrintFooterProps> = ({ 
-  dentistName = "Dr(a). Responsável", 
-  cro = "CRO XXXXX", 
-  date = new Date(),
+  patient, 
+  dentist, 
+  date, 
+  showPatientSignature, 
+  showDentistSignature,
+  dentistLabelOverride,
+  // Fallbacks
+  dentistName = "Dr(a). Responsável",
+  cro = "CRO XXXXX",
   signatureType = 'dentist',
   patientName = "Paciente",
-  showDate = true
 }) => {
-  const formattedDate = date.toLocaleDateString('pt-BR', {
+  const defaultDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: 'long',
     year: 'numeric'
   });
 
+  const shouldShowPatient = showPatientSignature ?? (signatureType === 'patient' || signatureType === 'both');
+  const shouldShowDentist = showDentistSignature ?? (signatureType === 'dentist' || signatureType === 'both');
+
+  const pName = patient?.name || patientName;
+  const pCpf = patient?.cpf;
+  const dName = dentist?.name || dentistName;
+  const dCro = dentist?.cro || cro;
+
   return (
-    <div className="print-only print-footer avoid-break" style={{ marginTop: '40px', paddingTop: '10px' }}>
+    <div className="print-only mt-16 pt-8 border-t border-slate-200 avoid-break w-full shrink-0">
+      <p className="text-right text-xs text-slate-600 mb-12">
+        {date || defaultDate}.
+      </p>
 
-      {/* Local e Data */}
-      {showDate && (
-        <div style={{ textAlign: 'right', marginBottom: '40px' }}>
-          <p style={{ fontFamily: '"Crimson Pro", serif', fontSize: '13px', color: '#18181b', fontWeight: '500' }}>
-            São Paulo, {formattedDate}.
-          </p>
-        </div>
-      )}
-
-      {/* Signature Grid */}
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', gap: '60px' }}>
+      <div className={`flex items-end gap-8 ${shouldShowPatient && shouldShowDentist ? 'justify-between' : 'justify-center'}`}>
         
-        {/* Left: Signature lines */}
-        <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '40px 80px' }}>
+        {/* Assinatura do Paciente */}
+        {shouldShowPatient && (
+          <div className={`text-center ${shouldShowDentist ? 'flex-1' : 'w-1/2'}`}>
+            <div className="border-t border-slate-800 w-full mb-2"></div>
+            <p className="font-bold text-sm text-slate-800 uppercase">{pName}</p>
+            <p className="text-xs text-slate-500">Paciente ou Responsável Legal</p>
+            {pCpf && <p className="text-[10px] text-slate-400 mt-1">CPF: {pCpf}</p>}
+          </div>
+        )}
 
-          {/* Patient signature */}
-          {(signatureType === 'patient' || signatureType === 'both') && (
-            <div style={{ textAlign: 'center', flex: '1', minWidth: '240px', maxWidth: '320px' }}>
-              <div style={{ 
-                height: '80px', 
-                borderBottom: '1.5px solid #18181b', 
-                marginBottom: '10px',
-                display: 'flex',
-                alignItems: 'flex-end',
-                justifyContent: 'center',
-                paddingBottom: '4px'
-              }}>
-                <span style={{ fontSize: '8px', color: '#d4d4d8', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Assinatura</span>
-              </div>
-              <p style={{ fontWeight: '900', fontSize: '11px', color: '#18181b', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>{patientName}</p>
-              <p style={{ fontSize: '8px', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: '800', margin: '4px 0 0' }}>Paciente / Responsável Legal</p>
-            </div>
-          )}
-
-          {/* Dentist signature */}
-          {(signatureType === 'dentist' || signatureType === 'both') && (
-            <div style={{ textAlign: 'center', flex: '1', minWidth: '240px', maxWidth: '320px' }}>
-              <div style={{ 
-                height: '80px', 
-                borderBottom: '1.5px solid #18181b', 
-                marginBottom: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '1.5px dashed #d4d4d8',
-                borderRadius: '8px',
-                borderBottomStyle: 'solid',
-                borderBottomColor: '#18181b'
-              }}>
-                <div style={{ 
-                  width: '60px', 
-                  height: '60px', 
-                  border: '1px solid #e4e4e7', 
-                  borderRadius: '50%', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  fontSize: '7px',
-                  color: '#a1a1aa',
-                  fontWeight: '800',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.1em'
-                }}>Carimbo</div>
-              </div>
-              <p style={{ fontWeight: '900', fontSize: '11px', color: '#18181b', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>{dentistName}</p>
-              <p style={{ fontSize: '8px', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: '800', margin: '4px 0 0' }}>{cro} · Cirurgião-Dentista</p>
-            </div>
-          )}
-        </div>
+        {/* Assinatura do Dentista */}
+        {shouldShowDentist && (
+          <div className={`text-center ${shouldShowPatient ? 'flex-1' : 'w-1/2'}`}>
+            <div className="border-t border-slate-800 w-full mb-2"></div>
+            <p className="font-bold text-sm text-slate-800 uppercase">{dName}</p>
+            <p className="text-xs text-slate-500">{dentistLabelOverride || dentist?.specialty || 'Cirurgião-Dentista'}</p>
+            <p className="text-[10px] text-slate-400 mt-1">CRO {dCro}</p>
+          </div>
+        )}
       </div>
-
-      {/* Footer bar */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginTop: '60px', 
-        paddingTop: '8px', 
-        borderTop: '0.5px solid #d4d4d8' 
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#18181b' }} />
-          <span style={{ fontSize: '7px', color: '#a1a1aa', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em' }}>OdontoAdmin Gestão Clínica 2026</span>
-        </div>
-        <span style={{ fontSize: '7px', color: '#a1a1aa', fontWeight: '600' }}>Página 1 de 1</span>
+      
+      <div className="mt-8 text-center flex justify-between items-center text-[9px] text-slate-400 font-mono tracking-widest uppercase border-t border-slate-100 pt-2">
+        <span>Gerado por OdontoAdmin Gestão Clínica © {new Date().getFullYear()}</span>
+        <span>Página 1 de 1</span>
       </div>
     </div>
   );
