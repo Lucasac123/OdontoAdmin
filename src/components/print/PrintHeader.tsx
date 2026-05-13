@@ -33,8 +33,8 @@ export const PrintHeader: React.FC<PrintHeaderProps> = ({
   via
 }) => {
   return (
-    <div className="print-only avoid-break w-full mb-6">
-      <div className="border-b-2 border-slate-800 pb-4 mb-6 flex justify-between items-start">
+    <div className="w-full mb-6 print:mb-4 print:page-break-inside-avoid" style={{ pageBreakInside: 'avoid' }} data-print-header data-print-protect>
+      <div className="border-b-2 border-slate-800 pb-4 mb-6 flex justify-between items-start print:pb-3 print:mb-4">
         <div className="flex flex-col">
           <h1 className="text-xl font-bold text-slate-800 uppercase tracking-wider">{clinic.name}</h1>
           <p className="text-xs text-slate-600 mt-1">{clinic.address}</p>
@@ -59,14 +59,14 @@ export const PrintHeader: React.FC<PrintHeaderProps> = ({
       
       {/* Optional Title Section - some components might pass title directly */}
       {(title || subtitle) && (
-        <div style={{ textAlign: 'center', padding: '16px 0 16px' }}>
+        <div style={{ textAlign: 'center', padding: '12px 0', pageBreakInside: 'avoid' }} className="print:page-break-inside-avoid">
           {title && (
-            <h1 className="font-sans text-xl font-bold uppercase tracking-wide text-slate-900 m-0 leading-none">
+            <h1 className="font-sans text-lg md:text-xl font-bold uppercase tracking-wide text-slate-900 m-0 leading-tight print:text-lg">
               {title}
             </h1>
           )}
           {subtitle && (
-            <div className="inline-block border-t border-slate-300 mt-2 mt-2">
+            <div className="inline-block border-t border-slate-300 mt-2">
               <p className="font-sans text-xs text-slate-500 m-0 pt-1 tracking-widest uppercase">{subtitle}</p>
             </div>
           )}
@@ -75,21 +75,21 @@ export const PrintHeader: React.FC<PrintHeaderProps> = ({
 
       {/* Patient Info Bar */}
       {patientName && (
-        <div className="bg-slate-50 p-3 rounded-md mb-6 border border-slate-200 print:border-slate-300 print:bg-transparent flex flex-wrap gap-x-6 gap-y-2">
+        <div className="bg-slate-50 p-3 rounded-md mb-4 border border-slate-200 print:border-slate-300 print:bg-white print:p-2 flex flex-wrap gap-x-6 gap-y-2 print:page-break-inside-avoid print:mb-2" style={{ pageBreakInside: 'avoid' }}>
           <div className="flex flex-col">
             <span className="text-[10px] text-slate-500 font-semibold uppercase">Paciente</span>
-            <span className="text-sm font-bold text-slate-800">{patientName}</span>
+            <span className="text-sm font-bold text-slate-800 print:text-base">{patientName}</span>
           </div>
           {patientCpf && (
             <div className="flex flex-col">
               <span className="text-[10px] text-slate-500 font-semibold uppercase">CPF</span>
-              <span className="text-sm text-slate-700">{patientCpf}</span>
+              <span className="text-sm text-slate-700 print:text-base">{patientCpf}</span>
             </div>
           )}
           {patientDob && (
             <div className="flex flex-col">
               <span className="text-[10px] text-slate-500 font-semibold uppercase">Data de Nasc.</span>
-              <span className="text-sm text-slate-700">{patientDob}</span>
+              <span className="text-sm text-slate-700 print:text-base">{patientDob}</span>
             </div>
           )}
         </div>

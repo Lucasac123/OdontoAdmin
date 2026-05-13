@@ -301,3 +301,214 @@ body {
   }
 }
 
+/* ============================================================================
+   ENHANCED PRINT STYLES - Page Break & Layout Fixes
+   ============================================================================ */
+
+@media print {
+  /* ────────────────────────────────────────────────────────────────────────
+     CRITICAL: FOOTER/SIGNATURE PROTECTION
+     ──────────────────────────────────────────────────────────────────────── */
+  
+  /* PrintFooter must NEVER break across pages */
+  [class*="print-footer"],
+  [class*="PrintFooter"],
+  .footer-section,
+  [data-print-footer] {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    orphans: 0 !important;
+    widows: 0 !important;
+    margin-top: 1.5rem !important;
+    padding-top: 0.5rem !important;
+    border-top: 1px solid #333 !important;
+  }
+
+  /* Signature lines */
+  [class*="signature"] {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     TABLE FIXES - Ensure headers repeat on new pages
+     ──────────────────────────────────────────────────────────────────────── */
+  
+  table {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  table thead {
+    display: table-header-group !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  table tbody {
+    display: table-row-group !important;
+  }
+
+  table tfoot {
+    display: table-footer-group !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  table tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  table td,
+  table th {
+    word-break: break-word !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    padding: 0.4rem !important;
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     SECTION & CONTAINER BREAKS
+     ──────────────────────────────────────────────────────────────────────── */
+  
+  /* Ensure sections don't split awkwardly */
+  section,
+  article,
+  .section,
+  [role="region"] {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  /* Keep headers with their content */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    orphans: 3 !important;
+    widows: 3 !important;
+  }
+
+  /* Keep paragraphs together */
+  p {
+    orphans: 2 !important;
+    widows: 2 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     SPACING ADJUSTMENTS FOR PRINT
+     ──────────────────────────────────────────────────────────────────────── */
+  
+  /* Reduce excessive margins in print */
+  .mb-10 { margin-bottom: 0.5rem !important; }
+  .mb-12 { margin-bottom: 0.75rem !important; }
+  .mt-12 { margin-top: 0.75rem !important; }
+  .mt-16 { margin-top: 1rem !important; }
+  .gap-8 { gap: 1rem !important; }
+
+  /* Compact print spacing */
+  * + * {
+    margin-top: 0 !important;
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     PRESERVE DOCUMENT STRUCTURE
+     ──────────────────────────────────────────────────────────────────────── */
+  
+  /* Full-page documents */
+  .flex.flex-col.h-full {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: auto !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  /* Flex-grow should expand naturally in print */
+  .flex-grow {
+    flex-grow: 1;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     LIST FIXES
+     ──────────────────────────────────────────────────────────────────────── */
+  
+  ul, ol {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  li {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    orphans: 2 !important;
+    widows: 2 !important;
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     BACKGROUNDS & BORDERS
+     ──────────────────────────────────────────────────────────────────────── */
+  
+  /* Keep important borders/colors in print */
+  .border,
+  .border-b,
+  .border-t,
+  .border-l,
+  .border-r {
+    border-color: #333 !important;
+  }
+
+  .bg-slate-50,
+  .bg-slate-100,
+  .bg-slate-200 {
+    background-color: white !important;
+    border: 1px solid #ccc !important;
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     TEXT VISIBILITY
+     ──────────────────────────────────────────────────────────────────────── */
+  
+  /* Ensure text is always readable in print */
+  body * {
+    color: #000 !important;
+  }
+
+  .text-slate-* {
+    color: #000 !important;
+  }
+
+  .text-red-600 {
+    color: #000 !important;
+  }
+
+  /* ────────────────────────────────────────────────────────────────────────
+     FINAL SAFEGUARDS
+     ──────────────────────────────────────────────────────────────────────── */
+
+  /* Ensure page flows naturally */
+  @page {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Protect specific print data attributes */
+  [data-print-protect],
+  [data-print-footer],
+  [data-print-header] {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+

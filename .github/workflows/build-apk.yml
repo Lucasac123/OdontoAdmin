@@ -117,12 +117,8 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: 8.5
+          gradle-version: 8.10.2
           cache-disabled: false
-
-      - name: Regenerate Gradle Wrapper
-        working-directory: ./android
-        run: gradle wrapper --gradle-version 8.5
 
       - name: Decode Keystore
         shell: python
@@ -142,27 +138,48 @@ jobs:
           find . -name "*.gradle" -type f -exec sed -i 's/maven\s*{\s*url\s*["\x27]https:\/\/jcenter.bintray.com["\x27]\s*}/mavenCentral()/g' {} +
           
           # Fix namespace for AGP 8+ in plugins
-          for f in $(find node_modules -name "build.gradle"); do
+          for f in $(find node_modules -name "build.gradle" 2>/dev/null || true); do
             if ! grep -q "namespace" "$f"; then
               manifest=$(dirname "$f")/src/main/AndroidManifest.xml
               if [ -f "$manifest" ]; then
-                pkg=$(grep -oP 'package="\K[^"]+' "$manifest" || echo "")
+                pkg=$(grep -oP 'package="\K[^"]+' "$manifest" 2>/dev/null || echo "")
                 if [ -n "$pkg" ]; then
                   sed -i "/android {/a \    namespace \"$pkg\"" "$f"
+                  echo "✅ Added namespace to $f"
                 fi
               fi
             fi
           done
+          
+      - name: Validate Android Project
+        run: |
+          echo "=== Java Version ===" 
+          java -version
+          echo "=== Gradle Version ==="
+          ./android/gradlew --version 2>&1 || gradle --version
+          echo "=== Gradle Wrapper Properties ==="
+          cat android/gradle/wrapper/gradle-wrapper.properties
 
       - name: Build APK
         working-directory: ./android
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease --stacktrace --info \
+          echo "Starting APK build with release configuration..."
+          ./gradlew clean assembleRelease --stacktrace --info \
             -PRELEASE_STORE_FILE=release.keystore \
             -PRELEASE_STORE_PASSWORD="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
             -PRELEASE_KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}" \
-            -PRELEASE_KEY_PASSWORD="${{ secrets.ANDROID_KEY_PASSWORD }}"
+            -PRELEASE_KEY_PASSWORD="${{ secrets.ANDROID_KEY_PASSWORD }}" \
+            2>&1 | tee build-output.log
+          
+          # Check if build succeeded
+          if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
+            echo "✅ APK built successfully!"
+            ls -lh app/build/outputs/apk/release/app-release.apk
+          else
+            echo "❌ APK build failed - file not found"
+            exit 1
+          fi
 
       - name: Extraction SHA-1 for Firebase
         run: |
