@@ -3,7 +3,7 @@ import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 
 export const getDriveAccessToken = async (): Promise<string | null> => {
-  return new Promise(async (resolve) => {
+  return new Promise(async (resolve, reject) => {
     const token = sessionStorage.getItem('gdrive_access_token');
     if (token) {
       resolve(token);
@@ -21,7 +21,7 @@ export const getDriveAccessToken = async (): Promise<string | null> => {
         }
       } catch (error) {
         console.error('Error getting Drive token natively:', error);
-        resolve(null);
+        reject(error);
       }
       return;
     }
@@ -46,7 +46,7 @@ export const getDriveAccessToken = async (): Promise<string | null> => {
       }
     } catch (error) {
       console.error('Error getting Drive token via Firebase:', error);
-      resolve(null);
+      reject(error);
     }
   });
 };

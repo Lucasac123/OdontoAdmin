@@ -312,9 +312,9 @@ export const Profile: React.FC = () => {
           alert('Falha ao autenticar com o Google Drive. O armazenamento retornou para o Firebase.');
           setStorageLocation('firebase');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Drive auth error:', error);
-        alert('Erro ao conectar com o Google Drive.');
+        alert(`Erro ao conectar com o Google Drive: ${error?.message || error}`);
         setStorageLocation('firebase');
       } finally {
         setIsAuthenticatingDrive(false);

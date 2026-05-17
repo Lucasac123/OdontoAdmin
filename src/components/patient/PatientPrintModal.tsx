@@ -111,12 +111,24 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
 
   const handlePrint = () => {
     setIsPrinting(true);
+    
+    // Force light mode for print to avoid any "tarja preta" or dark background bleeding
+    const wasDarkMode = document.documentElement.classList.contains('dark');
+    if (wasDarkMode) {
+      document.documentElement.classList.remove('dark');
+    }
+    
     document.body.classList.add('is-unified-printing');
     
     // Give React a moment to render the print view in the DOM before opening the print dialog
     setTimeout(() => {
       window.print();
+      
+      // Cleanup after print dialog closes
       document.body.classList.remove('is-unified-printing');
+      if (wasDarkMode) {
+        document.documentElement.classList.add('dark');
+      }
       setIsPrinting(false);
       onClose();
     }, 500);
@@ -140,31 +152,44 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
           initial={{ opacity: 0 }} 
           animate={{ opacity: 1 }} 
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 no-print"
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-2 sm:p-6 no-print backdrop-blur-sm"
         >
           <motion.div 
-            initial={{ scale: 0.95 }} 
-            animate={{ scale: 1 }} 
-            exit={{ scale: 0.95 }}
-            className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl"
+            initial={{ scale: 0.95, y: 20 }} 
+            animate={{ scale: 1, y: 0 }} 
+            exit={{ scale: 0.95, y: 20 }}
+            className="bg-zinc-100 dark:bg-zinc-900 rounded-2xl w-full max-w-7xl h-[95vh] flex flex-col overflow-hidden shadow-2xl ring-1 ring-white/10"
           >
-            <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
-              <h2 className="text-xl font-bold text-text-primary flex items-center gap-2">
-                <Printer className="w-5 h-5 text-indigo-600" />
+            {/* Header */}
+            <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-white dark:bg-zinc-900 shrink-0">
+              <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <Printer className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                 Impressão de Prontuário
               </h2>
-              <button onClick={onClose} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={handlePrint}
+                  disabled={(selectedSections.length === 0 && selectedTemplates.length === 0 && !includeCustomDocument) || isPrinting}
+                  className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors font-medium shadow-md"
+                >
+                  <Printer className="w-4 h-4" />
+                  {isPrinting ? 'Preparando...' : 'Gerar PDF / Imprimir'}
+                </button>
+                <button onClick={onClose} className="p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
             
-            <div className="p-6 flex-1 overflow-y-auto">
-              <p className="text-sm text-text-secondary mb-6">
-                Selecione os elementos da ficha do paciente que deseja incluir na impressão unificada. Cada elemento será impresso em uma página separada de forma otimizada.
-              </p>
+            <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
+              {/* Sidebar Settings */}
+              <div className="w-full md:w-80 lg:w-96 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 overflow-y-auto shrink-0 p-5">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
+                  Selecione os elementos que deseja incluir. O preview ao lado mostra como o documento ficará impresso.
+                </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Fixed Sections */}
+                <div className="space-y-8">
+                  {/* Fixed Sections */}
                 <div>
                   <h3 className="font-bold text-text-primary mb-4 flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
                     Elementos Padrão
@@ -273,46 +298,58 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
                     </div>
                   </div>
                 </div>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center">
-              <span className="text-sm text-text-secondary">
-                {selectedSections.length + selectedTemplates.length + (includeCustomDocument ? 1 : 0)} itens selecionados
-              </span>
-              <div className="flex gap-3">
-                <button 
-                  onClick={onClose}
-                  className="px-4 py-2 text-text-secondary hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl font-medium transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  onClick={handlePrint}
-                  disabled={(selectedSections.length === 0 && selectedTemplates.length === 0 && !includeCustomDocument) || isPrinting}
-                  className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors font-medium shadow-md"
-                >
-                  <Printer className="w-4 h-4" />
-                  {isPrinting ? 'Preparando...' : 'Gerar Impressão'}
-                </button>
+              {/* Preview Area */}
+              <div className="flex-1 bg-zinc-200 dark:bg-zinc-800 overflow-y-auto p-4 sm:p-8 flex justify-center">
+                <div className="bg-white w-full max-w-[210mm] min-h-[297mm] shadow-2xl print-preview-container text-black">
+                  {/* We render PatientPrintView inside the preview container so the user can see it */}
+                  {/* To ensure light mode colors, we force text-black and light mode backgrounds inside PatientPrintView */}
+                  {(selectedSections.length > 0 || selectedTemplates.length > 0 || includeCustomDocument) ? (
+                    <div className="p-10 pointer-events-none">
+                      <PatientPrintView 
+                        patient={patient}
+                        selectedSections={selectedSections}
+                        selectedTemplates={templates.filter(t => selectedTemplates.includes(t.id))}
+                        evolutions={evolutions}
+                        payments={payments}
+                        customDocument={includeCustomDocument ? customDocument : undefined}
+                        showDentistSignature={showDentistSignature}
+                        showPatientSignature={showPatientSignature}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-zinc-400 p-20 text-center">
+                      <FileText className="w-16 h-16 mb-4 opacity-20" />
+                      <p className="text-lg font-medium">Nenhum item selecionado</p>
+                      <p className="text-sm">Selecione ao menos um elemento na aba lateral para visualizar a impressão.</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </motion.div>
         </motion.div>
       )}
 
-      {/* Render the actual print view hidden unless printing is active and selected */}
-      {/* We always render it so it's in the DOM when window.print() is called, but CSS hides it when not printing */}
-      <PatientPrintView 
-        patient={patient}
-        selectedSections={selectedSections}
-        selectedTemplates={templates.filter(t => selectedTemplates.includes(t.id))}
-        evolutions={evolutions}
-        payments={payments}
-        customDocument={includeCustomDocument ? customDocument : undefined}
-        showDentistSignature={showDentistSignature}
-        showPatientSignature={showPatientSignature}
-      />
+      {/* 
+        This is the actual invisible print area that the browser will print.
+        It must be at the root level so it works properly with window.print(). 
+      */}
+      <div className="unified-print-only hidden">
+        <PatientPrintView 
+          patient={patient}
+          selectedSections={selectedSections}
+          selectedTemplates={templates.filter(t => selectedTemplates.includes(t.id))}
+          evolutions={evolutions}
+          payments={payments}
+          customDocument={includeCustomDocument ? customDocument : undefined}
+          showDentistSignature={showDentistSignature}
+          showPatientSignature={showPatientSignature}
+        />
+      </div>
     </AnimatePresence>
   );
 };

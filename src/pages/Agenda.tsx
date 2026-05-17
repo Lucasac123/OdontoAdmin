@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { NotificationSettings } from '../types';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { useSync } from '../context/SyncContext';
+import { googleCalendarService } from '../services/googleCalendarService';
 
 export const Agenda: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -24,9 +25,13 @@ export const Agenda: React.FC = () => {
     type: 'sms',
     hoursBefore: 24,
     messageTemplate: 'Olá {paciente}, confirmamos sua consulta com o(a) Dr(a) {dentista} para {data} às {hora}.',
+    senderEmail: '',
+    senderName: '',
     updatedAt: new Date().toISOString()
   });
   const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
+  const [syncWithGoogle, setSyncWithGoogle] = useState(false);
+  const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
   const { addSyncTask } = useSync();
   
   const [newAppt, setNewAppt] = useState({
@@ -71,6 +76,8 @@ export const Agenda: React.FC = () => {
           type: 'sms',
           hoursBefore: 24,
           messageTemplate: 'Olá {paciente}, confirmamos sua consulta com o(a) Dr(a) {dentista} para {data} às {hora}.',
+          senderEmail: '',
+          senderName: '',
           updatedAt: new Date().toISOString()
         });
       }
@@ -157,7 +164,9 @@ export const Agenda: React.FC = () => {
                 },
                 message,
                 date: format(date, 'dd/MM/yyyy'),
-                time: format(date, 'HH:mm')
+                time: format(date, 'HH:mm'),
+                senderEmail: notifSettings.senderEmail,
+                senderName: notifSettings.senderName
               })
             });
 
@@ -187,7 +196,7 @@ export const Agenda: React.FC = () => {
     }
   };
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth.currentUser || !newAppt.patientId || !newAppt.responsibleDentistId) return;
 
@@ -211,23 +220,53 @@ export const Agenda: React.FC = () => {
       return;
     }
 
-    const savePromise = addDoc(collection(db, 'appointments'), {
-      dentistId: auth.currentUser.uid,
-      responsibleDentistId: newAppt.responsibleDentistId,
-      patientId: newAppt.patientId,
-      patientName: patient?.name || 'Desconhecido',
-      date: apptDate.toISOString(),
-      duration: newAppt.duration,
-      notes: newAppt.notes,
-      status: 'scheduled',
-      createdAt: new Date().toISOString()
-    }).catch(error => {
-      handleFirestoreError(error, OperationType.CREATE, 'appointments');
-    });
+    let googleCalendarLink = '';
+    setIsSyncingCalendar(true);
 
-    addSyncTask(savePromise);
-    setIsAdding(false);
-    setNewAppt({ patientId: '', responsibleDentistId: '', time: '09:00', duration: 30, notes: '' });
+    try {
+      if (syncWithGoogle) {
+        const title = `Consulta Odontológica: ${patient?.name || 'Paciente'}`;
+        const duration = typeof newAppt.duration === 'number' ? newAppt.duration : 30;
+        const link = await googleCalendarService.createEvent(
+          title,
+          apptDate.toISOString(),
+          duration,
+          newAppt.notes
+        );
+        if (link) {
+          googleCalendarLink = link;
+        } else {
+          const proceed = window.confirm("Não foi possível conectar ao Google Agenda ou criar o evento. Deseja salvar o agendamento apenas localmente?");
+          if (!proceed) {
+            setIsSyncingCalendar(false);
+            return;
+          }
+        }
+      }
+
+      const savePromise = addDoc(collection(db, 'appointments'), {
+        dentistId: auth.currentUser.uid,
+        responsibleDentistId: newAppt.responsibleDentistId,
+        patientId: newAppt.patientId,
+        patientName: patient?.name || 'Desconhecido',
+        date: apptDate.toISOString(),
+        duration: newAppt.duration,
+        notes: newAppt.notes,
+        status: 'scheduled',
+        ...(googleCalendarLink ? { googleCalendarLink } : {}),
+        createdAt: new Date().toISOString()
+      }).catch(error => {
+        handleFirestoreError(error, OperationType.CREATE, 'appointments');
+      });
+
+      addSyncTask(savePromise);
+      setIsAdding(false);
+      setNewAppt({ patientId: '', responsibleDentistId: '', time: '09:00', duration: 30, notes: '' });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSyncingCalendar(false);
+    }
   };
 
   const handleStatusChange = (id: string, status: 'scheduled' | 'completed' | 'cancelled') => {
@@ -399,9 +438,30 @@ export const Agenda: React.FC = () => {
                   <label className="block text-sm font-medium text-text-secondary mb-1">Observações</label>
                   <textarea value={newAppt.notes} onChange={e => setNewAppt({...newAppt, notes: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 resize-none h-20" />
                 </div>
+                <div className="flex items-center gap-2 py-1">
+                  <input
+                    type="checkbox"
+                    id="syncWithGoogle"
+                    checked={syncWithGoogle}
+                    onChange={(e) => setSyncWithGoogle(e.target.checked)}
+                    className="w-4 h-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 bg-transparent"
+                  />
+                  <label htmlFor="syncWithGoogle" className="text-sm font-medium text-text-secondary cursor-pointer select-none">
+                    Adicionar ao Google Agenda automaticamente
+                  </label>
+                </div>
                 <div className="flex justify-end gap-3 pt-2">
-                  <button type="button" onClick={() => setIsAdding(false)} className="px-4 py-2 rounded-xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button>
-                  <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">Salvar</button>
+                  <button type="button" onClick={() => setIsAdding(false)} className="px-4 py-2 rounded-xl text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800" disabled={isSyncingCalendar}>Cancelar</button>
+                  <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50" disabled={isSyncingCalendar}>
+                    {isSyncingCalendar ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Sincronizando...
+                      </>
+                    ) : (
+                      'Salvar'
+                    )}
+                  </button>
                 </div>
               </motion.form>
             )}
@@ -483,14 +543,14 @@ export const Agenda: React.FC = () => {
                               </a>
                             )}
                             <a 
-                              href={generateGoogleCalendarLink(app)} 
+                              href={app.googleCalendarLink || generateGoogleCalendarLink(app)} 
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg flex items-center gap-2 text-sm font-medium"
-                              title="Adicionar ao Google Agenda"
+                              title={app.googleCalendarLink ? "Ver no Google Agenda" : "Adicionar ao Google Agenda"}
                             >
                               <ExternalLink className="w-4 h-4" />
-                              Google Agenda
+                              {app.googleCalendarLink ? 'Ver no Google Agenda' : 'Google Agenda'}
                             </a>
                             <button onClick={() => handleStatusChange(app.id, 'completed')} className="p-2 text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg" title="Marcar como concluída">
                               <CheckCircle className="w-5 h-5" />
@@ -568,6 +628,29 @@ export const Agenda: React.FC = () => {
                       value={notifSettings.hoursBefore}
                       onChange={e => setNotifSettings({ ...notifSettings, hoursBefore: e.target.value === '' ? '' : parseInt(e.target.value) })}
                       className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-1">E-mail do Remetente (Brevo)</label>
+                    <input
+                      type="email"
+                      placeholder="ex: contato@consultorio.com"
+                      value={notifSettings.senderEmail || ''}
+                      onChange={e => setNotifSettings({ ...notifSettings, senderEmail: e.target.value })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-955 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Nome do Consultório</label>
+                    <input
+                      type="text"
+                      placeholder="ex: OdontoAdm"
+                      value={notifSettings.senderName || ''}
+                      onChange={e => setNotifSettings({ ...notifSettings, senderName: e.target.value })}
+                      className="w-full bg-zinc-50 dark:bg-zinc-955 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                 </div>

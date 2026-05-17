@@ -30,7 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (Capacitor.isNativePlatform()) {
       GoogleAuth.initialize({
         clientId: '531539311792-07banoj8gike53of1ra4u4cin42cdt20.apps.googleusercontent.com',
-        scopes: ['profile', 'email', 'https://www.googleapis.com/auth/drive.file'],
+        scopes: ['profile', 'email', 'https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/calendar.events'],
         grantOfflineAccess: true,
       });
     }

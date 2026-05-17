@@ -4,6 +4,25 @@ import path from "path";
 import fs from "fs";
 
 async function startServer() {
+  // Load environment variables from .env manually
+  try {
+    const envPath = path.join(process.cwd(), '.env');
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      envContent.split(/\r?\n/).forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) return;
+        const [key, ...valueParts] = trimmed.split('=');
+        if (key && valueParts.length > 0) {
+          const value = valueParts.join('=').trim().replace(/^["']|["']$/g, '');
+          process.env[key.trim()] = value;
+        }
+      });
+    }
+  } catch (e) {
+    console.error("Failed to load .env file manually:", e);
+  }
+
   const app = express();
   const PORT = 3000;
 
@@ -16,10 +35,10 @@ async function startServer() {
 
   app.post("/api/send-reminder", async (req, res) => {
     try {
-      const { type, patient, message, date, time } = req.body;
+      const { type, patient, message, date, time, senderEmail: customSenderEmail, senderName: customSenderName } = req.body;
       const apiKey = process.env.BREVO_API_KEY;
-      const senderEmail = process.env.BREVO_SENDER_EMAIL || "contato@odontoadmin.com";
-      const senderName = process.env.BREVO_SENDER_NAME || "OdontoAdmin";
+      const senderEmail = customSenderEmail || process.env.BREVO_SENDER_EMAIL || "contato@odontoadmin.com";
+      const senderName = customSenderName || process.env.BREVO_SENDER_NAME || "OdontoAdmin";
 
       // 1. Verify Authentication
       const authHeader = req.headers.authorization;

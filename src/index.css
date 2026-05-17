@@ -177,10 +177,15 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* --- Print Styles --- */
 @media screen {
   .print-only, .unified-print-only {
     display: none !important;
+  }
+  
+  /* Show print elements ONLY inside the preview container on screen */
+  .print-preview-container .print-only,
+  .print-preview-container .unified-print-only {
+    display: block !important;
   }
 }
 
@@ -292,10 +297,6 @@ body {
 
 
   /* Special case for unified printing class on body */
-  body.is-unified-printing .print-only {
-    display: none !important;
-  }
-
   body:not(.is-unified-printing) .unified-print-only {
     display: none !important;
   }

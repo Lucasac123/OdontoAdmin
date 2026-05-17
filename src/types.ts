@@ -70,6 +70,7 @@ export interface Appointment {
   duration?: number;
   notes?: string;
   status: 'scheduled' | 'completed' | 'cancelled';
+  googleCalendarLink?: string;
   createdAt: string;
 }
 
@@ -116,6 +117,8 @@ export interface NotificationSettings {
   type: 'sms' | 'email' | 'whatsapp' | 'both' | 'all';
   hoursBefore: number | '';
   messageTemplate: string;
+  senderEmail?: string;
+  senderName?: string;
   updatedAt: string;
 }
 
