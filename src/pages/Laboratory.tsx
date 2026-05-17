@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { db, auth, moveToTrash, handleFirestoreError, OperationType } from '../firebase';
 import { LabJob, Patient } from '../types';
-import { Plus, Edit2, Trash2, CheckCircle, Clock, Truck, FileText, Search, Loader2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckCircle, Clock, Truck, FileText, Search, Loader2, Phone, MessageCircle, ArrowRightCircle } from 'lucide-react';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { motion } from 'motion/react';
 import { useSync } from '../context/SyncContext';
@@ -24,6 +24,7 @@ const Laboratory = () => {
     patientName: '',
     prosthesisType: '',
     labName: '',
+    labPhone: '',
     sendDate: new Date().toISOString().split('T')[0],
     expectedDate: '',
     status: 'Enviado' as LabJob['status'],
@@ -74,6 +75,7 @@ const Laboratory = () => {
         patientName: job.patientName,
         prosthesisType: job.prosthesisType,
         labName: job.labName,
+        labPhone: job.labPhone || '',
         sendDate: job.sendDate.split('T')[0],
         expectedDate: job.expectedDate.split('T')[0],
         status: job.status,
@@ -87,6 +89,7 @@ const Laboratory = () => {
         patientName: '',
         prosthesisType: '',
         labName: '',
+        labPhone: '',
         sendDate: new Date().toISOString().split('T')[0],
         expectedDate: '',
         status: 'Enviado',
@@ -155,6 +158,38 @@ const Laboratory = () => {
     setIsConfirmModalOpen(false);
     setJobToDelete(null);
     setDeleteError(null);
+  };
+
+  const statusOrder: LabJob['status'][] = ['Enviado', 'Em Confecção', 'Recebido', 'Instalado'];
+
+  const handleAdvanceStatus = async (job: LabJob) => {
+    const currentIndex = statusOrder.indexOf(job.status);
+    if (currentIndex < statusOrder.length - 1) {
+      const nextStatus = statusOrder[currentIndex + 1];
+      try {
+        const promise = updateDoc(doc(db, 'lab_jobs', job.id), {
+          status: nextStatus,
+          updatedAt: new Date().toISOString()
+        });
+        addSyncTask(promise);
+      } catch (error) {
+        console.error('Error advancing status:', error);
+      }
+    }
+  };
+
+  const openWhatsApp = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, '');
+    const number = cleaned.startsWith('55') ? cleaned : `55${cleaned}`;
+    window.open(`https://wa.me/${number}`, '_blank');
+  };
+
+  const getNextStatusLabel = (status: LabJob['status']): string | null => {
+    const currentIndex = statusOrder.indexOf(status);
+    if (currentIndex < statusOrder.length - 1) {
+      return statusOrder[currentIndex + 1];
+    }
+    return null;
   };
 
   const getStatusIcon = (status: string) => {
@@ -236,7 +271,18 @@ const Laboratory = () => {
                     <span className="text-sm text-text-secondary font-medium">{job.prosthesisType}</span>
                   </td>
                   <td className="py-4 px-6">
-                    <span className="text-sm text-text-secondary">{job.labName}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-text-secondary">{job.labName}</span>
+                      {job.labPhone && (
+                        <button
+                          onClick={() => openWhatsApp(job.labPhone!)}
+                          className="p-1 text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-500/10 rounded-lg transition-all"
+                          title={`WhatsApp: ${job.labPhone}`}
+                        >
+                          <MessageCircle size={16} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                   <td className="py-4 px-6">
                     <span className="text-sm text-text-secondary font-mono">
@@ -256,6 +302,16 @@ const Laboratory = () => {
                   </td>
                   <td className="py-4 px-6 text-right">
                     <div className="flex justify-end gap-1">
+                      {getNextStatusLabel(job.status) && (
+                        <button
+                          onClick={() => handleAdvanceStatus(job)}
+                          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 rounded-lg transition-all"
+                          title={`Avançar para: ${getNextStatusLabel(job.status)}`}
+                        >
+                          <ArrowRightCircle size={14} />
+                          {getNextStatusLabel(job.status)}
+                        </button>
+                      )}
                       <button
                         onClick={() => handleOpenModal(job)}
                         className="p-2 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-all"
@@ -305,7 +361,18 @@ const Laboratory = () => {
                 <div className="grid grid-cols-2 gap-4 text-[11px] text-text-secondary">
                   <div>
                     <span className="block font-black uppercase text-[9px] opacity-40 mb-0.5 tracking-widest">Laboratório</span>
-                    <span className="font-medium text-text-primary">{job.labName}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-medium text-text-primary">{job.labName}</span>
+                      {job.labPhone && (
+                        <button
+                          onClick={() => openWhatsApp(job.labPhone!)}
+                          className="p-0.5 text-green-500 hover:text-green-600 transition-colors"
+                          title={`WhatsApp: ${job.labPhone}`}
+                        >
+                          <MessageCircle size={13} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <span className="block font-black uppercase text-[9px] opacity-40 mb-0.5 tracking-widest">Previsão</span>
@@ -313,7 +380,15 @@ const Laboratory = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2">
+                <div className="flex flex-wrap justify-end gap-2 pt-2">
+                  {getNextStatusLabel(job.status) && (
+                    <button
+                      onClick={() => handleAdvanceStatus(job)}
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-2 px-4 text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-xl text-xs font-bold transition-all active:scale-95"
+                    >
+                      <ArrowRightCircle size={14} /> {getNextStatusLabel(job.status)}
+                    </button>
+                  )}
                   <button
                     onClick={() => handleOpenModal(job)}
                     className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-2 px-4 text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl text-xs font-bold transition-all active:scale-95"
@@ -371,6 +446,33 @@ const Laboratory = () => {
                     placeholder="Nome do Laboratório"
                     className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                   />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-text-secondary uppercase mb-1">Telefone do Protético / Laboratório</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                    <input
+                      type="tel"
+                      disabled={isSaving}
+                      value={formData.labPhone}
+                      onChange={(e) => setFormData({ ...formData, labPhone: e.target.value })}
+                      placeholder="(00) 00000-0000"
+                      className="w-full pl-10 pr-4 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-text-primary focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                    />
+                  </div>
+                  {formData.labPhone && (
+                    <button
+                      type="button"
+                      onClick={() => openWhatsApp(formData.labPhone)}
+                      className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors font-bold text-sm shrink-0"
+                    >
+                      <MessageCircle size={16} />
+                      WhatsApp
+                    </button>
+                  )}
                 </div>
               </div>
 

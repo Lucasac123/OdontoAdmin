@@ -2,21 +2,40 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useStorage } from '../context/StorageContext';
 import { useTheme } from '../context/ThemeContext';
-import { db, OperationType, handleFirestoreError } from '../firebase';
+import { db, OperationType, handleFirestoreError, storage } from '../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { motion, AnimatePresence } from 'motion/react';
 import { ImageCropperModal } from '../components/ImageCropperModal';
-import { User, Mail, Phone, Calendar, Award, Save, Loader2, Camera, Lock, HardDrive, Download, Upload, Palette, Image as ImageIcon, RotateCcw, CheckCircle } from 'lucide-react';
-import { storage } from '../firebase';
+import { 
+  User, Mail, Phone, Calendar, Award, Save, Loader2, Camera, Lock, 
+  HardDrive, Download, Upload, Palette, Image as ImageIcon, RotateCcw, 
+  CheckCircle, MapPin, Building, Eye, EyeOff, ShieldCheck, Check, 
+  Database, Sparkles, CloudLightning 
+} from 'lucide-react';
 import { getDriveAccessToken } from '../services/googleDriveService';
 import { backupToDrive, restoreFromDrive } from '../services/backupService';
+
+// Premium color presets specifically designed for clinical and dental aesthetics
+const COLOR_PRESETS = [
+  { id: 'bronze', label: 'Ouro Clínico', value: '#af571b', desc: 'Bronze clássico e acolhedor' },
+  { id: 'teal', label: 'Verde Turquesa', value: '#0d9488', desc: 'Moderno e tranquilizante' },
+  { id: 'blue', label: 'Azul Odonto', value: '#2563eb', desc: 'Profissional e tecnológico' },
+  { id: 'emerald', label: 'Menta Fresca', value: '#059669', desc: 'Suave, orgânico e natural' },
+  { id: 'violet', label: 'Roxo Ametista', value: '#7c3aed', desc: 'Sofisticado e contemporâneo' },
+  { id: 'slate', label: 'Mineral Neutro', value: '#4b5563', desc: 'Minimalista e ultra limpo' },
+];
 
 export const Profile: React.FC = () => {
   const { user } = useAuth();
   const { storageLocation, setStorageLocation } = useStorage();
-  const { accentColor, setAccentColor, colorHistory, customLogo, setCustomLogo, resetToDefaults } = useTheme();
+  const { accentColor, setAccentColor, colorHistory, customLogo, setCustomLogo } = useTheme();
+  
+  // Tab Management State
+  const [activeTab, setActiveTab] = useState<'profile' | 'appearance' | 'security' | 'storage'>('profile');
+  
+  // Loading & Saving States
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
@@ -24,9 +43,20 @@ export const Profile: React.FC = () => {
   const [isAuthenticatingDrive, setIsAuthenticatingDrive] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  
+  // Custom Color States
   const [colorInput, setColorInput] = useState(accentColor);
+  
+  // Password Visibility States
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Image Crop Modal States
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const [cropperImageSrc, setCropperImageSrc] = useState<string | null>(null);
+
+  // Form Fields State
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -39,6 +69,8 @@ export const Profile: React.FC = () => {
     responsibleTechnician: '',
     clinicName: ''
   });
+  
+  // Password Fields State
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -49,6 +81,7 @@ export const Profile: React.FC = () => {
     setColorInput(accentColor);
   }, [accentColor]);
 
+  // Logo Customization Handlers
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -80,7 +113,7 @@ export const Profile: React.FC = () => {
       }
 
       await setCustomLogo(logoURL);
-      alert('Logo atualizada com sucesso!');
+      alert('Logo do aplicativo atualizada com sucesso!');
     } catch (error) {
       console.error("Error uploading logo:", error);
       alert('Erro ao atualizar logo do aplicativo.');
@@ -89,6 +122,7 @@ export const Profile: React.FC = () => {
     }
   };
 
+  // Color Customization Handlers
   const handleColorSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (/^#[0-9A-F]{6}$/i.test(colorInput)) {
@@ -98,6 +132,7 @@ export const Profile: React.FC = () => {
     }
   };
 
+  // Fetching Profile Data
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) return;
@@ -135,11 +170,12 @@ export const Profile: React.FC = () => {
     fetchProfile();
   }, [user]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Submit Profile Changes
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -166,6 +202,7 @@ export const Profile: React.FC = () => {
     }
   };
 
+  // Password Modification Handler
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !user.email) return;
@@ -192,6 +229,7 @@ export const Profile: React.FC = () => {
 
   const isGoogleUser = user?.providerData.some(p => p.providerId === 'google.com');
 
+  // Profile Avatar Upload Handler
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -259,6 +297,7 @@ export const Profile: React.FC = () => {
     }
   };
 
+  // Data Storage Location Handler
   const handleStorageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value as 'firebase' | 'drive';
     
@@ -285,6 +324,7 @@ export const Profile: React.FC = () => {
     }
   };
 
+  // Google Drive Manual Backup Handler
   const handleBackup = async () => {
     if (!user) return;
     setIsBackingUp(true);
@@ -303,6 +343,7 @@ export const Profile: React.FC = () => {
     }
   };
 
+  // Google Drive Manual Restore Handler
   const handleRestore = async () => {
     if (!user) return;
     if (!window.confirm('Tem certeza que deseja restaurar os dados do Google Drive? Isso irá sobrescrever os dados atuais no Firebase.')) {
@@ -327,531 +368,934 @@ export const Profile: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      <div className="flex items-center justify-center h-full min-h-[400px]">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-600 dark:text-indigo-400" />
       </div>
     );
   }
 
+  // Sidebar Settings Tab Options
+  const TABS = [
+    { id: 'profile', label: 'Clínica & Perfil', icon: User, desc: 'Dados do consultório' },
+    { id: 'appearance', label: 'Identidade Visual', icon: Palette, desc: 'Cores e logomarca' },
+    { id: 'security', label: 'Segurança', icon: Lock, desc: 'Senha e credenciais' },
+    { id: 'storage', label: 'Armazenamento', icon: HardDrive, desc: 'Backups e nuvem' },
+  ] as const;
+
   return (
-    <div className="max-w-6xl mx-auto pb-20 sm:pb-6">
-      <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
-        {/* Left Column: Avatar & Summary */}
-        <div className="w-full lg:w-1/3 space-y-6">
+    <div className="max-w-6xl mx-auto pb-24 lg:pb-8 px-4 sm:px-6">
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
+        
+        {/* ================= LEFT SIDEBAR (Profile Summary & Tab Nav) ================= */}
+        <div className="w-full lg:w-[320px] shrink-0 space-y-6">
+          
+          {/* Profile Summary Card */}
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-surface rounded-[24px] sm:rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 text-center relative overflow-hidden"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-surface rounded-3xl shadow-premium border border-zinc-200 dark:border-zinc-800 p-6 text-center relative overflow-hidden glass"
           >
-            {/* Background decoration */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 blur-3xl -mr-16 -mt-16 pointer-events-none" />
+            {/* Elegant glass background decoration */}
+            <div className="absolute top-0 right-0 w-36 h-36 bg-indigo-500/5 dark:bg-indigo-400/5 blur-3xl -mr-12 -mt-12 pointer-events-none" />
             
             <div className="relative z-10">
+              {/* Avatar Container with Hover Glow */}
               <div className="relative inline-block group">
-                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-[32px] sm:rounded-[40px] bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center border-4 border-white dark:border-zinc-800 shadow-xl overflow-hidden transition-transform group-hover:scale-105 duration-500">
+                <div 
+                  className="w-28 h-28 sm:w-32 sm:h-32 rounded-[36px] bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-center border-4 border-white dark:border-zinc-800 shadow-xl overflow-hidden transition-all duration-500 group-hover:scale-105"
+                  style={{ borderColor: accentColor }}
+                >
                   {user?.photoURL ? (
                     <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   ) : (
-                    <User className="w-10 h-10 sm:w-12 sm:h-12 text-indigo-600 dark:text-indigo-400" />
+                    <User className="w-12 h-12 text-zinc-400" />
                   )}
-                  <label className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer backdrop-blur-sm">
-                    <Camera className="w-5 h-5 sm:w-6 sm:h-6 text-white mb-1" />
-                    <span className="text-[9px] sm:text-[10px] font-black text-white uppercase tracking-widest">Alterar</span>
+                  
+                  <label className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer backdrop-blur-xs">
+                    <Camera className="w-6 h-6 text-white mb-1 animate-pulse" />
+                    <span className="text-[9px] font-black text-white uppercase tracking-widest">Alterar</span>
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={saving} />
                   </label>
                 </div>
-                <div className="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 w-8 h-8 sm:w-10 sm:h-10 bg-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center text-white shadow-lg border-4 border-white dark:border-zinc-800">
-                  <Award className="w-4 h-4 sm:w-5 sm:h-5" />
+                
+                {/* Accent Badge */}
+                <div 
+                  className="absolute -bottom-1 -right-1 w-9 h-9 rounded-2xl flex items-center justify-center text-white shadow-lg border-4 border-white dark:border-zinc-800 transition-transform duration-500 group-hover:rotate-12"
+                  style={{ backgroundColor: accentColor }}
+                >
+                  <Award className="w-4 h-4" />
                 </div>
               </div>
 
-              <div className="mt-6">
-                <h1 className="hidden md:block text-xl sm:text-2xl font-black text-text-primary tracking-tight truncate px-2">{formData.name || 'Seu Nome'}</h1>
-                <p className="text-xs sm:text-sm font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-1">
+              {/* Title & Registration Details */}
+              <div className="mt-5">
+                <h1 className="text-xl font-black text-text-primary tracking-tight truncate px-2">
+                  {formData.name || 'Dentista'}
+                </h1>
+                <p 
+                  className="text-xs font-bold uppercase tracking-wider mt-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/20 inline-block"
+                  style={{ color: accentColor }}
+                >
                   {formData.cro ? `CRO: ${formData.cro}` : 'Cirurgião Dentista'}
                 </p>
               </div>
 
-              <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-zinc-100 dark:border-zinc-800 space-y-3 sm:space-y-4">
-                <div className="flex items-center gap-3 text-left">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 shrink-0">
-                    <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              {/* Quick Profile Meta Rows */}
+              <div className="mt-6 pt-5 border-t border-zinc-100 dark:border-zinc-800/80 space-y-4">
+                <div className="flex items-center gap-3.5 text-left">
+                  <div className="w-9 h-9 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-center text-zinc-400 shrink-0 border border-zinc-100 dark:border-zinc-800">
+                    <Mail className="w-4 h-4" />
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest">E-mail</p>
-                    <p className="text-xs sm:text-sm font-medium text-text-primary truncate">{formData.email}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">E-mail</p>
+                    <p className="text-xs sm:text-sm font-semibold text-text-primary truncate">{formData.email}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 text-left">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 shrink-0">
-                    <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                
+                <div className="flex items-center gap-3.5 text-left">
+                  <div className="w-9 h-9 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-center text-zinc-400 shrink-0 border border-zinc-100 dark:border-zinc-800">
+                    <Phone className="w-4 h-4" />
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest">Telefone</p>
-                    <p className="text-xs sm:text-sm font-medium text-text-primary truncate">{formData.phone || 'Não informado'}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Telefone</p>
+                    <p className="text-xs sm:text-sm font-semibold text-text-primary truncate">{formData.phone || 'Não informado'}</p>
                   </div>
                 </div>
               </div>
             </div>
           </motion.div>
 
+          {/* Navigation Tabs - Desktop (Vertical) */}
+          <div className="hidden lg:block bg-surface rounded-3xl p-3 border border-zinc-200 dark:border-zinc-800 shadow-premium glass">
+            <nav className="space-y-1 relative z-0">
+              {TABS.map((tab) => {
+                const IconComponent = tab.icon;
+                const isSelected = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className="w-full relative flex items-center gap-4 px-4 py-3 rounded-2xl text-left transition-all duration-300 group cursor-pointer"
+                  >
+                    {/* Active tab sliding highlight pill */}
+                    {isSelected && (
+                      <motion.div
+                        layoutId="activeTabPill"
+                        className="absolute inset-0 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl -z-10"
+                        transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+                        style={{ borderLeft: `3px solid ${accentColor}` }}
+                      />
+                    )}
+                    
+                    <div 
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border transition-all duration-300 ${
+                        isSelected 
+                        ? 'bg-surface border-zinc-100 dark:border-zinc-850 shadow-sm' 
+                        : 'bg-zinc-50/50 dark:bg-zinc-900/30 border-transparent text-zinc-400 group-hover:text-text-primary'
+                      }`}
+                      style={isSelected ? { color: accentColor } : {}}
+                    >
+                      <IconComponent className="w-4.5 h-4.5" />
+                    </div>
+                    
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-xs font-black tracking-tight ${isSelected ? 'text-text-primary' : 'text-text-secondary group-hover:text-text-primary'}`}>
+                        {tab.label}
+                      </p>
+                      <p className="text-[9px] font-medium text-zinc-400 dark:text-zinc-500 truncate leading-none mt-0.5">
+                        {tab.desc}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* Navigation Tabs - Mobile/Tablet (Horizontal Scroll) */}
+          <div className="block lg:hidden w-full overflow-x-auto hide-scrollbar -mx-4 px-4 pb-2 sticky top-[60px] z-20 bg-zinc-50 dark:bg-zinc-900/10 backdrop-blur-md">
+            <div className="flex gap-2.5 min-w-max p-1 bg-surface dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm">
+              {TABS.map((tab) => {
+                const IconComponent = tab.icon;
+                const isSelected = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className="relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-left transition-all duration-300 cursor-pointer"
+                  >
+                    {/* Active tab sliding highlight pill for mobile */}
+                    {isSelected && (
+                      <motion.div
+                        layoutId="activeTabPillMobile"
+                        className="absolute inset-0 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl -z-10"
+                        transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+                        style={{ borderBottom: `2px solid ${accentColor}` }}
+                      />
+                    )}
+                    
+                    <IconComponent 
+                      className="w-4 h-4" 
+                      style={isSelected ? { color: accentColor } : { color: 'var(--text-secondary)' }}
+                    />
+                    <span className={`text-xs font-black tracking-tight ${isSelected ? 'text-text-primary' : 'text-text-secondary'}`}>
+                      {tab.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Account Status Card - Integrated in Sidebar */}
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-indigo-600 rounded-[24px] sm:rounded-[32px] p-6 sm:p-8 text-white shadow-lg dark:shadow-none relative overflow-hidden"
+            className="rounded-3xl p-5 text-white shadow-premium relative overflow-hidden"
+            style={{ background: `linear-gradient(135deg, ${accentColor} 0%, #1e1b4b 100%)` }}
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-3xl -mr-16 -mt-16" />
-            <div className="relative z-10">
-              <h3 className="text-base sm:text-lg font-black uppercase tracking-widest mb-2">Status da Conta</h3>
-              <p className="text-indigo-100 text-xs sm:text-sm font-medium leading-relaxed">Sua conta está ativa e verificada. Você tem acesso total a todos os recursos do sistema.</p>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-2xl -mr-12 -mt-12 pointer-events-none" />
+            <div className="relative z-10 flex gap-4">
+              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
+                <CheckCircle className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-widest text-white/95">Status da Conta</h3>
+                <p className="text-white/80 text-[10px] font-semibold leading-relaxed mt-1">
+                  Sua conta está ativa e protegida. Acesso total a recursos em nuvem, agendamentos e IA.
+                </p>
+              </div>
             </div>
           </motion.div>
+
         </div>
 
-        {/* Right Column: Forms */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 auto-rows-min">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="group bg-surface rounded-[24px] sm:rounded-[32px] shadow-sm hover:shadow-md border border-zinc-200 dark:border-zinc-800 overflow-hidden md:col-span-2 transition-all duration-300"
-          >
-            <div className="p-6 sm:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-900/20">
-              <div>
-                <h2 className="text-lg sm:text-xl font-black text-text-primary tracking-tight">Informações Pessoais</h2>
-                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Dados fundamentais do seu consultório</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 transition-transform group-hover:scale-110">
-                <User className="w-5 h-5" />
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
-                <div className="space-y-2">
-                  <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nome Completo</label>
-                  <div className="relative group">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-indigo-500 transition-colors" />
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      className="w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">E-mail (Apenas leitura)</label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      className="w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800/50 text-zinc-500 outline-none cursor-not-allowed text-sm font-medium"
-                      disabled
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Celular</label>
-                  <div className="relative group">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-indigo-500 transition-colors" />
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className="w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Data de Nascimento</label>
-                  <div className="relative group">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-indigo-500 transition-colors" />
-                    <input
-                      type="date"
-                      name="birthDate"
-                      value={formData.birthDate}
-                      onChange={handleChange}
-                      className="w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Registro CRO</label>
-                  <div className="relative group">
-                    <Award className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-indigo-500 transition-colors" />
-                    <input
-                      type="text"
-                      name="cro"
-                      value={formData.cro}
-                      onChange={handleChange}
-                      className="w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Tipo de Ambiente</label>
-                  <select
-                    name="type"
-                    value={formData.type}
-                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as 'clinica' | 'consultorio' }))}
-                    className="w-full pl-4 pr-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
-                  >
-                    <option value="consultorio">Consultório Odontológico</option>
-                    <option value="clinica">Clínica Odontológica</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                    <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Endereço</label>
-                    <input
-                      type="text"
-                      name="address"
-                      value={formData.address}
-                      onChange={handleChange}
-                      className="w-full pl-4 pr-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
-                    />
-                </div>
-
-                <div className="space-y-2">
-                    <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nome da Clínica/Consultório</label>
-                    <input
-                      type="text"
-                      name="clinicName"
-                      value={formData.clinicName}
-                      onChange={handleChange}
-                      className="w-full pl-4 pr-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
-                    />
-                </div>
-
-                {formData.type === 'clinica' && (
-                  <>
-                  <div className="space-y-2">
-                      <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Número EPAO</label>
-                      <input
-                        type="text"
-                        name="epao"
-                        value={formData.epao}
-                        onChange={handleChange}
-                        className="w-full pl-4 pr-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
-                      />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Responsável Técnico</label>
-                    <input
-                      type="text"
-                      name="responsibleTechnician"
-                      value={formData.responsibleTechnician}
-                      onChange={handleChange}
-                      className="w-full pl-4 pr-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
-                    />
-                  </div>
-                  </>
-                )}
-              </div>
-
-              <div className="pt-4 flex justify-end">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="w-full sm:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl sm:rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all flex items-center justify-center gap-3 disabled:opacity-50 shadow-lg dark:shadow-none active:scale-95"
-                >
-                  {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                  {saving ? 'Salvando...' : 'Salvar Alterações'}
-                </button>
-              </div>
-            </form>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="group bg-surface rounded-[24px] sm:rounded-[32px] shadow-sm hover:shadow-md border border-zinc-200 dark:border-zinc-800 overflow-hidden md:col-span-1 transition-all duration-300 flex flex-col"
-          >
-            <div className="p-6 sm:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-900/20">
-              <div>
-                <h2 className="text-lg font-black text-text-primary tracking-tight">Segurança</h2>
-                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Credenciais de Acesso</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 transition-transform group-hover:scale-110">
-                <Lock className="w-5 h-5" />
-              </div>
-            </div>
-
-            <form onSubmit={handlePasswordChange} className="p-6 sm:p-8 space-y-6 flex-1 flex flex-col">
-              {isGoogleUser ? (
-                <div className="p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800 text-center flex-1 flex flex-col justify-center">
-                  <Mail className="w-8 h-8 text-zinc-300 mx-auto mb-4" />
-                  <p className="text-sm font-medium text-text-secondary">Sua conta está vinculada ao Google Login.</p>
-                </div>
-              ) : (
-                <>
-                  <div className="space-y-5 flex-1">
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Senha Atual</label>
-                      <input
-                        type="password"
-                        value={passwordData.currentPassword}
-                        onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                        className="w-full px-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
-                        required
-                      />
+        {/* ================= RIGHT CONFIGURATION PANELS ================= */}
+        <div className="flex-1 w-full min-w-0">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="w-full"
+            >
+              
+              {/* ----------------- TAB: PROFILE & CLINIC ----------------- */}
+              {activeTab === 'profile' && (
+                <div className="bg-surface rounded-[32px] border border-zinc-200 dark:border-zinc-800 shadow-premium overflow-hidden glass">
+                  <div className="p-6 sm:p-8 border-b border-zinc-150 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-black text-text-primary tracking-tight">Informações Cadastrais</h2>
+                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Configuração do seu perfil e ambiente clínico</p>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nova Senha</label>
-                      <input
-                        type="password"
-                        value={passwordData.newPassword}
-                        onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                        className="w-full px-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Confirmar Senha</label>
-                      <input
-                        type="password"
-                        value={passwordData.confirmNewPassword}
-                        onChange={(e) => setPasswordData(prev => ({ ...prev, confirmNewPassword: e.target.value }))}
-                        className="w-full px-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="pt-6">
-                    <button
-                      type="submit"
-                      disabled={passwordSaving}
-                      className="w-full px-4 py-3.5 bg-zinc-900 dark:bg-zinc-100 hover:opacity-90 text-white dark:text-zinc-900 rounded-xl sm:rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95 shadow-sm"
+                    <div 
+                      className="w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm transition-transform shrink-0"
+                      style={{ color: accentColor, borderColor: `${accentColor}22`, backgroundColor: `${accentColor}11` }}
                     >
-                      {passwordSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Lock className="w-5 h-5" />}
-                      Salvar Nova Senha
-                    </button>
-                  </div>
-                </>
-              )}
-            </form>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="group bg-surface rounded-[24px] sm:rounded-[32px] shadow-sm hover:shadow-md border border-zinc-200 dark:border-zinc-800 overflow-hidden md:col-span-2 transition-all duration-300"
-          >
-            <div className="p-6 sm:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-900/20">
-              <div>
-                <h2 className="text-lg sm:text-xl font-black text-text-primary tracking-tight">Identidade Visual</h2>
-                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Sua marca e cores personalizadas</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center transition-transform group-hover:scale-110" style={{ color: accentColor }}>
-                <Palette className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div className="p-6 sm:p-8 space-y-8">
-              {/* Color Configuration */}
-              <div className="space-y-4">
-                <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Cor Base do Aplicativo</label>
-                <form onSubmit={handleColorSubmit} className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex-1 flex gap-3">
-                    <div className="relative group shrink-0">
-                      <div 
-                        className="w-12 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm transition-transform group-hover:scale-105" 
-                        style={{ backgroundColor: accentColor, height: '46px' }}
-                      />
-                      <input 
-                        type="color" 
-                        value={colorInput} 
-                        onChange={(e) => setColorInput(e.target.value)}
-                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                      />
-                    </div>
-                    <input
-                      type="text"
-                      value={colorInput}
-                      onChange={(e) => setColorInput(e.target.value)}
-                      placeholder="#000000"
-                      className="flex-1 px-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 outline-none transition-all text-sm font-mono font-medium lowercase"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="submit"
-                      className="px-6 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl sm:rounded-2xl font-bold text-xs uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all"
-                    >
-                      Aplicar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAccentColor('#af571b');
-                        setColorInput('#af571b');
-                      }}
-                      className="p-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 rounded-xl sm:rounded-2xl transition-all"
-                      title="Redefinir Cor"
-                    >
-                      <RotateCcw className="w-5 h-5" />
-                    </button>
-                  </div>
-                </form>
-
-                {colorHistory.length > 0 && (
-                  <div className="pt-2">
-                    <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-3 ml-1">Cores Recentes</p>
-                    <div className="flex flex-wrap gap-2">
-                      {colorHistory.map((color, i) => (
-                        <button
-                          key={`${color}-${i}`}
-                          onClick={() => setAccentColor(color)}
-                          className="w-8 h-8 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-sm transition-all hover:scale-110 active:scale-90"
-                          style={{ backgroundColor: color }}
-                          title={color}
-                        />
-                      ))}
+                      <User className="w-5 h-5" />
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* Logo Configuration */}
-              <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 space-y-4">
-                <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Logotipo Personalizado</label>
-                <div className="flex flex-col sm:flex-row items-center gap-6 p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
-                  <div 
-                    className="w-20 h-20 rounded-2xl border border-zinc-200 dark:border-zinc-700 flex items-center justify-center overflow-hidden shadow-sm transition-all duration-500"
-                    style={{ 
-                      background: customLogo ? 'white' : `linear-gradient(145deg, var(--accent) 0%, var(--accent-dark) 100%)`
-                    }}
-                  >
-                    <img 
-                      src={customLogo || "/icon.png"} 
-                      alt="Logo" 
-                      className={`w-full h-full object-cover transition-all duration-500 ${!customLogo ? 'mix-blend-luminosity opacity-90 brightness-110 grayscale contrast-125' : ''}`} 
-                    />
-                  </div>
-                  <div className="flex-1 space-y-3 text-center sm:text-left">
-                    <p className="text-xs font-medium text-text-secondary leading-relaxed">
-                      Substitua o dente padrão por sua própria logomarca. Recomendamos arquivos PNG transparentes de 512x512px.
-                    </p>
-                    <div className="flex flex-wrap justify-center sm:justify-start gap-3">
-                      <label className="flex items-center gap-2 px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:opacity-90 active:scale-95 transition-all">
-                        {logoUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImageIcon className="w-3.5 h-3.5" />}
-                        {logoUploading ? 'Enviando...' : 'Fazer Upload'}
-                        <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={logoUploading} />
-                      </label>
+                  <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-8">
+                    
+                    {/* Subsection: Pessoal */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-2">
+                        <User className="w-4 h-4 text-zinc-400" />
+                        <h3 className="text-xs font-black uppercase tracking-wider text-zinc-450 dark:text-zinc-400">Dados Pessoais</h3>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nome Completo</label>
+                          <div className="relative group">
+                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-[var(--accent)] transition-colors" style={{ '--accent': accentColor } as React.CSSProperties} />
+                            <input
+                              type="text"
+                              name="name"
+                              value={formData.name}
+                              onChange={handleChange}
+                              className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                              style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Celular</label>
+                          <div className="relative group">
+                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-[var(--accent)] transition-colors" style={{ '--accent': accentColor } as React.CSSProperties} />
+                            <input
+                              type="tel"
+                              name="phone"
+                              value={formData.phone}
+                              onChange={handleChange}
+                              placeholder="(00) 00000-0000"
+                              className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                              style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Data de Nascimento</label>
+                          <div className="relative group">
+                            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-[var(--accent)] transition-colors" style={{ '--accent': accentColor } as React.CSSProperties} />
+                            <input
+                              type="date"
+                              name="birthDate"
+                              value={formData.birthDate}
+                              onChange={handleChange}
+                              className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                              style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">E-mail (Não editável)</label>
+                          <div className="relative">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-450 dark:text-zinc-500" />
+                            <input
+                              type="email"
+                              value={formData.email}
+                              className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900/50 text-zinc-450 dark:text-zinc-500 outline-none cursor-not-allowed text-sm font-semibold"
+                              disabled
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Subsection: Clínica / Atendimento */}
+                    <div className="space-y-4 pt-4 border-t border-zinc-100 dark:border-zinc-800/80">
+                      <div className="flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-2">
+                        <Building className="w-4 h-4 text-zinc-400" />
+                        <h3 className="text-xs font-black uppercase tracking-wider text-zinc-450 dark:text-zinc-400">Dados do Consultório / Clínica</h3>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nome Fantasia do Consultório</label>
+                          <div className="relative group">
+                            <Building className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-[var(--accent)] transition-colors" style={{ '--accent': accentColor } as React.CSSProperties} />
+                            <input
+                              type="text"
+                              name="clinicName"
+                              value={formData.clinicName}
+                              onChange={handleChange}
+                              className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                              style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Tipo de Ambiente</label>
+                          <div className="relative group">
+                            <select
+                              name="type"
+                              value={formData.type}
+                              onChange={handleChange}
+                              className="w-full pl-4 pr-10 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent appearance-none cursor-pointer"
+                              style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
+                            >
+                              <option value="consultorio">Consultório Odontológico</option>
+                              <option value="clinica">Clínica Odontológica</option>
+                            </select>
+                            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-zinc-400">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Registro Profissional CRO</label>
+                          <div className="relative group">
+                            <Award className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-[var(--accent)] transition-colors" style={{ '--accent': accentColor } as React.CSSProperties} />
+                            <input
+                              type="text"
+                              name="cro"
+                              value={formData.cro}
+                              onChange={handleChange}
+                              placeholder="UF-12345"
+                              className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                              style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Endereço Físico</label>
+                          <div className="relative group">
+                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-[var(--accent)] transition-colors" style={{ '--accent': accentColor } as React.CSSProperties} />
+                            <input
+                              type="text"
+                              name="address"
+                              value={formData.address}
+                              onChange={handleChange}
+                              placeholder="Av. Paulista, 1000 - Cj. 41"
+                              className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                              style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Clinical-Only EPAO Fields with Smooth Slide Animate */}
+                      <AnimatePresence>
+                        {formData.type === 'clinica' && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-3 overflow-hidden"
+                          >
+                            <div className="space-y-2">
+                              <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Número EPAO (Clínicas)</label>
+                              <div className="relative group">
+                                <Award className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-[var(--accent)] transition-colors" style={{ '--accent': accentColor } as React.CSSProperties} />
+                                <input
+                                  type="text"
+                                  name="epao"
+                                  value={formData.epao}
+                                  onChange={handleChange}
+                                  placeholder="EPAO-1234"
+                                  className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                                  style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Responsável Técnico</label>
+                              <div className="relative group">
+                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-[var(--accent)] transition-colors" style={{ '--accent': accentColor } as React.CSSProperties} />
+                                <input
+                                  type="text"
+                                  name="responsibleTechnician"
+                                  value={formData.responsibleTechnician}
+                                  onChange={handleChange}
+                                  placeholder="Nome do Responsável Técnico"
+                                  className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                                  style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
+                                />
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Submit Actions Button */}
+                    <div className="pt-6 border-t border-zinc-150 dark:border-zinc-800/80 flex justify-end">
                       <button
-                        type="button"
-                        onClick={() => setCustomLogo(null)}
-                        className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:text-zinc-900 dark:hover:text-zinc-100 active:scale-95 transition-all"
+                        type="submit"
+                        disabled={saving}
+                        className="w-full sm:w-auto px-8 py-3.5 rounded-2xl font-black uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98] shadow-md hover:brightness-105 cursor-pointer text-white"
+                        style={{ backgroundColor: accentColor }}
                       >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        Restaurar Original
+                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        {saving ? 'Gravando...' : 'Salvar Alterações'}
                       </button>
                     </div>
+                  </form>
+                </div>
+              )}
+
+              {/* ----------------- TAB: VISUAL APPEARANCE ----------------- */}
+              {activeTab === 'appearance' && (
+                <div className="space-y-6">
+                  
+                  {/* Theme Color Configuration Card */}
+                  <div className="bg-surface rounded-[32px] border border-zinc-200 dark:border-zinc-800 shadow-premium overflow-hidden glass">
+                    <div className="p-6 sm:p-8 border-b border-zinc-150 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between">
+                      <div>
+                        <h2 className="text-xl font-black text-text-primary tracking-tight">Cores & Paleta Visual</h2>
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Selecione o tom que melhor representa sua clínica</p>
+                      </div>
+                      <div 
+                        className="w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm transition-transform shrink-0"
+                        style={{ color: accentColor, borderColor: `${accentColor}22`, backgroundColor: `${accentColor}11` }}
+                      >
+                        <Palette className="w-5 h-5" />
+                      </div>
+                    </div>
+
+                    <div className="p-6 sm:p-8 space-y-8">
+                      {/* Presets Grid */}
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-zinc-400" />
+                          <h3 className="text-xs font-black uppercase tracking-wider text-zinc-450 dark:text-zinc-400">Presets Premium</h3>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                          {COLOR_PRESETS.map((preset) => {
+                            const isPresetActive = accentColor.toLowerCase() === preset.value.toLowerCase();
+                            return (
+                              <button
+                                key={preset.id}
+                                onClick={() => {
+                                  setAccentColor(preset.value);
+                                  setColorInput(preset.value);
+                                }}
+                                className={`p-4 rounded-2xl border text-left flex items-start gap-3 transition-all duration-300 group relative overflow-hidden cursor-pointer ${
+                                  isPresetActive 
+                                  ? 'border-indigo-200 dark:border-indigo-800 shadow-md' 
+                                  : 'border-zinc-200 dark:border-zinc-800/80 bg-zinc-50/20 dark:bg-zinc-900/10 hover:border-zinc-350 dark:hover:border-zinc-700 hover:shadow-sm'
+                                }`}
+                                style={isPresetActive ? { backgroundColor: `${preset.value}05` } : {}}
+                              >
+                                <div 
+                                  className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm shrink-0 transition-transform duration-300 group-hover:scale-105 text-white"
+                                  style={{ backgroundColor: preset.value }}
+                                >
+                                  {isPresetActive && <Check className="w-4.5 h-4.5 stroke-[3]" />}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-black text-text-primary tracking-tight leading-tight">{preset.label}</p>
+                                  <p className="text-[9px] font-medium text-zinc-400 dark:text-zinc-500 mt-1 leading-snug">{preset.desc}</p>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Custom Hex Selector Form */}
+                      <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800/80 space-y-4">
+                        <div className="flex items-center gap-2">
+                          <Palette className="w-4 h-4 text-zinc-400" />
+                          <h3 className="text-xs font-black uppercase tracking-wider text-zinc-450 dark:text-zinc-400">Cor Personalizada (Hexadecimal)</h3>
+                        </div>
+                        
+                        <form onSubmit={handleColorSubmit} className="flex flex-col sm:flex-row gap-4">
+                          <div className="flex-1 flex gap-3">
+                            <div className="relative group shrink-0">
+                              <div 
+                                className="w-12 h-12 rounded-xl border border-zinc-250 dark:border-zinc-700 shadow-sm transition-transform group-hover:scale-105 cursor-pointer" 
+                                style={{ backgroundColor: accentColor }}
+                              />
+                              <input 
+                                type="color" 
+                                value={colorInput} 
+                                onChange={(e) => setColorInput(e.target.value)}
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                              />
+                            </div>
+                            <input
+                              type="text"
+                              value={colorInput}
+                              onChange={(e) => setColorInput(e.target.value)}
+                              placeholder="#000000"
+                              className="flex-1 px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/20 outline-none transition-all text-sm font-mono font-bold lowercase focus:ring-2 focus:border-transparent"
+                              style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
+                            />
+                          </div>
+                          
+                          <div className="flex gap-2.5">
+                            <button
+                              type="submit"
+                              className="px-6 py-3 rounded-xl font-black text-xs uppercase tracking-wider hover:brightness-105 active:scale-95 transition-all text-white cursor-pointer"
+                              style={{ backgroundColor: accentColor }}
+                            >
+                              Aplicar
+                            </button>
+                            
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAccentColor('#af571b');
+                                setColorInput('#af571b');
+                              }}
+                              className="p-3 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-text-primary rounded-xl hover:shadow-sm active:scale-95 transition-all cursor-pointer"
+                              title="Redefinir Cor Padrão"
+                            >
+                              <RotateCcw className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </form>
+
+                        {/* Recent colors history */}
+                        {colorHistory.length > 0 && (
+                          <div className="pt-3">
+                            <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-3 ml-0.5">Utilizadas Recentemente</p>
+                            <div className="flex flex-wrap gap-2.5">
+                              {colorHistory.map((color, i) => (
+                                <button
+                                  key={`${color}-${i}`}
+                                  type="button"
+                                  onClick={() => {
+                                    setAccentColor(color);
+                                    setColorInput(color);
+                                  }}
+                                  className="w-8 h-8 rounded-lg border border-zinc-200 dark:border-zinc-750 shadow-sm transition-all hover:scale-110 active:scale-90 cursor-pointer"
+                                  style={{ backgroundColor: color }}
+                                  title={color}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Logo Customized Banner Card */}
+                  <div className="bg-surface rounded-[32px] border border-zinc-200 dark:border-zinc-800 shadow-premium overflow-hidden glass">
+                    <div className="p-6 sm:p-8 border-b border-zinc-150 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between">
+                      <div>
+                        <h2 className="text-xl font-black text-text-primary tracking-tight">Logomarca do Aplicativo</h2>
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Insira seu logotipo e personalize o cabeçalho</p>
+                      </div>
+                      <div 
+                        className="w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm transition-transform shrink-0"
+                        style={{ color: accentColor, borderColor: `${accentColor}22`, backgroundColor: `${accentColor}11` }}
+                      >
+                        <ImageIcon className="w-5 h-5" />
+                      </div>
+                    </div>
+
+                    <div className="p-6 sm:p-8">
+                      <div className="flex flex-col md:flex-row items-center gap-6 p-5 rounded-2xl bg-zinc-50/30 dark:bg-zinc-900/20 border border-zinc-200 dark:border-zinc-800">
+                        {/* Mockup Card Design showing Tooth / Custom Logo */}
+                        <div 
+                          className="w-24 h-24 rounded-2xl border border-zinc-200 dark:border-zinc-750 flex items-center justify-center overflow-hidden shadow-md shrink-0 bg-white"
+                        >
+                          <img 
+                            src={customLogo || "/icon.png"} 
+                            alt="Logo" 
+                            className="w-full h-full object-contain p-2" 
+                          />
+                        </div>
+                        
+                        <div className="flex-1 space-y-4 text-center md:text-left">
+                          <div className="space-y-1">
+                            <h4 className="text-sm font-black text-text-primary">Marca Integrada no Cabeçalho</h4>
+                            <p className="text-xs font-semibold text-text-secondary leading-relaxed">
+                              Substitua a logomarca do OdontoAdmin pelo seu próprio logotipo corporativo. Ele será exibido na barra de navegação principal. Formato recomendado: **PNG transparente de 512x512px**.
+                            </p>
+                          </div>
+                          
+                          <div className="flex flex-wrap justify-center md:justify-start gap-3">
+                            <label className="flex items-center gap-2 px-5 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl font-black text-[10px] uppercase tracking-widest cursor-pointer hover:opacity-90 active:scale-95 shadow-sm transition-all shrink-0">
+                              {logoUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                              {logoUploading ? 'Enviando...' : 'Fazer Upload'}
+                              <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={logoUploading} />
+                            </label>
+                            
+                            <button
+                              type="button"
+                              onClick={() => setCustomLogo(null)}
+                              className="flex items-center gap-2 px-5 py-2.5 bg-surface dark:bg-zinc-900/50 text-zinc-500 hover:text-text-primary border border-zinc-200 dark:border-zinc-700 rounded-xl font-black text-[10px] uppercase tracking-widest hover:shadow-sm active:scale-95 transition-all cursor-pointer shrink-0"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                              Restaurar Padrão
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+              {/* ----------------- TAB: PASSWORD SECURITY ----------------- */}
+              {activeTab === 'security' && (
+                <div className="bg-surface rounded-[32px] border border-zinc-200 dark:border-zinc-800 shadow-premium overflow-hidden glass">
+                  <div className="p-6 sm:p-8 border-b border-zinc-150 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-black text-text-primary tracking-tight">Segurança da Conta</h2>
+                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Controle de credenciais de acesso</p>
+                    </div>
+                    <div 
+                      className="w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm transition-transform shrink-0"
+                      style={{ color: accentColor, borderColor: `${accentColor}22`, backgroundColor: `${accentColor}11` }}
+                    >
+                      <Lock className="w-5 h-5" />
+                    </div>
+                  </div>
+
+                  <div className="p-6 sm:p-8">
+                    {isGoogleUser ? (
+                      /* SSO Auth Modern Badge Panel */
+                      <div className="p-6 sm:p-8 rounded-2xl bg-zinc-50/30 dark:bg-zinc-900/20 border border-zinc-200 dark:border-zinc-800 text-center max-w-xl mx-auto space-y-5">
+                        <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mx-auto shadow-sm">
+                          <ShieldCheck className="w-7 h-7" />
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="text-base font-black text-text-primary">Autenticação SSO via Google</h3>
+                          <p className="text-xs font-semibold text-text-secondary leading-relaxed">
+                            Sua conta está vinculada e protegida com as credenciais do Google Login. 
+                          </p>
+                          <p className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 leading-relaxed max-w-md mx-auto">
+                            Por utilizar este provedor de login integrado de alta segurança, sua senha é gerenciada diretamente pela Google. Não há necessidade de alteração de senha local no OdontoAdmin.
+                          </p>
+                        </div>
+                        
+                        <div className="pt-2">
+                          <a 
+                            href="https://myaccount.google.com/security" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-6 py-2.5 bg-zinc-900 dark:bg-zinc-100 hover:opacity-90 active:scale-95 text-white dark:text-zinc-900 text-[10px] font-black uppercase tracking-wider rounded-xl shadow-sm transition-all"
+                          >
+                            <ShieldCheck className="w-4 h-4" />
+                            Segurança da Conta Google
+                          </a>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Standard Password Configuration Form */
+                      <form onSubmit={handlePasswordChange} className="space-y-6 max-w-xl mx-auto">
+                        <div className="space-y-4">
+                          
+                          <div className="space-y-2">
+                            <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Senha Atual</label>
+                            <div className="relative group">
+                              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-[var(--accent)] transition-colors" style={{ '--accent': accentColor } as React.CSSProperties} />
+                              <input
+                                type={showCurrentPassword ? 'text' : 'password'}
+                                value={passwordData.currentPassword}
+                                onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                                className="w-full pl-11 pr-12 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                                style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
+                                required
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-text-primary focus:outline-none cursor-pointer"
+                              >
+                                {showCurrentPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nova Senha</label>
+                            <div className="relative group">
+                              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-[var(--accent)] transition-colors" style={{ '--accent': accentColor } as React.CSSProperties} />
+                              <input
+                                type={showNewPassword ? 'text' : 'password'}
+                                value={passwordData.newPassword}
+                                onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                                className="w-full pl-11 pr-12 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                                style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
+                                required
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-text-primary focus:outline-none cursor-pointer"
+                              >
+                                {showNewPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Confirmar Nova Senha</label>
+                            <div className="relative group">
+                              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-[var(--accent)] transition-colors" style={{ '--accent': accentColor } as React.CSSProperties} />
+                              <input
+                                type={showConfirmPassword ? 'text' : 'password'}
+                                value={passwordData.confirmNewPassword}
+                                onChange={(e) => setPasswordData(prev => ({ ...prev, confirmNewPassword: e.target.value }))}
+                                className="w-full pl-11 pr-12 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                                style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
+                                required
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-text-primary focus:outline-none cursor-pointer"
+                              >
+                                {showConfirmPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="pt-4 flex justify-end">
+                          <button
+                            type="submit"
+                            disabled={passwordSaving}
+                            className="w-full sm:w-auto px-8 py-3.5 rounded-2xl font-black uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98] shadow-md hover:brightness-105 cursor-pointer text-white"
+                            style={{ backgroundColor: accentColor }}
+                          >
+                            {passwordSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                            {passwordSaving ? 'Salvando...' : 'Salvar Nova Senha'}
+                          </button>
+                        </div>
+                      </form>
+                    )}
                   </div>
                 </div>
-              </div>
-            </div>
-          </motion.div>
+              )}
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="group bg-surface rounded-[24px] sm:rounded-[32px] shadow-sm hover:shadow-md border border-zinc-200 dark:border-zinc-800 overflow-hidden md:col-span-1 transition-all duration-300 flex flex-col"
-          >
-            <div className="p-6 sm:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-900/20">
-              <div>
-                <h2 className="text-lg font-black text-text-primary tracking-tight">Armazenamento</h2>
-                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Conectividade e Backups</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 transition-transform group-hover:scale-110">
-                <HardDrive className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div className="p-6 sm:p-8 space-y-6 flex-1">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Ambiente de Dados</label>
-                  <div className="relative">
-                    <select
-                      value={storageLocation}
-                      onChange={handleStorageChange}
-                      disabled={isAuthenticatingDrive}
-                      className="w-full px-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium appearance-none cursor-pointer disabled:opacity-50"
+              {/* ----------------- TAB: DATA STORAGE & BACKUP ----------------- */}
+              {activeTab === 'storage' && (
+                <div className="bg-surface rounded-[32px] border border-zinc-200 dark:border-zinc-800 shadow-premium overflow-hidden glass">
+                  <div className="p-6 sm:p-8 border-b border-zinc-150 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-black text-text-primary tracking-tight">Armazenamento & Nuvem</h2>
+                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Configuração de sincronização e backups secundários</p>
+                    </div>
+                    <div 
+                      className="w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm transition-transform shrink-0"
+                      style={{ color: accentColor, borderColor: `${accentColor}22`, backgroundColor: `${accentColor}11` }}
                     >
-                      <option value="firebase">Firebase (Cloud Padrão)</option>
-                      <option value="drive">Google Drive Personal</option>
-                    </select>
-                    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                      {isAuthenticatingDrive ? (
-                        <Loader2 className="w-4 h-4 text-indigo-600 animate-spin" />
-                      ) : (
-                        <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                      <HardDrive className="w-5 h-5" />
+                    </div>
+                  </div>
+
+                  <div className="p-6 sm:p-8 space-y-8">
+                    
+                    {/* Database Cloud Panel Indicators */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      
+                      {/* Firebase Indicator Card */}
+                      <div className="p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-900/20 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-150 dark:border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                              <Database className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-black text-text-primary">Banco de Dados principal</h4>
+                              <p className="text-[9px] font-bold text-zinc-450 dark:text-zinc-500 uppercase tracking-widest leading-none mt-1">Firebase Cloud</p>
+                            </div>
+                          </div>
+                          
+                          <span className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 rounded-full text-[9px] font-black uppercase tracking-wider border border-emerald-100 dark:border-emerald-850 animate-pulse">
+                            <CheckCircle className="w-3 h-3" />
+                            Ativo
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-semibold text-text-secondary leading-relaxed">
+                          Seu prontuário, ficha de pacientes, agenda e movimentações financeiras estão armazenados na rede segura e replicados globalmente.
+                        </p>
+                      </div>
+
+                      {/* Google Drive Connection Card */}
+                      <div className="p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-900/20 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-150 dark:border-indigo-500/20 flex items-center justify-center text-indigo-650 dark:text-indigo-400">
+                              <CloudLightning className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-black text-text-primary">Nuvem de Segurança</h4>
+                              <p className="text-[9px] font-bold text-zinc-450 dark:text-zinc-500 uppercase tracking-widest leading-none mt-1">Google Drive</p>
+                            </div>
+                          </div>
+                          
+                          {storageLocation === 'drive' ? (
+                            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-full text-[9px] font-black uppercase tracking-wider border border-indigo-100 dark:border-indigo-850">
+                              <CheckCircle className="w-3 h-3" />
+                              Conectado
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-450 dark:text-zinc-500 rounded-full text-[9px] font-black uppercase tracking-wider border border-zinc-200 dark:border-zinc-750">
+                              Offline
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] font-semibold text-text-secondary leading-relaxed">
+                          Habilite backups secundários em seu próprio Google Drive pessoal para garantir a integridade absoluta dos seus relatórios de clínica.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Environment Toggle Select */}
+                    <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800/80 space-y-4">
+                      <div className="space-y-2 max-w-md">
+                        <label className="text-[9px] font-black text-zinc-450 dark:text-zinc-400 uppercase tracking-widest ml-1">Ambiente Ativo de Armazenamento</label>
+                        <div className="relative">
+                          <select
+                            value={storageLocation}
+                            onChange={handleStorageChange}
+                            disabled={isAuthenticatingDrive}
+                            className="w-full pl-4 pr-10 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/25 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent appearance-none cursor-pointer disabled:opacity-50"
+                            style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
+                          >
+                            <option value="firebase">Firebase (Cloud Padrão do Sistema)</option>
+                            <option value="drive">Google Drive Personal (Sua Conta Google)</option>
+                          </select>
+                          <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-zinc-400">
+                            {isAuthenticatingDrive ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Google Drive Action Backups Grid with AnimatePresence */}
+                      <AnimatePresence>
+                        {storageLocation === 'drive' && (
+                          <motion.div 
+                            initial={{ opacity: 0, scale: 0.98, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.98, y: 10 }}
+                            className="p-5 rounded-2xl bg-indigo-50/20 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800/30 space-y-4 mt-4"
+                          >
+                            <div className="flex gap-2">
+                              <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: accentColor }} />
+                              <p className="text-xs font-semibold text-text-primary leading-relaxed">
+                                Você está conectado à pasta remota **DentalApp_Data** em sua conta do Google Drive. Utilize os botões abaixo para sincronizar seus dados manualmente:
+                              </p>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+                              <button
+                                onClick={handleBackup}
+                                disabled={isBackingUp || isRestoring}
+                                className="flex items-center justify-center gap-2 px-5 py-3 bg-zinc-950 dark:bg-zinc-100 hover:opacity-90 active:scale-95 text-white dark:text-zinc-900 text-xs font-black uppercase tracking-wider rounded-xl transition-all disabled:opacity-50 cursor-pointer shadow-sm"
+                              >
+                                {isBackingUp ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                                Gerar Backup no Drive
+                              </button>
+                              
+                              <button
+                                onClick={handleRestore}
+                                disabled={isBackingUp || isRestoring}
+                                className="flex items-center justify-center gap-2 px-5 py-3 bg-white dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/40 text-xs font-black uppercase tracking-wider rounded-xl transition-all disabled:opacity-50 active:scale-95 cursor-pointer shadow-xs"
+                              >
+                                {isRestoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                Restaurar do Drive
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      {storageLocation === 'firebase' && (
+                        <div className="p-4 rounded-2xl bg-emerald-50/20 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-850/55 mt-4">
+                          <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 leading-relaxed flex items-center gap-2.5">
+                            <CheckCircle className="w-4 h-4 shrink-0 stroke-[2.5]" />
+                            Seus dados clínicos estão altamente protegidos, replicados em múltiplos servidores na nuvem e sincronizados em tempo real. Sinta-se seguro.
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>
                 </div>
+              )}
 
-                <AnimatePresence>
-                  {storageLocation === 'drive' && (
-                    <motion.div 
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      className="p-4 rounded-xl sm:rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 space-y-4"
-                    >
-                      <p className="text-[11px] font-medium text-indigo-700 dark:text-indigo-300 leading-relaxed">
-                        Conectado ao DentalApp_Data.
-                      </p>
-                      
-                      <div className="flex flex-col gap-2 pt-2">
-                        <button
-                          onClick={handleBackup}
-                          disabled={isBackingUp || isRestoring}
-                          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all disabled:opacity-50 active:scale-95"
-                        >
-                          {isBackingUp ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                          Backup
-                        </button>
-                        <button
-                          onClick={handleRestore}
-                          disabled={isBackingUp || isRestoring}
-                          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all disabled:opacity-50 active:scale-95"
-                        >
-                          {isRestoring ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                          Restaurar
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {storageLocation === 'firebase' && (
-                  <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20">
-                    <p className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 leading-relaxed flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 shrink-0" />
-                      Seus dados estão protegidos e sincronizados em tempo real com a nuvem DentalApp.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </AnimatePresence>
         </div>
+
       </div>
       
       {cropperImageSrc && (

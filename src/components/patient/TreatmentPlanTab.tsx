@@ -127,7 +127,8 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
           unitPrice: unitP,
           totalPrice: total,
           status: 'não_realizado' as const,
-          paymentStatus: 'pendente' as const
+          paymentStatus: 'pendente' as const,
+          templateId: selectedTemplateId || ''
         }];
         
         const newTotal = procedures.reduce((acc, curr) => acc + curr.totalPrice, 0);
@@ -216,6 +217,7 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
         status: 'não_realizado',
         procedureId: proc.id, // Link to the procedure in the proposal
         proposalId: proposal.id,
+        templateId: proc.templateId || '',
         createdAt: serverTimestamp(),
         authorName: auth.currentUser.displayName || 'Dentista'
       });

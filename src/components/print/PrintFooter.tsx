@@ -56,36 +56,36 @@ export const PrintFooter: React.FC<PrintFooterProps> = ({
   const dCro = dentist?.cro || cro;
 
   return (
-    <div className="print-only mt-16 pt-8 border-t border-slate-200 avoid-break w-full shrink-0">
-      <p className="text-right text-xs text-slate-600 mb-12">
-        {date || defaultDate}.
+    <div className="print-only mt-12 pt-6 border-t-[1.5px] border-slate-800 avoid-break w-full shrink-0">
+      <p className="text-right text-[10px] uppercase tracking-widest text-slate-500 mb-10">
+        {date || defaultDate}
       </p>
 
-      <div className={`flex items-end gap-8 ${shouldShowPatient && shouldShowDentist ? 'justify-between' : 'justify-center'}`}>
+      <div className={`flex items-end gap-12 ${shouldShowPatient && shouldShowDentist ? 'justify-between' : 'justify-center'}`}>
         
         {/* Assinatura do Paciente */}
         {shouldShowPatient && (
-          <div className={`text-center ${shouldShowDentist ? 'flex-1' : 'w-1/2'}`}>
-            <div className="border-t border-slate-800 w-full mb-2"></div>
-            <p className="font-bold text-sm text-slate-800 uppercase">{pName}</p>
-            <p className="text-xs text-slate-500">Paciente ou Responsável Legal</p>
-            {pCpf && <p className="text-[10px] text-slate-400 mt-1">CPF: {pCpf}</p>}
+          <div className={`text-center ${shouldShowDentist ? 'flex-1 max-w-[240px]' : 'w-64'}`}>
+            <div className="border-t border-slate-400 w-full mb-3"></div>
+            <p className="font-bold text-xs text-slate-800 uppercase tracking-wide">{pName}</p>
+            <p className="text-[9px] uppercase tracking-widest text-slate-500 mt-0.5">Paciente ou Responsável Legal</p>
+            {pCpf && <p className="text-[9px] text-slate-400 mt-1 font-mono">CPF {pCpf}</p>}
           </div>
         )}
 
         {/* Assinatura do Dentista */}
         {shouldShowDentist && (
-          <div className={`text-center ${shouldShowPatient ? 'flex-1' : 'w-1/2'}`}>
-            <div className="border-t border-slate-800 w-full mb-2"></div>
-            <p className="font-bold text-sm text-slate-800 uppercase">{dName}</p>
-            <p className="text-xs text-slate-500">{dentistLabelOverride || dentist?.specialty || 'Cirurgião-Dentista'}</p>
-            <p className="text-[10px] text-slate-400 mt-1">CRO {dCro}</p>
+          <div className={`text-center ${shouldShowPatient ? 'flex-1 max-w-[240px]' : 'w-64'}`}>
+            <div className="border-t border-slate-400 w-full mb-3"></div>
+            <p className="font-bold text-xs text-slate-800 uppercase tracking-wide">{dName}</p>
+            <p className="text-[9px] uppercase tracking-widest text-slate-500 mt-0.5">{dentistLabelOverride || dentist?.specialty || 'Cirurgião-Dentista'}</p>
+            <p className="text-[9px] text-slate-400 mt-1 font-mono">{dCro}</p>
           </div>
         )}
       </div>
       
-      <div className="mt-8 text-center flex justify-between items-center text-[9px] text-slate-400 font-mono tracking-widest uppercase border-t border-slate-100 pt-2">
-        <span>Gerado por OdontoAdmin Gestão Clínica © {new Date().getFullYear()}</span>
+      <div className="mt-12 text-center flex justify-between items-center text-[8px] text-slate-400 font-mono tracking-[0.2em] uppercase">
+        <span>Gerado por OdontoAdmin © {new Date().getFullYear()}</span>
         <span>Página 1 de 1</span>
       </div>
     </div>

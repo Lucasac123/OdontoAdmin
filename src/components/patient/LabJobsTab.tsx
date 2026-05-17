@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../../firebase';
 import { LabJob, Patient } from '../../types';
-import { Plus, Edit2, Trash2, CheckCircle, Clock, Truck, FileText, Loader2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckCircle, Clock, Truck, FileText, Loader2, Phone, MessageCircle, ArrowRightCircle } from 'lucide-react';
 import { ConfirmModal } from '../ConfirmModal';
 import { motion } from 'motion/react';
 import { useSync } from '../../context/SyncContext';
@@ -18,6 +18,7 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
 
   const [formData, setFormData] = useState({
     labName: '',
+    labPhone: '',
     prosthesisType: '',
     sendDate: new Date().toISOString().split('T')[0],
     expectedDate: '',
@@ -50,6 +51,7 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
       setEditingJob(job);
       setFormData({
         labName: job.labName,
+        labPhone: job.labPhone || '',
         prosthesisType: job.prosthesisType,
         sendDate: job.sendDate,
         expectedDate: job.expectedDate,
@@ -60,6 +62,7 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
       setEditingJob(null);
       setFormData({
         labName: '',
+        labPhone: '',
         prosthesisType: '',
         sendDate: new Date().toISOString().split('T')[0],
         expectedDate: '',
@@ -78,6 +81,7 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
       patientId: patient.id,
       patientName: patient.name,
       labName: formData.labName,
+      labPhone: formData.labPhone || null,
       prosthesisType: formData.prosthesisType,
       sendDate: formData.sendDate,
       expectedDate: formData.expectedDate,
@@ -122,16 +126,36 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
     setJobToDelete(null);
   };
 
-  const handleStatusChange = async (jobId: string, newStatus: LabJob['status']) => {
-    try {
-      await updateDoc(doc(db, 'lab_jobs', jobId), {
-        status: newStatus,
-        updatedAt: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('Error updating status:', error);
-      alert('Erro ao atualizar status.');
+  const statusOrder: LabJob['status'][] = ['Enviado', 'Em Confecção', 'Recebido', 'Instalado'];
+
+  const handleAdvanceStatus = async (job: LabJob) => {
+    const currentIndex = statusOrder.indexOf(job.status);
+    if (currentIndex < statusOrder.length - 1) {
+      const nextStatus = statusOrder[currentIndex + 1];
+      try {
+        await updateDoc(doc(db, 'lab_jobs', job.id), {
+          status: nextStatus,
+          updatedAt: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('Error advancing status:', error);
+        alert('Erro ao avançar status.');
+      }
     }
+  };
+
+  const openWhatsApp = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, '');
+    const number = cleaned.startsWith('55') ? cleaned : `55${cleaned}`;
+    window.open(`https://wa.me/${number}`, '_blank');
+  };
+
+  const getNextStatusLabel = (status: LabJob['status']): string | null => {
+    const currentIndex = statusOrder.indexOf(status);
+    if (currentIndex < statusOrder.length - 1) {
+      return statusOrder[currentIndex + 1];
+    }
+    return null;
   };
 
   const getStatusIcon = (status: string) => {
@@ -187,9 +211,19 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <h3 className="font-semibold text-text-primary line-clamp-2">{job.prosthesisType}</h3>
-                  <p className="text-sm text-text-secondary mt-1 flex items-center gap-1">
-                    <FileText size={14} /> {job.labName}
-                  </p>
+                  <div className="text-sm text-text-secondary mt-1 flex items-center gap-1.5">
+                    <FileText size={14} />
+                    <span>{job.labName}</span>
+                    {job.labPhone && (
+                      <button
+                        onClick={() => openWhatsApp(job.labPhone!)}
+                        className="p-0.5 text-green-500 hover:text-green-600 transition-colors"
+                        title={`WhatsApp: ${job.labPhone}`}
+                      >
+                        <MessageCircle size={14} />
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <button onClick={() => handleOpenModal(job)} className="p-1.5 text-zinc-400 hover:text-indigo-600 transition-colors rounded-lg hover:bg-white/50 dark:hover:bg-zinc-800">
@@ -218,16 +252,15 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
                     {getStatusIcon(job.status)}
                     <span>{getStatusLabel(job.status)}</span>
                   </div>
-                  <select
-                    value={job.status}
-                    onChange={(e) => handleStatusChange(job.id, e.target.value as LabJob['status'])}
-                    className="text-xs bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg py-1 pl-2 pr-6 focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="Enviado">Enviado</option>
-                    <option value="Em Confecção">Em Produção</option>
-                    <option value="Recebido">Recebido</option>
-                    <option value="Instalado">Instalado</option>
-                  </select>
+                  {getNextStatusLabel(job.status) && (
+                    <button
+                      onClick={() => handleAdvanceStatus(job)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 rounded-lg transition-all active:scale-95"
+                    >
+                      <ArrowRightCircle size={14} />
+                      {getNextStatusLabel(job.status)}
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -257,6 +290,33 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
                   placeholder="Nome do laboratório"
                   className="w-full px-4 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-indigo-500 text-text-primary disabled:opacity-50"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Telefone do Protético / Laboratório</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                    <input
+                      type="tel"
+                      disabled={isSaving}
+                      value={formData.labPhone}
+                      onChange={(e) => setFormData({ ...formData, labPhone: e.target.value })}
+                      placeholder="(00) 00000-0000"
+                      className="w-full pl-10 pr-4 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-indigo-500 text-text-primary disabled:opacity-50"
+                    />
+                  </div>
+                  {formData.labPhone && (
+                    <button
+                      type="button"
+                      onClick={() => openWhatsApp(formData.labPhone)}
+                      className="flex items-center gap-2 px-3 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors font-bold text-sm shrink-0"
+                    >
+                      <MessageCircle size={16} />
+                      WhatsApp
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -320,7 +380,7 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
                     className="w-full px-4 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-indigo-500 text-text-primary disabled:opacity-50"
                   >
                     <option value="Enviado">Enviado</option>
-                    <option value="Em Confecção">Em Produção</option>
+                    <option value="Em Confecção">Em Confecção</option>
                     <option value="Recebido">Recebido</option>
                     <option value="Instalado">Instalado</option>
                   </select>

@@ -82,11 +82,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // ... rest of the code
     try {
       setIsSigningIn(true);
-      console.log("Starting sign in...");
+
       
       let result;
       if (Capacitor.isNativePlatform()) {
-        console.log("Using Capacitor Native Google Auth");
+
         const googleUser = await GoogleAuth.signIn();
         if (googleUser.authentication.accessToken) {
           sessionStorage.setItem('gdrive_access_token', googleUser.authentication.accessToken);
@@ -94,11 +94,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
         result = await signInWithCredential(auth, credential);
       } else {
-        console.log("Using Web Popup Google Auth");
+
         result = await signInWithPopup(auth, googleProvider);
       }
       
-      console.log("Sign in successful for user:", result.user.email);
+
       
       // Create user document if it doesn't exist
       try {
@@ -118,7 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error: any) {
       if (error.code === 'auth/popup-closed-by-user' || error.message?.includes('cancel')) {
-        console.log('Login cancelado pelo usuário.');
+
         return;
       }
       console.error("Error signing in:", error);

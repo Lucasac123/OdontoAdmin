@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, moveToTrash } from '../../firebase';
-import { Patient } from '../../types';
+import { Patient, ProcedureTemplate, InventoryItem } from '../../types';
 import { Activity, Plus, Loader2, Trash2, Calendar, Clock, User, Printer, CheckCircle2, Circle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmModal } from '../ConfirmModal';
@@ -16,6 +16,7 @@ interface EvolutionNote {
   tooth?: string;
   status?: 'realizado' | 'não_realizado';
   procedureId?: string; // Link to treatment plan procedure
+  templateId?: string; // Link to procedure template
   executionDate?: string;
   createdAt: any;
   authorName: string;
@@ -29,15 +30,20 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
   const { addSyncTask } = useSync();
   
+  const [templates, setTemplates] = useState<ProcedureTemplate[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  
   const [newNote, setNewNote] = useState({
     content: '',
     procedure: '',
-    tooth: ''
+    tooth: '',
+    templateId: ''
   });
 
   useEffect(() => {
     if (!auth.currentUser) return;
 
+    // Notes subscription
     const q = query(
       collection(db, 'clinical_evolutions'),
       where('patientId', '==', patient.id),
@@ -56,12 +62,97 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    // Templates subscription
+    const qTemplates = query(
+      collection(db, 'procedure_templates'),
+      where('dentistId', '==', auth.currentUser.uid)
+    );
+    const unsubTemplates = onSnapshot(qTemplates, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as ProcedureTemplate[];
+      setTemplates(data.sort((a, b) => a.name.localeCompare(b.name)));
+    }, (error) => {
+      console.error("Failed to load templates", error);
+    });
+
+    // Inventory subscription
+    const qInventory = query(
+      collection(db, 'inventory'),
+      where('dentistId', '==', auth.currentUser.uid)
+    );
+    const unsubInventory = onSnapshot(qInventory, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as InventoryItem[];
+      setInventory(data);
+    }, (error) => {
+      console.error("Failed to load inventory", error);
+    });
+
+    return () => {
+      unsubscribe();
+      unsubTemplates();
+      unsubInventory();
+    };
   }, [patient.id]);
 
-  const handleAddNote = (e: React.FormEvent) => {
+  const deductStockForTemplate = async (templateId: string) => {
+    if (!templateId) return;
+    const template = templates.find(t => t.id === templateId);
+    if (!template || !template.materials || template.materials.length === 0) return;
+
+    let deductedItems: string[] = [];
+    let lowStockAlerts: string[] = [];
+
+    for (const material of template.materials) {
+      if (!material.inventoryItemId) continue;
+      
+      const inventoryItem = inventory.find(i => i.id === material.inventoryItemId);
+      if (inventoryItem) {
+        // Skip subtraction if marked as reusable (e.g. instruments, dental drills)
+        if (inventoryItem.isReusable === true) {
+          continue;
+        }
+
+        const requiredQty = Number(material.quantity) || 1;
+        const newQty = Math.max(0, inventoryItem.quantity - requiredQty);
+
+        try {
+          await updateDoc(doc(db, 'inventory', inventoryItem.id), {
+            quantity: newQty,
+            updatedAt: new Date().toISOString()
+          });
+          deductedItems.push(`• ${inventoryItem.name}: -${requiredQty} ${inventoryItem.unit || 'un'}`);
+          
+          if (newQty <= inventoryItem.minQuantity) {
+            lowStockAlerts.push(`• ${inventoryItem.name} (${newQty} restando)`);
+          }
+        } catch (err) {
+          console.error(`Erro ao subtrair estoque de ${inventoryItem.name}:`, err);
+        }
+      }
+    }
+
+    if (deductedItems.length > 0) {
+      let msg = `Consumos de estoque registrados automaticamente:\n${deductedItems.join('\n')}`;
+      if (lowStockAlerts.length > 0) {
+        msg += `\n\n⚠️ ESTOQUE BAIXO DETECTADO:\n${lowStockAlerts.join('\n')}`;
+      }
+      alert(msg);
+    }
+  };
+
+  const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNote.content.trim() || !auth.currentUser) return;
+
+    // Deduct stock if a procedure template was used
+    if (newNote.templateId) {
+      await deductStockForTemplate(newNote.templateId);
+    }
 
     const savePromise = addDoc(collection(db, 'clinical_evolutions'), {
       patientId: patient.id,
@@ -70,6 +161,7 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
       procedure: newNote.procedure,
       tooth: newNote.tooth,
       status: 'realizado', // Notes are usually realized things
+      templateId: newNote.templateId || '',
       createdAt: serverTimestamp(),
       authorName: auth.currentUser.displayName || 'Dentista'
     }).catch(error => {
@@ -77,10 +169,15 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
     });
 
     addSyncTask(savePromise);
-    setNewNote({ content: '', procedure: '', tooth: '' });
+    setNewNote({ content: '', procedure: '', tooth: '', templateId: '' });
   };
 
-  const handleMarkAsRealized = (noteId: string) => {
+  const handleMarkAsRealized = async (noteId: string) => {
+    const note = notes.find(n => n.id === noteId);
+    if (note && note.templateId) {
+      await deductStockForTemplate(note.templateId);
+    }
+
     const savePromise = updateDoc(doc(db, 'clinical_evolutions', noteId), {
       status: 'realizado',
       executionDate: new Date().toISOString(),
@@ -147,13 +244,27 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1">Procedimento Realizado (Opcional)</label>
               <input
+                list="procedure-templates-list"
                 type="text"
                 disabled={isSaving}
                 value={newNote.procedure}
-                onChange={(e) => setNewNote({ ...newNote, procedure: e.target.value })}
-                placeholder="Ex: Restauração Resina, Profilaxia..."
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const foundTemplate = templates.find(t => t.name === val);
+                  setNewNote({ 
+                    ...newNote, 
+                    procedure: val,
+                    templateId: foundTemplate ? foundTemplate.id : ''
+                  });
+                }}
+                placeholder="Busque ou digite um procedimento..."
                 className="w-full bg-surface border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
               />
+              <datalist id="procedure-templates-list">
+                {templates.map(t => (
+                  <option key={t.id} value={t.name} />
+                ))}
+              </datalist>
             </div>
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1">Dente/Região (Opcional)</label>

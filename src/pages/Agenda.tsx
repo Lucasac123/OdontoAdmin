@@ -141,10 +141,12 @@ export const Agenda: React.FC = () => {
         // Se for Email ou SMS, tenta usar o Brevo
         if (notifSettings.type === 'email' || notifSettings.type === 'sms' || notifSettings.type === 'both' || notifSettings.type === 'all') {
           try {
+            const idToken = await auth.currentUser?.getIdToken();
             const response = await fetch('/api/send-reminder', {
               method: 'POST',
               headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`
               },
               body: JSON.stringify({
                 type: notifSettings.type === 'all' ? 'both' : notifSettings.type, // Não envia whatsapp via Brevo se já abriu aba

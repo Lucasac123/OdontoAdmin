@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, writeBatch } from 'firebase/firestore';
 import { db, auth, moveToTrash, handleFirestoreError, OperationType } from '../firebase';
 import { InventoryItem, InventoryKit } from '../types';
 import { 
   Plus, Edit2, Trash2, AlertTriangle, Package, Folder, 
-  Minus, Tag, Info, Layers, ChevronRight, Box, Filter,
-  Stethoscope, Syringe, Heart, Shield, MoreVertical, Search
+  Minus, Tag, Info, Layers, Box, Filter, Recycle,
+  Stethoscope, Syringe, Heart, Shield, Search, Zap, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSync } from '../context/SyncContext';
 
 const DENTAL_BRANDS = [
-  'Straumann', 'Neodent', 'Nobel Biocare', '3M ESPE', 'Ivoclar Vivadent',
-  'Coltene', 'Tokuyama Dental', 'GC Corporation', 'Dentsply Sirona', 'FGM',
-  'Kulzer', 'Kerr', 'Ultradent', 'Zimmer Biomet', 'Osstem', 'SIN Implantes'
+  'Neodent', 'Straumann', 'Nobel Biocare', 'SIN Implantes', 'Implacil De Bortoli', 'Intraoss',
+  '3M ESPE', 'Ivoclar Vivadent', 'Coltene', 'Tokuyama Dental', 'GC Corporation',
+  'Dentsply Sirona', 'FGM', 'Kulzer', 'Kerr', 'Ultradent', 'Zimmer Biomet', 'Osstem'
 ];
 
 const CATEGORIES = [
@@ -31,6 +31,163 @@ const CATEGORIES = [
   { id: 'Outros', icon: <Tag className="w-4 h-4" /> }
 ];
 
+// ── Implant manufacturers with their specific connections/platforms ──
+const IMPLANT_MANUFACTURER_SPECS: Record<string, { connections: string[]; platforms: string[] }> = {
+  'Neodent': {
+    connections: ['Cone Morse (CM)', 'Grand Morse (GM)', 'Hex Externo', 'Acqua'],
+    platforms: ['NP 3.5mm', 'RP 4.1mm', 'WP 5.0mm', 'GM 5.0mm', 'GM 6.0mm']
+  },
+  'Straumann': {
+    connections: ['Bone Level (BL)', 'Tissue Level (TL)', 'BLX', 'BLT'],
+    platforms: ['NC 3.3mm', 'RC 4.1mm', 'WN 4.8mm']
+  },
+  'Nobel Biocare': {
+    connections: ['Conical Connection (CC)', 'Hex Externo', 'Tri-lobe'],
+    platforms: ['NP 3.5mm', 'RP 4.3mm', 'WP 5.0mm']
+  },
+  'SIN Implantes': {
+    connections: ['Cone Morse', 'Hex Interno', 'Hex Externo'],
+    platforms: ['NP 3.5mm', 'RP 4.1mm', 'WP 5.0mm']
+  },
+  'Implacil De Bortoli': {
+    connections: ['Cone Morse', 'Hex Interno'],
+    platforms: ['Standard 3.75mm', 'Wide 5.0mm']
+  },
+  'Intraoss': {
+    connections: ['Cone Morse', 'Hex Interno'],
+    platforms: ['NP 3.3mm', 'RP 4.0mm']
+  },
+  'Outro': {
+    connections: ['Cone Morse', 'Hex Externo', 'Hex Interno', 'Torx'],
+    platforms: ['NP (Narrow)', 'RP (Regular)', 'WP (Wide)']
+  }
+};
+
+// ── Endodontic file quick presets ──
+interface EndoPreset { name: string; icon: string; items: Partial<InventoryItem>[] }
+const ENDO_PRESETS: EndoPreset[] = [
+  {
+    name: 'ProTaper Gold (S1-F3)', icon: '🦷',
+    items: [
+      { name: 'ProTaper Gold S1', endoSpec: { fileType: 'Rotatória', fileSystem: 'ProTaper Gold', caliber: '17', taper: 'Variável', length: '25mm', manufacturer: 'Dentsply Sirona' } },
+      { name: 'ProTaper Gold S2', endoSpec: { fileType: 'Rotatória', fileSystem: 'ProTaper Gold', caliber: '20', taper: 'Variável', length: '25mm', manufacturer: 'Dentsply Sirona' } },
+      { name: 'ProTaper Gold F1', endoSpec: { fileType: 'Rotatória', fileSystem: 'ProTaper Gold', caliber: '20', taper: '7%', length: '25mm', manufacturer: 'Dentsply Sirona' } },
+      { name: 'ProTaper Gold F2', endoSpec: { fileType: 'Rotatória', fileSystem: 'ProTaper Gold', caliber: '25', taper: '8%', length: '25mm', manufacturer: 'Dentsply Sirona' } },
+      { name: 'ProTaper Gold F3', endoSpec: { fileType: 'Rotatória', fileSystem: 'ProTaper Gold', caliber: '30', taper: '9%', length: '25mm', manufacturer: 'Dentsply Sirona' } },
+    ]
+  },
+  {
+    name: 'WaveOne Gold (Sequência)', icon: '〰️',
+    items: [
+      { name: 'WaveOne Gold Small', endoSpec: { fileType: 'Reciprocante', fileSystem: 'WaveOne Gold', caliber: '20', taper: '7%', length: '25mm', manufacturer: 'Dentsply Sirona' } },
+      { name: 'WaveOne Gold Primary', endoSpec: { fileType: 'Reciprocante', fileSystem: 'WaveOne Gold', caliber: '25', taper: '8%', length: '25mm', manufacturer: 'Dentsply Sirona' } },
+      { name: 'WaveOne Gold Medium', endoSpec: { fileType: 'Reciprocante', fileSystem: 'WaveOne Gold', caliber: '35', taper: '6%', length: '25mm', manufacturer: 'Dentsply Sirona' } },
+      { name: 'WaveOne Gold Large', endoSpec: { fileType: 'Reciprocante', fileSystem: 'WaveOne Gold', caliber: '45', taper: '5%', length: '25mm', manufacturer: 'Dentsply Sirona' } },
+    ]
+  },
+  {
+    name: 'Reciproc (R25/R40/R50)', icon: '↩️',
+    items: [
+      { name: 'Reciproc R25', endoSpec: { fileType: 'Reciprocante', fileSystem: 'Reciproc', caliber: '25', taper: '8%', length: '25mm', manufacturer: 'VDW' } },
+      { name: 'Reciproc R40', endoSpec: { fileType: 'Reciprocante', fileSystem: 'Reciproc', caliber: '40', taper: '6%', length: '25mm', manufacturer: 'VDW' } },
+      { name: 'Reciproc R50', endoSpec: { fileType: 'Reciprocante', fileSystem: 'Reciproc', caliber: '50', taper: '5%', length: '25mm', manufacturer: 'VDW' } },
+    ]
+  },
+  {
+    name: 'Kit Lima K (15 → 40)', icon: '📏',
+    items: [
+      { name: 'Lima K #15', endoSpec: { fileType: 'Manual', fileSystem: 'K-File', caliber: '15', taper: '2%', length: '25mm', manufacturer: 'Mani' } },
+      { name: 'Lima K #20', endoSpec: { fileType: 'Manual', fileSystem: 'K-File', caliber: '20', taper: '2%', length: '25mm', manufacturer: 'Mani' } },
+      { name: 'Lima K #25', endoSpec: { fileType: 'Manual', fileSystem: 'K-File', caliber: '25', taper: '2%', length: '25mm', manufacturer: 'Mani' } },
+      { name: 'Lima K #30', endoSpec: { fileType: 'Manual', fileSystem: 'K-File', caliber: '30', taper: '2%', length: '25mm', manufacturer: 'Mani' } },
+      { name: 'Lima K #35', endoSpec: { fileType: 'Manual', fileSystem: 'K-File', caliber: '35', taper: '2%', length: '25mm', manufacturer: 'Mani' } },
+      { name: 'Lima K #40', endoSpec: { fileType: 'Manual', fileSystem: 'K-File', caliber: '40', taper: '2%', length: '25mm', manufacturer: 'Mani' } },
+    ]
+  },
+];
+
+// ── Quick-fill bundles for all categories ──
+interface QuickBundle { name: string; icon: string; items: Partial<InventoryItem>[] }
+const QUICK_FILL_BUNDLES: Record<string, QuickBundle[]> = {
+  'Implantodontia': [
+    {
+      name: 'Kit Neodent CM 3.5×10mm', icon: '🔩',
+      items: [
+        { name: 'Implante Neodent CM 3.5×10mm', brand: 'Neodent', category: 'Implantodontia', unit: 'unidade', minQuantity: 2, quantity: 0, implantSpec: { manufacturer: 'Neodent', diameter: '3.5', length: '10', connection: 'Cone Morse (CM)', platform: 'NP 3.5mm' } },
+        { name: 'Cicatrizador Neodent NP', brand: 'Neodent', category: 'Implantodontia', unit: 'unidade', minQuantity: 1, quantity: 0 },
+        { name: 'Parafuso de Cobertura Neodent NP', brand: 'Neodent', category: 'Implantodontia', unit: 'unidade', minQuantity: 2, quantity: 0 },
+      ]
+    },
+    {
+      name: 'Kit Straumann BL RC 4.1mm', icon: '🔩',
+      items: [
+        { name: 'Implante Straumann BL RC 4.1×10mm', brand: 'Straumann', category: 'Implantodontia', unit: 'unidade', minQuantity: 2, quantity: 0, implantSpec: { manufacturer: 'Straumann', diameter: '4.1', length: '10', connection: 'Bone Level (BL)', platform: 'RC 4.1mm' } },
+        { name: 'Tampa de Cicatrização Straumann RC', brand: 'Straumann', category: 'Implantodontia', unit: 'unidade', minQuantity: 1, quantity: 0 },
+      ]
+    },
+  ],
+  'Dentística': [
+    {
+      name: 'Kit Filtek Z350 (A2/A3)', icon: '🪥',
+      items: [
+        { name: 'Filtek Z350 Esmalte A2', brand: '3M ESPE', category: 'Dentística', unit: 'seringa', minQuantity: 1, quantity: 0, resinSpec: { shade: 'A2', opacity: 'Esmalte', system: 'Incremental', colorSystem: 'VITA Classical' } },
+        { name: 'Filtek Z350 Dentina A2', brand: '3M ESPE', category: 'Dentística', unit: 'seringa', minQuantity: 1, quantity: 0, resinSpec: { shade: 'A2', opacity: 'Dentina', system: 'Incremental', colorSystem: 'VITA Classical' } },
+        { name: 'Filtek Z350 Esmalte A3', brand: '3M ESPE', category: 'Dentística', unit: 'seringa', minQuantity: 1, quantity: 0, resinSpec: { shade: 'A3', opacity: 'Esmalte', system: 'Incremental', colorSystem: 'VITA Classical' } },
+        { name: 'Filtek Z350 Flow A2', brand: '3M ESPE', category: 'Dentística', unit: 'seringa', minQuantity: 1, quantity: 0, resinSpec: { shade: 'A2', opacity: 'Body', system: 'Flow', colorSystem: 'VITA Classical' } },
+        { name: 'Filtek Z350 Body A2', brand: '3M ESPE', category: 'Dentística', unit: 'seringa', minQuantity: 1, quantity: 0, resinSpec: { shade: 'A2', opacity: 'Body', system: 'Incremental', colorSystem: 'VITA Classical' } },
+      ]
+    },
+    {
+      name: 'Kit Empress Direct (A1/A2/A3)', icon: '💎',
+      items: [
+        { name: 'Empress Direct Esmalte A1', brand: 'Ivoclar Vivadent', category: 'Dentística', unit: 'seringa', minQuantity: 1, quantity: 0, resinSpec: { shade: 'A1', opacity: 'Esmalte', system: 'Incremental', colorSystem: 'VITA Classical' } },
+        { name: 'Empress Direct Esmalte A2', brand: 'Ivoclar Vivadent', category: 'Dentística', unit: 'seringa', minQuantity: 1, quantity: 0, resinSpec: { shade: 'A2', opacity: 'Esmalte', system: 'Incremental', colorSystem: 'VITA Classical' } },
+        { name: 'Empress Direct Dentina A2', brand: 'Ivoclar Vivadent', category: 'Dentística', unit: 'seringa', minQuantity: 1, quantity: 0, resinSpec: { shade: 'A2', opacity: 'Dentina', system: 'Incremental', colorSystem: 'VITA Classical' } },
+        { name: 'Empress Direct Translúcida T', brand: 'Ivoclar Vivadent', category: 'Dentística', unit: 'seringa', minQuantity: 1, quantity: 0, resinSpec: { shade: 'T', opacity: 'Translúcida', system: 'Incremental', colorSystem: 'VITA Classical' } },
+      ]
+    },
+  ],
+  'Endodontia': ENDO_PRESETS.map(p => ({ name: p.name, icon: p.icon, items: p.items.map(i => ({ ...i, category: 'Endodontia', unit: 'unidade', minQuantity: 3, quantity: 0, isReusable: false, brand: i.endoSpec?.manufacturer })) })),
+  'Cirurgia': [
+    {
+      name: 'Kit Sutura Básico', icon: '🧵',
+      items: [
+        { name: 'Fio Nylon 3-0 c/24', brand: 'Ethicon', category: 'Cirurgia', unit: 'caixa', minQuantity: 2, quantity: 0, surgicalSpec: { sutureType: 'Nylon', sutureSize: '3-0' } },
+        { name: 'Fio Nylon 4-0 c/24', brand: 'Ethicon', category: 'Cirurgia', unit: 'caixa', minQuantity: 2, quantity: 0, surgicalSpec: { sutureType: 'Nylon', sutureSize: '4-0' } },
+        { name: 'Fio Vicryl 3-0 c/24', brand: 'Ethicon', category: 'Cirurgia', unit: 'caixa', minQuantity: 1, quantity: 0, surgicalSpec: { sutureType: 'Vicryl', sutureSize: '3-0' } },
+      ]
+    },
+    {
+      name: 'Kit Anestésico Básico', icon: '💉',
+      items: [
+        { name: 'Mepivacaína 2% c/Vasoconst.', brand: 'DFL', category: 'Cirurgia', unit: 'caixa', minQuantity: 5, quantity: 0, surgicalSpec: { anestheticType: 'Mepivacaína', anestheticConc: '2%' } },
+        { name: 'Lidocaína 2% c/Epinefrina', brand: 'Sankin', category: 'Cirurgia', unit: 'caixa', minQuantity: 5, quantity: 0, surgicalSpec: { anestheticType: 'Lidocaína', anestheticConc: '2%' } },
+      ]
+    },
+  ],
+  'Periodontia': [
+    {
+      name: 'Kit Regeneração Básico', icon: '🦴',
+      items: [
+        { name: 'Bio-Oss Xenoenxerto 0.5g', brand: 'Geistlich', category: 'Periodontia', unit: 'unidade', minQuantity: 2, quantity: 0, perioSpec: { materialType: 'Enxerto ósseo', graftOrigin: 'Xenógeno' } },
+        { name: 'Bio-Gide Membrana Reabsorvível', brand: 'Geistlich', category: 'Periodontia', unit: 'unidade', minQuantity: 2, quantity: 0, perioSpec: { materialType: 'Membrana reabsorvível', graftOrigin: 'Xenógeno' } },
+      ]
+    },
+  ],
+  'EPI': [
+    {
+      name: 'Kit EPI Padrão', icon: '🛡️',
+      items: [
+        { name: 'Luva Látex P c/100', category: 'EPI', unit: 'caixa', minQuantity: 3, quantity: 0, brand: 'Supermax' },
+        { name: 'Luva Látex M c/100', category: 'EPI', unit: 'caixa', minQuantity: 3, quantity: 0, brand: 'Supermax' },
+        { name: 'Luva Látex G c/100', category: 'EPI', unit: 'caixa', minQuantity: 3, quantity: 0, brand: 'Supermax' },
+        { name: 'Máscara Cirúrgica c/50', category: 'EPI', unit: 'caixa', minQuantity: 5, quantity: 0 },
+        { name: 'Óculos de Proteção', category: 'EPI', unit: 'unidade', minQuantity: 2, quantity: 0, isReusable: true },
+      ]
+    },
+  ],
+};
+
 const Inventory = () => {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [kits, setKits] = useState<InventoryKit[]>([]);
@@ -45,8 +202,10 @@ const Inventory = () => {
   const [isSaving, setIsSaving] = useState(false);
   const { addSyncTask } = useSync();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showQuickFill, setShowQuickFill] = useState(false);
+  const [quickFillBatch, setQuickFillBatch] = useState<string[]>([]);
 
-  const [formData, setFormData] = useState({
+  const emptyForm = {
     name: '',
     brand: '',
     reference: '',
@@ -54,21 +213,19 @@ const Inventory = () => {
     minQuantity: 0,
     unit: 'unidade',
     price: '' as number | '',
-    category: 'Material de Consumo',
+    category: 'Dentística',
     kitId: '',
     notes: '',
-    implantSpec: {
-      diameter: '',
-      length: '',
-      platform: '',
-      connection: ''
-    },
-    resinSpec: {
-      shade: '',
-      opacity: '',
-      system: ''
-    }
-  });
+    isReusable: false,
+    implantSpec: { manufacturer: '', diameter: '', length: '', platform: '', connection: '' },
+    resinSpec: { shade: '', opacity: '', system: '', colorSystem: '' },
+    endoSpec: { fileType: '', fileSystem: '', caliber: '', length: '', taper: '', manufacturer: '' },
+    surgicalSpec: { sutureType: '', sutureSize: '', anestheticType: '', anestheticConc: '' },
+    perioSpec: { materialType: '', graftOrigin: '' },
+    prostheticsSpec: { type: '', material: '', cementType: '' }
+  };
+
+  const [formData, setFormData] = useState(emptyForm);
 
   const [kitFormData, setKitFormData] = useState({
     name: '',
@@ -128,36 +285,91 @@ const Inventory = () => {
         category: item.category,
         kitId: item.kitId || '',
         notes: item.notes || '',
-        implantSpec: { 
-          diameter: item.implantSpec?.diameter || '', 
-          length: item.implantSpec?.length || '', 
-          platform: item.implantSpec?.platform || '', 
-          connection: item.implantSpec?.connection || '' 
+        isReusable: item.isReusable ?? false,
+        implantSpec: {
+          manufacturer: item.implantSpec?.manufacturer || '',
+          diameter: item.implantSpec?.diameter || '',
+          length: item.implantSpec?.length || '',
+          platform: item.implantSpec?.platform || '',
+          connection: item.implantSpec?.connection || ''
         },
-        resinSpec: { 
-          shade: item.resinSpec?.shade || '', 
-          opacity: item.resinSpec?.opacity || '', 
-          system: item.resinSpec?.system || '' 
+        resinSpec: {
+          shade: item.resinSpec?.shade || '',
+          opacity: item.resinSpec?.opacity || '',
+          system: item.resinSpec?.system || '',
+          colorSystem: item.resinSpec?.colorSystem || ''
+        },
+        endoSpec: {
+          fileType: item.endoSpec?.fileType || '',
+          fileSystem: item.endoSpec?.fileSystem || '',
+          caliber: item.endoSpec?.caliber || '',
+          length: item.endoSpec?.length || '',
+          taper: item.endoSpec?.taper || '',
+          manufacturer: item.endoSpec?.manufacturer || ''
+        },
+        surgicalSpec: {
+          sutureType: item.surgicalSpec?.sutureType || '',
+          sutureSize: item.surgicalSpec?.sutureSize || '',
+          anestheticType: item.surgicalSpec?.anestheticType || '',
+          anestheticConc: item.surgicalSpec?.anestheticConc || ''
+        },
+        perioSpec: {
+          materialType: item.perioSpec?.materialType || '',
+          graftOrigin: item.perioSpec?.graftOrigin || ''
+        },
+        prostheticsSpec: {
+          type: item.prostheticsSpec?.type || '',
+          material: item.prostheticsSpec?.material || '',
+          cementType: item.prostheticsSpec?.cementType || ''
         }
       });
     } else {
       setEditingItem(null);
-      setFormData({
-        name: '',
-        brand: '',
-        reference: '',
-        quantity: 0,
-        minQuantity: 0,
-        unit: 'unidade',
-        price: '',
-        category: 'Dentística',
-        kitId: selectedKitId || '',
-        notes: '',
-        implantSpec: { diameter: '', length: '', platform: '', connection: '' },
-        resinSpec: { shade: '', opacity: '', system: '' }
-      });
+      setFormData({ ...emptyForm, category: activeCategory !== 'All' ? activeCategory : 'Dentística', kitId: selectedKitId || '' });
     }
     setIsModalOpen(true);
+  };
+
+  // ── Quick Fill: bulk-add preset items to inventory ──
+  const handleQuickFill = async (bundle: QuickBundle) => {
+    if (!auth.currentUser) return;
+    setIsSaving(true);
+    const batch = writeBatch(db);
+    const now = new Date().toISOString();
+    const names: string[] = [];
+    bundle.items.forEach(item => {
+      const ref = doc(collection(db, 'inventory'));
+      batch.set(ref, {
+        dentistId: auth.currentUser!.uid,
+        name: item.name ?? 'Item',
+        brand: item.brand ?? '',
+        reference: '',
+        quantity: item.quantity ?? 0,
+        minQuantity: item.minQuantity ?? 1,
+        unit: item.unit ?? 'unidade',
+        category: item.category ?? activeCategory,
+        kitId: selectedKitId ?? '',
+        notes: '',
+        isReusable: item.isReusable ?? false,
+        ...(item.implantSpec ? { implantSpec: item.implantSpec } : {}),
+        ...(item.resinSpec ? { resinSpec: item.resinSpec } : {}),
+        ...(item.endoSpec ? { endoSpec: item.endoSpec } : {}),
+        ...(item.surgicalSpec ? { surgicalSpec: item.surgicalSpec } : {}),
+        ...(item.perioSpec ? { perioSpec: item.perioSpec } : {}),
+        ...(item.prostheticsSpec ? { prostheticsSpec: item.prostheticsSpec } : {}),
+        updatedAt: now
+      });
+      names.push(item.name ?? 'Item');
+    });
+    try {
+      await batch.commit();
+      setQuickFillBatch(names);
+      setTimeout(() => setQuickFillBatch([]), 4000);
+    } catch (err) {
+      console.error('Quick fill error:', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleOpenKitModal = (kit?: InventoryKit) => {
@@ -286,21 +498,110 @@ const Inventory = () => {
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <button
-            onClick={() => handleOpenKitModal()}
-            className="flex-1 sm:flex-none border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-text-primary px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all"
+            onClick={() => setShowQuickFill(!showQuickFill)}
+            className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all font-bold border text-sm ${
+              showQuickFill 
+                ? 'bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-400' 
+                : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-text-primary hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-sm'
+            }`}
           >
-            <Folder size={20} className="text-indigo-500" />
+            <Zap size={18} className={showQuickFill ? 'fill-indigo-500 text-indigo-500 animate-pulse' : 'text-zinc-400'} />
+            Preenchimento Inteligente
+          </button>
+          <button
+            onClick={() => handleOpenKitModal()}
+            className="flex-1 sm:flex-none border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-text-primary px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all text-sm shadow-sm"
+          >
+            <Folder size={18} className="text-indigo-500" />
             Novo Kit
           </button>
           <button
             onClick={() => handleOpenModal()}
-            className="flex-1 sm:flex-none bg-indigo-600 text-white px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-sm active:scale-95"
+            className="flex-1 sm:flex-none bg-indigo-600 text-white px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-md text-sm active:scale-95 font-bold"
           >
-            <Plus size={20} />
+            <Plus size={18} />
             Novo Item
           </button>
         </div>
       </div>
+
+      {/* Quick Fill Tray */}
+      <AnimatePresence>
+        {showQuickFill && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-indigo-50/50 dark:bg-indigo-500/5 p-6 rounded-3xl border border-indigo-100 dark:border-indigo-500/10 space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black text-indigo-950 dark:text-indigo-300 uppercase tracking-wider flex items-center gap-2">
+                  <Zap className="w-4 h-4 fill-indigo-500 text-indigo-500 animate-pulse" />
+                  Preenchimento Clínico Rápido
+                </h3>
+                <p className="text-xs text-text-secondary mt-1">
+                  Cadastre pacotes inteiros de materiais odontológicos essenciais por fabricante e especialidade com um único clique.
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowQuickFill(false)}
+                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
+              >
+                Ocultar Painel
+              </button>
+            </div>
+
+            {/* Quick Fill Batches success note */}
+            {quickFillBatch.length > 0 && (
+              <motion.div 
+                initial={{ scale: 0.95, opacity: 0 }} 
+                animate={{ scale: 1, opacity: 1 }} 
+                className="p-3 bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-800 dark:text-emerald-400 rounded-2xl text-xs font-medium"
+              >
+                ✅ {quickFillBatch.length} itens adicionados com sucesso: {quickFillBatch.join(', ')}
+              </motion.div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {Object.entries(QUICK_FILL_BUNDLES).map(([categoryName, bundles]) => (
+                <div key={categoryName} className="space-y-2 p-3 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800/80">
+                  <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest block mb-1">
+                    {categoryName}
+                  </span>
+                  <div className="space-y-1.5">
+                    {bundles.map((bundle, idx) => (
+                      <button
+                        key={`${categoryName}-${idx}`}
+                        onClick={() => handleQuickFill(bundle)}
+                        disabled={isSaving}
+                        className="w-full text-left p-2.5 bg-zinc-50 hover:bg-indigo-50/50 dark:bg-zinc-950 dark:hover:bg-indigo-950/20 rounded-xl transition-all border border-zinc-100 dark:border-zinc-800 hover:border-indigo-200 dark:hover:border-indigo-500/20 flex items-center justify-between group disabled:opacity-50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg bg-white dark:bg-zinc-900 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm border border-zinc-100 dark:border-zinc-800">
+                            {bundle.icon}
+                          </span>
+                          <div>
+                            <p className="text-xs font-bold text-text-primary group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                              {bundle.name}
+                            </p>
+                            <p className="text-[9px] text-text-secondary font-medium">
+                              {bundle.items.length} itens inclusos
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 group-hover:translate-x-1 transition-transform">
+                          Adicionar →
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar */}
@@ -446,20 +747,43 @@ const Inventory = () => {
                   </div>
 
                   {/* Specific Specs display */}
-                  {(item.implantSpec?.diameter || item.resinSpec?.shade) && (
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      {item.implantSpec?.diameter && (
-                        <span className="text-[9px] font-bold bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 px-1.5 py-0.5 rounded">
-                          Ø {item.implantSpec.diameter}mm × {item.implantSpec.length}mm
-                        </span>
-                      )}
-                      {item.resinSpec?.shade && (
-                        <span className="text-[9px] font-bold bg-amber-100 dark:bg-amber-500/20 text-amber-700 px-1.5 py-0.5 rounded uppercase">
-                          Cor: {item.resinSpec.shade} • {item.resinSpec.opacity}
-                        </span>
-                      )}
-                    </div>
-                  )}
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    {item.isReusable && (
+                      <span className="text-[9px] font-black bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                        Reutilizável
+                      </span>
+                    )}
+                    {item.implantSpec?.diameter && (
+                      <span className="text-[9px] font-bold bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 px-1.5 py-0.5 rounded">
+                        Ø {item.implantSpec.diameter}mm × {item.implantSpec.length}mm ({item.implantSpec.connection || 'S/C'})
+                      </span>
+                    )}
+                    {item.resinSpec?.shade && (
+                      <span className="text-[9px] font-bold bg-amber-100 dark:bg-amber-500/20 text-amber-700 px-1.5 py-0.5 rounded uppercase">
+                        Cor: {item.resinSpec.shade} • {item.resinSpec.opacity}
+                      </span>
+                    )}
+                    {item.endoSpec?.fileSystem && (
+                      <span className="text-[9px] font-bold bg-purple-100 dark:bg-purple-500/20 text-purple-700 px-1.5 py-0.5 rounded uppercase">
+                        Endo: {item.endoSpec.fileSystem} • #{item.endoSpec.caliber} • {item.endoSpec.length}
+                      </span>
+                    )}
+                    {item.surgicalSpec?.sutureType && (
+                      <span className="text-[9px] font-bold bg-red-100 dark:bg-red-500/20 text-red-700 px-1.5 py-0.5 rounded uppercase">
+                        Cir: {item.surgicalSpec.sutureType} {item.surgicalSpec.sutureSize}
+                      </span>
+                    )}
+                    {item.perioSpec?.materialType && (
+                      <span className="text-[9px] font-bold bg-teal-100 dark:bg-teal-500/20 text-teal-700 px-1.5 py-0.5 rounded uppercase">
+                        Perio: {item.perioSpec.materialType}
+                      </span>
+                    )}
+                    {item.prostheticsSpec?.type && (
+                      <span className="text-[9px] font-bold bg-sky-100 dark:bg-sky-500/20 text-sky-700 px-1.5 py-0.5 rounded uppercase">
+                        Prót: {item.prostheticsSpec.type} • {item.prostheticsSpec.material}
+                      </span>
+                    )}
+                  </div>
 
                   <div className="flex items-center justify-between mt-auto pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
                     <div className="flex items-center gap-2">
@@ -578,6 +902,20 @@ const Inventory = () => {
                   <div className="space-y-4 bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800">
                     <h3 className="text-xs font-black text-indigo-500 uppercase tracking-[0.2em] mb-4">Especificações Técnicas</h3>
                     
+                    {/* isReusable Checkbox */}
+                    <div className="flex items-center gap-2 mb-4 p-3 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800/80 rounded-xl">
+                      <input
+                        type="checkbox"
+                        id="isReusable"
+                        checked={formData.isReusable || false}
+                        onChange={e => setFormData({ ...formData, isReusable: e.target.checked })}
+                        className="w-4 h-4 text-indigo-600 border-zinc-300 rounded focus:ring-indigo-500"
+                      />
+                      <label htmlFor="isReusable" className="text-xs font-bold text-text-primary uppercase cursor-pointer select-none">
+                        Material Reutilizável (Não deduzir do estoque)
+                      </label>
+                    </div>
+
                     {formData.category === 'Implantodontia' ? (
                       <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-3">
@@ -598,6 +936,7 @@ const Inventory = () => {
                               <option value="Hex. Externo">Hex. Externo</option>
                               <option value="Hex. Interno">Hex. Interno</option>
                               <option value="Cone Morse">Cone Morse</option>
+                              <option value="Grand Morse (GM)">Grand Morse (GM)</option>
                             </select>
                           </div>
                           <div>
@@ -607,6 +946,8 @@ const Inventory = () => {
                               <option value="NP (Narrow)">NP (Narrow)</option>
                               <option value="RP (Regular)">RP (Regular)</option>
                               <option value="WP (Wide)">WP (Wide)</option>
+                              <option value="GM 5.0mm">GM 5.0mm</option>
+                              <option value="GM 6.0mm">GM 6.0mm</option>
                             </select>
                           </div>
                         </div>
@@ -640,10 +981,132 @@ const Inventory = () => {
                           </div>
                         </div>
                       </div>
+                    ) : formData.category === 'Endodontia' ? (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Tipo de Lima</label>
+                            <select value={formData.endoSpec?.fileType || ''} onChange={e => setFormData({...formData, endoSpec: {...formData.endoSpec, fileType: e.target.value}})} className="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm">
+                              <option value="">Selecionar</option>
+                              <option value="Manual">Manual</option>
+                              <option value="Rotatória">Rotatória</option>
+                              <option value="Reciprocante">Reciprocante</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Sistema/Linhagem</label>
+                            <input type="text" value={formData.endoSpec?.fileSystem || ''} onChange={e => setFormData({...formData, endoSpec: {...formData.endoSpec, fileSystem: e.target.value}})} className="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm" placeholder="Ex: ProTaper Gold, K-File" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Calibre</label>
+                            <input type="text" value={formData.endoSpec?.caliber || ''} onChange={e => setFormData({...formData, endoSpec: {...formData.endoSpec, caliber: e.target.value}})} className="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm" placeholder="Ex: 25" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Comprimento</label>
+                            <select value={formData.endoSpec?.length || ''} onChange={e => setFormData({...formData, endoSpec: {...formData.endoSpec, length: e.target.value}})} className="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm">
+                              <option value="">Selecionar</option>
+                              <option value="21mm">21mm</option>
+                              <option value="25mm">25mm</option>
+                              <option value="28mm">28mm</option>
+                              <option value="31mm">31mm</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Conicidade</label>
+                            <input type="text" value={formData.endoSpec?.taper || ''} onChange={e => setFormData({...formData, endoSpec: {...formData.endoSpec, taper: e.target.value}})} className="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm" placeholder="Ex: 4%, Variável" />
+                          </div>
+                        </div>
+                      </div>
+                    ) : formData.category === 'Cirurgia' ? (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Tipo de Sutura</label>
+                            <select value={formData.surgicalSpec?.sutureType || ''} onChange={e => setFormData({...formData, surgicalSpec: {...formData.surgicalSpec, sutureType: e.target.value}})} className="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm">
+                              <option value="">Selecionar</option>
+                              <option value="Nylon">Nylon</option>
+                              <option value="Seda">Seda</option>
+                              <option value="Vicryl">Vicryl</option>
+                              <option value="Catgut">Catgut</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Tamanho da Sutura</label>
+                            <select value={formData.surgicalSpec?.sutureSize || ''} onChange={e => setFormData({...formData, surgicalSpec: {...formData.surgicalSpec, sutureSize: e.target.value}})} className="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm">
+                              <option value="">Selecionar</option>
+                              <option value="3-0">3-0</option>
+                              <option value="4-0">4-0</option>
+                              <option value="5-0">5-0</option>
+                              <option value="6-0">6-0</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Anestésico</label>
+                            <input type="text" value={formData.surgicalSpec?.anestheticType || ''} onChange={e => setFormData({...formData, surgicalSpec: {...formData.surgicalSpec, anestheticType: e.target.value}})} className="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm" placeholder="Ex: Lidocaína, Mepivacaína" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Concentração</label>
+                            <input type="text" value={formData.surgicalSpec?.anestheticConc || ''} onChange={e => setFormData({...formData, surgicalSpec: {...formData.surgicalSpec, anestheticConc: e.target.value}})} className="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm" placeholder="Ex: 2%, 3%" />
+                          </div>
+                        </div>
+                      </div>
+                    ) : formData.category === 'Periodontia' ? (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Tipo de Material</label>
+                          <select value={formData.perioSpec?.materialType || ''} onChange={e => setFormData({...formData, perioSpec: {...formData.perioSpec, materialType: e.target.value}})} className="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm">
+                            <option value="">Selecionar</option>
+                            <option value="Enxerto ósseo">Enxerto ósseo</option>
+                            <option value="Membrana reabsorvível">Membrana reabsorvível</option>
+                            <option value="Membrana não-reabsorvível">Membrana não-reabsorvível</option>
+                            <option value="Barreira de colágeno">Barreira de colágeno</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Origem do Enxerto</label>
+                          <select value={formData.perioSpec?.graftOrigin || ''} onChange={e => setFormData({...formData, perioSpec: {...formData.perioSpec, graftOrigin: e.target.value}})} className="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm">
+                            <option value="">Selecionar</option>
+                            <option value="Xenógeno">Xenógeno (Bovino, etc.)</option>
+                            <option value="Alógeno">Alógeno (Humano)</option>
+                            <option value="Sintético">Sintético</option>
+                            <option value="Autógeno">Autógeno</option>
+                          </select>
+                        </div>
+                      </div>
+                    ) : formData.category === 'Prótese' ? (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Tipo de Prótese</label>
+                            <select value={formData.prostheticsSpec?.type || ''} onChange={e => setFormData({...formData, prostheticsSpec: {...formData.prostheticsSpec, type: e.target.value}})} className="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm">
+                              <option value="">Selecionar</option>
+                              <option value="Coroa provisória">Coroa provisória</option>
+                              <option value="Coroa definitiva">Coroa definitiva</option>
+                              <option value="Faceta/Lente">Faceta/Lente</option>
+                              <option value="Pilar/Abutment">Pilar/Abutment</option>
+                              <option value="Prótese total">Prótese total</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Material</label>
+                            <select value={formData.prostheticsSpec?.material || ''} onChange={e => setFormData({...formData, prostheticsSpec: {...formData.prostheticsSpec, material: e.target.value}})} className="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm">
+                              <option value="">Selecionar</option>
+                              <option value="Zircônia">Zircônia</option>
+                              <option value="Emax/Dissilicato">Emax/Dissilicato</option>
+                              <option value="Metalocerâmica">Metalocerâmica</option>
+                              <option value="Resina Acrílica">Resina Acrílica</option>
+                              <option value="PMMA">PMMA</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
                     ) : (
-                      <div className="py-10 text-center space-y-2 opacity-50">
-                        <Info className="mx-auto text-zinc-300" />
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase">Campos adicionais específicos <br/> para Implante e Resinas.</p>
+                      <div className="py-6 text-center space-y-2 opacity-50">
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase">Sem especificações técnicas<br/>adicionais para esta categoria.</p>
                       </div>
                     )}
 

@@ -1,6 +1,7 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
+import fs from "fs";
 
 async function startServer() {
   const app = express();
@@ -19,6 +20,47 @@ async function startServer() {
       const apiKey = process.env.BREVO_API_KEY;
       const senderEmail = process.env.BREVO_SENDER_EMAIL || "contato@odontoadmin.com";
       const senderName = process.env.BREVO_SENDER_NAME || "OdontoAdmin";
+
+      // 1. Verify Authentication
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ error: "Não autorizado. Token ausente." });
+      }
+      
+      const idToken = authHeader.split("Bearer ")[1];
+      let firebaseApiKey = process.env.VITE_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY;
+      
+      if (!firebaseApiKey) {
+        try {
+          const configPath = path.join(process.cwd(), 'firebase-applet-config.json');
+          if (fs.existsSync(configPath)) {
+            const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            firebaseApiKey = config.apiKey;
+          }
+        } catch (e) {
+          console.error("Failed to read firebase config", e);
+        }
+      }
+
+      if (!firebaseApiKey) {
+        console.error("Firebase API Key is missing for token verification.");
+        return res.status(500).json({ error: "Configuração do servidor incompleta (Firebase API Key ausente)." });
+      }
+
+      try {
+        const verifyRes = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseApiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken })
+        });
+        
+        if (!verifyRes.ok) {
+          return res.status(401).json({ error: "Token inválido ou expirado." });
+        }
+      } catch (err) {
+        console.error("Token verification failed:", err);
+        return res.status(500).json({ error: "Erro ao verificar autenticação." });
+      }
 
       if (!apiKey) {
         console.error("BREVO_API_KEY is missing in environment variables.");

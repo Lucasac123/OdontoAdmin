@@ -33,62 +33,66 @@ export const PrintHeader: React.FC<PrintHeaderProps> = ({
   via
 }) => {
   return (
-    <div className="print-only avoid-break w-full mb-6">
-      <div className="border-b-2 border-slate-800 pb-4 mb-6 flex justify-between items-start">
-        <div className="flex flex-col">
-          <h1 className="text-xl font-bold text-slate-800 uppercase tracking-wider">{clinic.name}</h1>
-          <p className="text-xs text-slate-600 mt-1">{clinic.address}</p>
-          <div className="flex gap-4 mt-1">
-            <p className="text-xs text-slate-600">{clinic.phone}</p>
-            <p className="text-xs text-slate-600">{clinic.email}</p>
-          </div>
+    <div className="print-only avoid-break w-full mb-8">
+      {/* Clinic Identity (Letterhead) */}
+      <div className="flex justify-between items-end border-b-[1.5px] border-slate-800 pb-3 mb-6">
+        <div>
+          <h1 className="text-2xl font-serif font-bold text-slate-900 tracking-tight">{clinic.name}</h1>
+          <p className="text-[9px] uppercase tracking-[0.2em] text-slate-500 mt-1">Odontologia Integrada</p>
         </div>
-        <div className="text-right flex flex-col items-end gap-2">
+        <div className="text-right">
+          <p className="text-[10px] text-slate-600">{clinic.address}</p>
+          <div className="flex justify-end gap-3 mt-0.5">
+            <p className="text-[10px] text-slate-600">{clinic.phone}</p>
+            <p className="text-[10px] text-slate-600">{clinic.email}</p>
+          </div>
           {clinic.epao && (
-            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded font-medium border border-slate-200">
-              {clinic.epao}
-            </span>
-          )}
-          {via && (
-            <span className="text-xs font-black uppercase text-slate-900 border border-slate-900 rounded px-2 py-1 bg-slate-50 tracking-widest">
-              {via}
-            </span>
+            <p className="text-[9px] font-mono text-slate-500 mt-1 uppercase">EPAO {clinic.epao}</p>
           )}
         </div>
       </div>
       
-      {/* Optional Title Section - some components might pass title directly */}
+      {/* Document Title Section */}
       {(title || subtitle) && (
-        <div style={{ textAlign: 'center', padding: '16px 0 16px' }}>
+        <div className="text-center mb-6">
           {title && (
-            <h1 className="font-sans text-xl font-bold uppercase tracking-wide text-slate-900 m-0 leading-none">
+            <h2 className="text-lg font-bold uppercase tracking-wider text-slate-900">
               {title}
-            </h1>
+            </h2>
           )}
           {subtitle && (
-            <div className="inline-block border-t border-slate-300 mt-2 mt-2">
-              <p className="font-sans text-xs text-slate-500 m-0 pt-1 tracking-widest uppercase">{subtitle}</p>
+            <div className="inline-flex items-center gap-2 mt-1">
+              <span className="h-px w-6 bg-slate-300"></span>
+              <p className="text-[10px] uppercase tracking-widest text-slate-500">{subtitle}</p>
+              <span className="h-px w-6 bg-slate-300"></span>
+            </div>
+          )}
+          {via && (
+            <div className="mt-2">
+              <span className="inline-block px-2 py-0.5 text-[9px] font-black uppercase text-slate-900 border border-slate-900 rounded tracking-widest">
+                {via}
+              </span>
             </div>
           )}
         </div>
       )}
 
-      {/* Patient Info Bar */}
+      {/* Patient Identification Card */}
       {patientName && (
-        <div className="bg-slate-50 p-3 rounded-md mb-6 border border-slate-200 print:border-slate-300 print:bg-transparent flex flex-wrap gap-x-6 gap-y-2">
+        <div className="bg-slate-50 border border-slate-200 rounded p-3 mb-8 print:bg-slate-50/50 flex flex-wrap items-center gap-x-8 gap-y-3">
           <div className="flex flex-col">
-            <span className="text-[10px] text-slate-500 font-semibold uppercase">Paciente</span>
-            <span className="text-sm font-bold text-slate-800">{patientName}</span>
+            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Paciente</span>
+            <span className="text-sm font-semibold text-slate-800">{patientName}</span>
           </div>
           {patientCpf && (
             <div className="flex flex-col">
-              <span className="text-[10px] text-slate-500 font-semibold uppercase">CPF</span>
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">CPF</span>
               <span className="text-sm text-slate-700">{patientCpf}</span>
             </div>
           )}
           {patientDob && (
             <div className="flex flex-col">
-              <span className="text-[10px] text-slate-500 font-semibold uppercase">Data de Nasc.</span>
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Data de Nascimento</span>
               <span className="text-sm text-slate-700">{patientDob}</span>
             </div>
           )}

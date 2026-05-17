@@ -355,7 +355,7 @@ export const Financial: React.FC = () => {
     `;
 
     const iframe = document.createElement('iframe');
-    console.log('Creating iframe for printing...');
+
     iframe.style.position = 'absolute';
     iframe.style.width = '0';
     iframe.style.height = '0';
@@ -364,7 +364,7 @@ export const Financial: React.FC = () => {
 
     const doc = iframe.contentWindow?.document;
     if (doc) {
-      console.log('Iframe document found, writing content...');
+
       doc.open();
       doc.write(`
         <html>
@@ -383,13 +383,13 @@ export const Financial: React.FC = () => {
       
       // Wait for content to load before printing
       setTimeout(() => {
-        console.log('Attempting to print iframe...');
+
         iframe.contentWindow?.focus();
         iframe.contentWindow?.print();
         
         // Cleanup
         setTimeout(() => {
-          console.log('Cleaning up iframe...');
+
           document.body.removeChild(iframe);
         }, 2000); // Increased cleanup timeout
       }, 1000); // Increased print timeout

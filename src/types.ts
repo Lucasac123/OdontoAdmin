@@ -48,6 +48,7 @@ export interface TreatmentProcedure {
   status: 'realizado' | 'não_realizado';
   executionDate?: string;
   paymentStatus: 'pago' | 'pendente';
+  templateId?: string;
 }
 
 export interface TreatmentProposal {
@@ -160,7 +161,10 @@ export interface InventoryItem {
   category: string;
   kitId?: string;
   notes?: string;
+  /** Se true, o item NÃO é subtraído do estoque ao realizar um procedimento (ex: instrumental) */
+  isReusable?: boolean;
   implantSpec?: {
+    manufacturer?: string;
     diameter?: string;
     length?: string;
     platform?: string;
@@ -170,6 +174,30 @@ export interface InventoryItem {
     shade?: string;
     opacity?: string;
     system?: string;
+    colorSystem?: string;
+  };
+  endoSpec?: {
+    fileType?: string;       // 'manual' | 'reciprocating' | 'rotary'
+    fileSystem?: string;     // 'ProTaper Gold', 'WaveOne Gold', 'K-File', etc.
+    caliber?: string;        // '15', '20', '25', etc.
+    length?: string;         // '21mm', '25mm', '31mm'
+    taper?: string;          // '2%', '4%', '6%', 'Variable'
+    manufacturer?: string;
+  };
+  surgicalSpec?: {
+    sutureType?: string;     // 'Nylon', 'Catgut', 'Vicryl', 'Seda'
+    sutureSize?: string;     // '3-0', '4-0', '5-0'
+    anestheticType?: string; // 'Mepivacaína', 'Lidocaína', etc.
+    anestheticConc?: string; // '2%', '3%'
+  };
+  perioSpec?: {
+    materialType?: string;   // 'Membrana', 'Enxerto ósseo', 'Barreira'
+    graftOrigin?: string;    // 'Xenógeno', 'Alógeno', 'Sintético'
+  };
+  prostheticsSpec?: {
+    type?: string;           // 'Provisório', 'Definitivo', 'Faceta', etc.
+    material?: string;       // 'Zircônia', 'Emax', 'Metalocerâmica', etc.
+    cementType?: string;
   };
   updatedAt: string;
 }
@@ -191,6 +219,7 @@ export interface LabJob {
   patientName: string;
   prosthesisType: string;
   labName: string;
+  labPhone?: string;
   sendDate: string;
   expectedDate: string;
   status: 'Enviado' | 'Em Confecção' | 'Recebido' | 'Instalado';
