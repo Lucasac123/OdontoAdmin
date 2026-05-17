@@ -39,7 +39,7 @@ jobs:
           
           # Install dependencies for cairosvg on Ubuntu
           sudo apt-get update && sudo apt-get install -y libcairo2-dev libffi-dev libxml2-dev libxslt-dev
-          pip install cairosvg Pillow --quiet
+          pip install cairosvg Pillow --quiet --break-system-packages
           
           python3 - <<'EOF'
           import cairosvg
@@ -71,8 +71,9 @@ jobs:
                 
                 out_dir = os.path.join(base, folder)
                 os.makedirs(out_dir, exist_ok=True)
-                img.save(os.path.join(out_dir, "ic_launcher.png"))
-                img.save(os.path.join(out_dir, "ic_launcher_round.png"))
+                img.save(os.path.join(out_dir, "ic_launcher.png"), "PNG", optimize=False)
+                img.save(os.path.join(out_dir, "ic_launcher_round.png"), "PNG", optimize=False)
+                img.save(os.path.join(out_dir, "ic_launcher_foreground.png"), "PNG", optimize=False)
                 print(f"  ✅ {folder}: {size}x{size}")
             except Exception as e:
                 print(f"  ❌ Error generating {folder}: {e}")
@@ -98,7 +99,7 @@ jobs:
                   splash_img = Image.open(io.BytesIO(png_data)).convert("RGBA")
                   splash_dir = os.path.join(base, splash_dir_name)
                   os.makedirs(splash_dir, exist_ok=True)
-                  splash_img.save(os.path.join(splash_dir, "splash.png"))
+                  splash_img.save(os.path.join(splash_dir, "splash.png"), "PNG", optimize=False)
                   print(f"  ✅ {splash_dir_name}/splash.png: {width}x{height}")
               except Exception as e:
                   print(f"  ❌ Error generating {splash_dir_name}: {e}")
