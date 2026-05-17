@@ -236,7 +236,7 @@ export const PrescriptionTemplatesModal: React.FC<PrescriptionTemplatesModalProp
                   <div className="mb-4">
                     <h4 className="text-xs font-bold text-text-secondary uppercase mb-2">Modelos Padrão</h4>
                     {standardTemplates.map((template) => (
-                      <div key={template.id} className="flex items-center p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 rounded-xl cursor-pointer hover:border-indigo-300 transition-colors" onClick={() => { onSelectTemplate(template.content); onClose(); }}>
+                      <div key={`std-${template.id}`} className="flex items-center p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 rounded-xl cursor-pointer hover:border-indigo-300 transition-colors" onClick={() => { onSelectTemplate(template.content); onClose(); }}>
                         <FileText className="w-5 h-5 text-indigo-600 mr-3" />
                         <h3 className="text-sm font-bold text-text-primary">{template.title}</h3>
                       </div>
@@ -245,7 +245,7 @@ export const PrescriptionTemplatesModal: React.FC<PrescriptionTemplatesModalProp
                 )}
                 <h4 className="text-xs font-bold text-text-secondary uppercase mb-2">Modelos Salvos</h4>
                 {filteredTemplates.map((template) => (
-                  <div key={template.id} className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-300 transition-colors">
+                  <div key={`saved-${template.id}`} className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-300 transition-colors">
                     <div className="flex items-center cursor-pointer flex-1" onClick={() => { onSelectTemplate(template.content); onClose(); }}>
                       <FileText className="w-5 h-5 text-gray-400 mr-3" />
                       <h3 className="text-sm font-bold text-text-primary">{template.title}</h3>

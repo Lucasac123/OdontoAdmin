@@ -6,7 +6,13 @@ import { QuickTemplatesList } from './QuickTemplatesList';
 import { PrintHeader } from '../print/PrintHeader';
 import { PrintFooter } from '../print/PrintFooter';
 
-export const ConsentFormsTab = ({ patient }: { patient: Patient }) => {
+export const ConsentFormsTab = ({ 
+  patient,
+  onOpenPrintModal
+}: { 
+  patient: Patient;
+  onOpenPrintModal?: (customDocument?: { title: string; content: string; type: string }) => void;
+}) => {
   const [selectedTemplate, setSelectedTemplate] = useState('geral');
   const [customText, setCustomText] = useState('');
   const [showTemplatesModal, setShowTemplatesModal] = useState(false);
@@ -25,7 +31,16 @@ export const ConsentFormsTab = ({ patient }: { patient: Patient }) => {
   };
 
   const handlePrint = () => {
-    window.print();
+    if (onOpenPrintModal) {
+      const currentText = customText || templates[selectedTemplate as keyof typeof templates] || '';
+      onOpenPrintModal({
+        title: selectedTemplate === 'imageRelease' ? 'Autorização de Uso de Imagem' : 'Termo de Consentimento Livre e Esclarecido',
+        content: currentText,
+        type: selectedTemplate === 'imageRelease' ? 'image-release' : 'tcle'
+      });
+    } else {
+      window.print();
+    }
   };
 
   return (

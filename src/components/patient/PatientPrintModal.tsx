@@ -11,28 +11,40 @@ interface PatientPrintModalProps {
   onClose: () => void;
   patient: Patient;
   preSelectedTab?: string;
+  customDocument?: {
+    title: string;
+    content: string;
+    type: string;
+  };
 }
 
 export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({ 
   isOpen, 
   onClose, 
   patient,
-  preSelectedTab
+  preSelectedTab,
+  customDocument
 }) => {
   const [selectedSections, setSelectedSections] = useState<string[]>([]);
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
+  const [includeCustomDocument, setIncludeCustomDocument] = useState<boolean>(false);
+  const [showDentistSignature, setShowDentistSignature] = useState(true);
+  const [showPatientSignature, setShowPatientSignature] = useState(true);
   const [isPrinting, setIsPrinting] = useState(false);
   const [evolutions, setEvolutions] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
 
   useEffect(() => {
-    if (preSelectedTab && isOpen) {
-      if (!selectedSections.includes(preSelectedTab)) {
+    if (isOpen) {
+      if (preSelectedTab && !selectedSections.includes(preSelectedTab)) {
         setSelectedSections([preSelectedTab]);
       }
+      if (customDocument) {
+        setIncludeCustomDocument(true);
+      }
     }
-  }, [preSelectedTab, isOpen]);
+  }, [preSelectedTab, customDocument, isOpen]);
 
   useEffect(() => {
     if (!auth.currentUser || !isOpen) return;
@@ -160,7 +172,7 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
                   <div className="space-y-3">
                     {baseSections.map(section => (
                       <button
-                        key={section.id}
+                        key={`section-${section.id}`}
                         onClick={() => handleToggleSection(section.id)}
                         className="flex items-center gap-3 w-full text-left p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
                       >
@@ -176,42 +188,97 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
                 </div>
 
                 {/* Custom Templates */}
-                <div>
-                  <h3 className="font-bold text-text-primary mb-4 flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
-                    Termos e Receituários Salvos
-                  </h3>
-                  {templates.length === 0 ? (
-                    <p className="text-sm text-text-secondary italic p-2">Nenhum modelo salvo encontrado.</p>
-                  ) : (
-                    <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                      {templates.map(template => (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-bold text-text-primary mb-4 flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
+                      Documentos
+                    </h3>
+                    
+                    <div className="space-y-3 mb-4">
+                      {customDocument && (
                         <button
-                          key={template.id}
-                          onClick={() => handleToggleTemplate(template.id)}
-                          className="flex items-start gap-3 w-full text-left p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                          onClick={() => setIncludeCustomDocument(!includeCustomDocument)}
+                          className="flex items-start gap-3 w-full text-left p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors border-2 border-indigo-100 dark:border-indigo-900/30 bg-indigo-50/50 dark:bg-indigo-900/10"
                         >
                           <div className="mt-0.5">
-                            {selectedTemplates.includes(template.id) ? (
+                            {includeCustomDocument ? (
                               <CheckSquare className="w-5 h-5 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
                             ) : (
                               <Square className="w-5 h-5 text-gray-400 flex-shrink-0" />
                             )}
                           </div>
                           <div>
-                            <span className="text-sm font-medium text-text-primary block leading-tight">{template.title}</span>
-                            <span className="text-xs text-text-secondary uppercase mt-1 block">{template.type}</span>
+                            <span className="text-sm font-bold text-indigo-900 dark:text-indigo-100 block leading-tight">{customDocument.title}</span>
+                            <span className="text-xs text-indigo-600 dark:text-indigo-400 uppercase mt-1 block">Documento Atual</span>
                           </div>
                         </button>
-                      ))}
+                      )}
                     </div>
-                  )}
+
+                    <h4 className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-3">Modelos Salvos</h4>
+                    {templates.length === 0 ? (
+                      <p className="text-sm text-text-secondary italic p-2">Nenhum modelo salvo encontrado.</p>
+                    ) : (
+                      <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                        {templates.map(template => (
+                          <button
+                            key={`template-${template.id}`}
+                            onClick={() => handleToggleTemplate(template.id)}
+                            className="flex items-start gap-3 w-full text-left p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                          >
+                            <div className="mt-0.5">
+                              {selectedTemplates.includes(template.id) ? (
+                                <CheckSquare className="w-5 h-5 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
+                              ) : (
+                                <Square className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                              )}
+                            </div>
+                            <div>
+                              <span className="text-sm font-medium text-text-primary block leading-tight">{template.title}</span>
+                              <span className="text-xs text-text-secondary uppercase mt-1 block">{template.type}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="font-bold text-text-primary mb-4 flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-2">
+                      Assinaturas no Rodapé
+                    </h3>
+                    <div className="space-y-3">
+                      <button
+                        onClick={() => setShowDentistSignature(!showDentistSignature)}
+                        className="flex items-center gap-3 w-full text-left p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                      >
+                        {showDentistSignature ? (
+                          <CheckSquare className="w-5 h-5 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
+                        ) : (
+                          <Square className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                        )}
+                        <span className="text-sm font-medium text-text-primary">Espaço p/ Assinatura do Dentista</span>
+                      </button>
+                      <button
+                        onClick={() => setShowPatientSignature(!showPatientSignature)}
+                        className="flex items-center gap-3 w-full text-left p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                      >
+                        {showPatientSignature ? (
+                          <CheckSquare className="w-5 h-5 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
+                        ) : (
+                          <Square className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                        )}
+                        <span className="text-sm font-medium text-text-primary">Espaço p/ Assinatura do Paciente</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center">
               <span className="text-sm text-text-secondary">
-                {selectedSections.length + selectedTemplates.length} itens selecionados
+                {selectedSections.length + selectedTemplates.length + (includeCustomDocument ? 1 : 0)} itens selecionados
               </span>
               <div className="flex gap-3">
                 <button 
@@ -222,7 +289,7 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
                 </button>
                 <button 
                   onClick={handlePrint}
-                  disabled={selectedSections.length === 0 && selectedTemplates.length === 0 || isPrinting}
+                  disabled={(selectedSections.length === 0 && selectedTemplates.length === 0 && !includeCustomDocument) || isPrinting}
                   className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors font-medium shadow-md"
                 >
                   <Printer className="w-4 h-4" />
@@ -242,6 +309,9 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
         selectedTemplates={templates.filter(t => selectedTemplates.includes(t.id))}
         evolutions={evolutions}
         payments={payments}
+        customDocument={includeCustomDocument ? customDocument : undefined}
+        showDentistSignature={showDentistSignature}
+        showPatientSignature={showPatientSignature}
       />
     </AnimatePresence>
   );

@@ -331,7 +331,7 @@ const Inventory = () => {
               </button>
               {CATEGORIES.map(cat => (
                 <button
-                  key={cat.id}
+                  key={`cat-${cat.id}`}
                   onClick={() => { setActiveCategory(cat.id); setSelectedKitId(null); }}
                   className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
                     activeCategory === cat.id 
@@ -359,7 +359,7 @@ const Inventory = () => {
               ) : (
                 kits.map(kit => (
                   <button
-                    key={kit.id}
+                    key={`kit-${kit.id}`}
                     onClick={() => { setSelectedKitId(kit.id); setActiveCategory('All'); }}
                     className={`w-full text-left px-4 py-2.5 rounded-xl transition-all flex items-center justify-between group ${
                       selectedKitId === kit.id 
@@ -421,7 +421,7 @@ const Inventory = () => {
               return (
                 <motion.div
                   layout
-                  key={item.id}
+                  key={`item-${item.id}`}
                   className={`bg-surface p-5 rounded-3xl border ${isLowStock ? 'border-red-200 dark:border-red-900/50 bg-red-50/10' : 'border-zinc-200 dark:border-zinc-800'} shadow-sm hover:shadow-md transition-all group`}
                 >
                   <div className="flex justify-between items-start mb-3">

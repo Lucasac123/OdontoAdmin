@@ -141,7 +141,7 @@ export const QuickTemplatesList: React.FC<QuickTemplatesListProps> = ({ currentT
             <div className="space-y-2">
               {standardTemplates.map((template) => (
                 <button
-                  key={template.id}
+                  key={`std-${template.id}`}
                   onClick={() => onSelectTemplate(template.content)}
                   className="w-full flex items-center text-left p-3 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800/30 rounded-xl hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors group"
                 >
@@ -162,7 +162,7 @@ export const QuickTemplatesList: React.FC<QuickTemplatesListProps> = ({ currentT
           ) : (
             <div className="space-y-2">
               {filteredTemplates.map((template) => (
-                <div key={template.id} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors group">
+                <div key={`saved-${template.id}`} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors group">
                   <button 
                     onClick={() => onSelectTemplate(template.content)}
                     className="flex items-center flex-1 min-w-0 text-left"

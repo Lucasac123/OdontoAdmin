@@ -520,26 +520,7 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-surface rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
-          <h2 className="text-lg font-bold text-text-primary mb-4">Aniversariantes (Próximos 7 dias)</h2>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
-            {upcomingBirthdays.length === 0 ? (
-              <p className="text-sm text-text-secondary">Nenhum aniversário nos próximos 7 dias.</p>
-            ) : (
-              upcomingBirthdays.map(patient => {
-                const [year, month, day] = patient.dob!.split('-').map(Number);
-                return (
-                  <div key={patient.id} className="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg flex items-center justify-between gap-2 border border-zinc-200 dark:border-zinc-700">
-                    <p className="text-sm font-medium text-text-primary">{patient.name}</p>
-                    <p className="text-sm text-text-secondary">{day}/{month}</p>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-surface rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-8">
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -601,9 +582,6 @@ export const Dashboard: React.FC = () => {
             )}
           </div>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-surface rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-8">
           <div className="flex items-center justify-between mb-8">
             <div>

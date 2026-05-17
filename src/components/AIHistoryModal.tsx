@@ -140,7 +140,7 @@ export const AIHistoryModal: React.FC<AIHistoryModalProps> = ({ isOpen, onClose 
             ) : (
               <div className="space-y-4">
                 {searches.map((s, idx) => (
-                  <div key={idx} className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
+                  <div key={`search-${idx}`} className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="font-semibold text-text-primary text-base break-words">"{s.query}"</h4>
                       <span className="text-[10px] text-text-secondary flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-full shrink-0 ml-2">
@@ -161,7 +161,7 @@ export const AIHistoryModal: React.FC<AIHistoryModalProps> = ({ isOpen, onClose 
             ) : (
               <div className="space-y-4">
                 {analyses.map((a, idx) => (
-                  <div key={idx} className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row gap-5">
+                  <div key={`analysis-${idx}`} className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row gap-5">
                     {a.thumbnail ? (
                       <div className="w-full md:w-48 h-32 md:h-auto rounded-xl overflow-hidden shrink-0 border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center">
                         <img src={a.thumbnail} alt="Thumbnail" className="w-full h-full object-contain" />

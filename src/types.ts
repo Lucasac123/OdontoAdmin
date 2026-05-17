@@ -143,6 +143,7 @@ export interface Dentist {
   specialty?: string;
   phone?: string;
   email?: string;
+  commissionPercentage?: number;
   createdAt: string;
 }
 

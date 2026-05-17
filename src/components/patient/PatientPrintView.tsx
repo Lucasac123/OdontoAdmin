@@ -9,6 +9,13 @@ interface PatientPrintViewProps {
   selectedTemplates: DocumentTemplate[];
   evolutions: any[];
   payments: any[];
+  customDocument?: {
+    title: string;
+    content: string;
+    type: string;
+  };
+  showDentistSignature?: boolean;
+  showPatientSignature?: boolean;
 }
 
 export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
@@ -17,8 +24,11 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
   selectedTemplates,
   evolutions,
   payments,
+  customDocument,
+  showDentistSignature,
+  showPatientSignature,
 }) => {
-  if (selectedSections.length === 0 && selectedTemplates.length === 0) return null;
+  if (selectedSections.length === 0 && selectedTemplates.length === 0 && !customDocument) return null;
 
   const patientDob = patient.dob
     ? new Date(patient.dob).toLocaleDateString('pt-BR')
@@ -63,7 +73,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
         </section>
       </div>
 
-      <PrintFooter signatureType="patient" patientName={patient.name} />
+      <PrintFooter showDentistSignature={showDentistSignature} showPatientSignature={showPatientSignature} signatureType="patient" patientName={patient.name} />
     </div>
   );
 
@@ -132,7 +142,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
           </section>
         </div>
 
-        <PrintFooter signatureType="both" patientName={patient.name} />
+        <PrintFooter showDentistSignature={showDentistSignature} showPatientSignature={showPatientSignature} signatureType="both" patientName={patient.name} />
       </div>
     );
   };
@@ -200,8 +210,8 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
               {Object.entries(teethState).filter(([_, t]: any) => t.notes || t.status !== 'healthy').length === 0 ? (
                 <p className="col-span-2 text-center italic text-slate-400">Nenhuma alteração registrada em dentes isolados.</p>
               ) : (
-                Object.entries(teethState).filter(([_, t]: any) => t.notes || t.status !== 'healthy').map(([toothId, t]: any) => (
-                  <div key={toothId} className="border-b border-slate-200 pb-2 print:break-inside-avoid">
+                Object.entries(teethState).filter(([_, t]: any) => t.notes || t.status !== 'healthy').map(([toothId, t]: any, idx) => (
+                  <div key={`${toothId}-${idx}`} className="border-b border-slate-200 pb-2 print:break-inside-avoid">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-bold text-slate-700">Dente {toothId}</span>
                       <span className="text-[9px] px-2 py-0.5 bg-slate-800 text-white rounded font-bold uppercase tracking-wider">{t.status}</span>
@@ -214,7 +224,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
           </section>
         </div>
 
-        <PrintFooter signatureType="dentist" />
+        <PrintFooter showDentistSignature={showDentistSignature} showPatientSignature={showPatientSignature} signatureType="dentist" />
       </div>
     );
   };
@@ -240,8 +250,8 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
                 <td colSpan={4} className="p-4 text-center italic text-slate-400">Nenhum registro de evolução encontrado.</td>
               </tr>
             ) : (
-              evolutions.map((evo) => (
-                <tr key={evo.id} className="border-b border-slate-200 print:break-inside-avoid">
+              evolutions.map((evo, idx) => (
+                <tr key={`${evo.id || 'evo'}-${idx}`} className="border-b border-slate-200 print:break-inside-avoid">
                   <td className="p-2 align-top text-slate-600">
                     {new Date(evo.createdAt).toLocaleDateString('pt-BR')}
                   </td>
@@ -262,7 +272,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
           </tbody>
         </table>
       </div>
-      <PrintFooter signatureType="dentist" />
+      <PrintFooter showDentistSignature={showDentistSignature} showPatientSignature={showPatientSignature} signatureType="dentist" />
     </div>
   );
 
@@ -299,7 +309,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
                 <tr><td colSpan={4} className="p-4 text-center italic text-slate-400">Nenhum procedimento proposto.</td></tr>
               ) : (
                 procs.map((p, index) => (
-                  <tr key={index} className="border-b border-slate-200 print:break-inside-avoid">
+                  <tr key={`${p.id || 'proc'}-${index}`} className="border-b border-slate-200 print:break-inside-avoid">
                     <td className="p-3 font-medium text-slate-800">{p.name}</td>
                     <td className="p-3 text-center text-slate-600">{p.tooth || '—'}</td>
                     <td className="p-3 text-center text-slate-600">{p.quantity || 1}</td>
@@ -321,7 +331,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
           </div>
         </div>
 
-        <PrintFooter signatureType="both" patientName={patient.name} />
+        <PrintFooter showDentistSignature={showDentistSignature} showPatientSignature={showPatientSignature} signatureType="both" patientName={patient.name} />
       </div>
     );
   };
@@ -350,7 +360,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
                 <tr><td colSpan={4} className="p-4 text-center italic text-slate-400">Nenhum lançamento encontrado.</td></tr>
               ) : (
                 payments.map((p, i) => (
-                  <tr key={p.id} className={`border-b border-slate-200 ${i % 2 !== 0 ? 'bg-slate-50 print:bg-transparent' : ''}`}>
+                  <tr key={`${p.id || 'pay'}-${i}`} className={`border-b border-slate-200 ${i % 2 !== 0 ? 'bg-slate-50 print:bg-transparent' : ''}`}>
                     <td className="p-3 text-slate-600">{new Date(p.date).toLocaleDateString('pt-BR')}</td>
                     <td className="p-3 font-medium text-slate-800">{p.description}</td>
                     <td className="p-3">
@@ -398,7 +408,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
           CID: _______
         </p>
       </div>
-      <PrintFooter signatureType="dentist" />
+      <PrintFooter showDentistSignature={showDentistSignature} showPatientSignature={showPatientSignature} signatureType="dentist" />
     </div>
   );
 
@@ -436,12 +446,12 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
           Em caso de dor intensa, sangramento abundante ou dúvidas, entre em contato com a clínica imediatamente.
         </p>
       </div>
-      <PrintFooter signatureType="dentist" />
+      <PrintFooter showDentistSignature={showDentistSignature} showPatientSignature={showPatientSignature} signatureType="dentist" />
     </div>
   );
 
   /* ── 7. Document Templates ─────────────────────────────────────────────── */
-  const renderTemplate = (template: DocumentTemplate) => {
+  const renderTemplate = (template: DocumentTemplate, idx: number) => {
     let content = template.content
       .replace(/\[Nome do Paciente\]/g, patient.name)
       .replace(/\[CPF\]/g, patient.cpf || '_______')
@@ -451,27 +461,45 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     const sigType = (template.type === 'tcle' || template.type === 'image-release') ? 'both' : 'dentist';
 
     return (
-      <div key={template.id} className="flex flex-col h-full print:break-after-page mb-10">
+    <div key={`${template.id || 'tpl'}-${idx}`} className="flex flex-col h-full print:break-after-page mb-10">
         <PrintHeader title={title} patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
         <div className="flex-grow text-sm text-slate-800 leading-relaxed text-justify space-y-4 whitespace-pre-wrap">
           {content}
         </div>
-        <PrintFooter signatureType={sigType} patientName={patient.name} />
+        <PrintFooter showDentistSignature={showDentistSignature} showPatientSignature={showPatientSignature} signatureType={sigType} patientName={patient.name} />
+      </div>
+    );
+  };
+
+  /* ── 8. Custom Document ────────────────────────────────────────────────── */
+  const renderCustomDocument = () => {
+    if (!customDocument) return null;
+    const title = customDocument.title || 'Documento Odontológico';
+    const sigType = customDocument.type === 'tcle' ? 'both' : 'dentist';
+
+    return (
+      <div className="flex flex-col h-full print:break-after-page mb-10">
+        <PrintHeader title={title} patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
+        <div className="flex-grow text-sm text-slate-800 leading-relaxed text-justify space-y-4 whitespace-pre-wrap">
+          {customDocument.content}
+        </div>
+        <PrintFooter showDentistSignature={showDentistSignature} showPatientSignature={showPatientSignature} signatureType={sigType} patientName={patient.name} />
       </div>
     );
   };
 
   return (
     <div className="unified-print-only w-full max-w-4xl mx-auto bg-white p-6 print:p-0">
-      {selectedSections.includes('personal')   && renderPersonal()}
-      {selectedSections.includes('anamnesis')  && renderAnamnesis()}
-      {selectedSections.includes('odontogram') && renderOdontogram()}
-      {selectedSections.includes('evolution')  && renderEvolution()}
-      {selectedSections.includes('treatment')  && renderTreatmentPlan()}
-      {selectedSections.includes('payments')   && renderPayments()}
-      {selectedSections.includes('atestado')   && renderAtestado()}
-      {selectedSections.includes('recomendacoes') && renderRecomendacoes()}
-      {selectedTemplates.map(renderTemplate)}
+      {selectedSections.includes('personal')   && <div key="personal-section">{renderPersonal()}</div>}
+      {selectedSections.includes('anamnesis')  && <div key="anamnesis-section">{renderAnamnesis()}</div>}
+      {selectedSections.includes('odontogram') && <div key="odontogram-section">{renderOdontogram()}</div>}
+      {selectedSections.includes('evolution')  && <div key="evolution-section">{renderEvolution()}</div>}
+      {selectedSections.includes('treatment')  && <div key="treatment-section">{renderTreatmentPlan()}</div>}
+      {selectedSections.includes('payments')   && <div key="payments-section">{renderPayments()}</div>}
+      {selectedSections.includes('atestado')   && <div key="atestado-section">{renderAtestado()}</div>}
+      {selectedSections.includes('recomendacoes') && <div key="recomendacoes-section">{renderRecomendacoes()}</div>}
+      {selectedTemplates.map((template, idx) => renderTemplate(template, idx))}
+      {customDocument && <div key="custom-doc-section">{renderCustomDocument()}</div>}
     </div>
   );
 };

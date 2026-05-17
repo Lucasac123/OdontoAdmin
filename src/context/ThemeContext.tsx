@@ -150,6 +150,46 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem('accentColor', accentColor);
   }, [theme, accentColor]);
 
+  useEffect(() => {
+    // Dynamically update manifest and favicon when customLogo changes
+    if (typeof document !== 'undefined') {
+      const iconUrl = customLogo || '/icon.png';
+      
+      const iconLink = document.querySelector("link[rel='icon']") as HTMLLinkElement;
+      if (iconLink) iconLink.href = iconUrl;
+      
+      const appleLink = document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement;
+      if (appleLink) appleLink.href = iconUrl;
+
+      const manifestUrl = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify({
+        "name": "OdontoAdmin",
+        "short_name": "OdontoAdmin",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#f5f5f1",
+        "theme_color": "#f5f5f1",
+        "icons": [
+          {
+            "src": iconUrl,
+            "sizes": "192x192 512x512",
+            "type": "image/png"
+          }
+        ]
+      }));
+      
+      let manifestLink = document.getElementById('dynamic-manifest') as HTMLLinkElement;
+      if (manifestLink) {
+        manifestLink.href = manifestUrl;
+      } else {
+        manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        manifestLink.id = 'dynamic-manifest';
+        manifestLink.href = manifestUrl;
+        document.head.appendChild(manifestLink);
+      }
+    }
+  }, [customLogo]);
+
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
   };

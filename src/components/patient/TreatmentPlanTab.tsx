@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc, collection, onSnapshot, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, collection, onSnapshot, query, where, addDoc, serverTimestamp, setDoc, deleteDoc } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType } from '../../firebase';
 import { Patient, ProcedureTemplate, TreatmentProposal, TreatmentProcedure } from '../../types';
 import { 
@@ -76,6 +76,21 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
       status: 'proposed',
       createdAt: new Date().toISOString()
     };
+    const dealRef = doc(db, 'crm_deals', newProposal.id);
+    const dealPromise = setDoc(dealRef, {
+      patientId: patient.id,
+      patientName: patient.name,
+      title: newProposal.title,
+      value: newProposal.totalValue,
+      status: 'negotiation',
+      dentistId: auth.currentUser!.uid,
+      updatedAt: new Date().toISOString(),
+      createdAt: newProposal.createdAt
+    }).catch(error => {
+      console.error("Failed to sync CRM deal", error);
+    });
+    addSyncTask(dealPromise);
+
     const updated = [...proposals, newProposal];
     saveProposals(updated);
     setNewProposalTitle('');
@@ -84,8 +99,13 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
   };
 
   const handleDeleteProposal = (id: string) => {
-    const updated = proposals.filter(p => p.id !== id);
-    saveProposals(updated);
+    const updated = proposals.filter(p => !id.includes(p.id)); // Assuming id is single but this is just to match the original visually
+    saveProposals(proposals.filter(p => p.id !== id));
+    
+    // Also delete from CRM
+    const dealRef = doc(db, 'crm_deals', id);
+    addSyncTask(deleteDoc(dealRef).catch(console.error));
+
     if (selectedProposalId === id) setSelectedProposalId(null);
   };
 
@@ -109,10 +129,17 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
           status: 'não_realizado' as const,
           paymentStatus: 'pendente' as const
         }];
+        
+        const newTotal = procedures.reduce((acc, curr) => acc + curr.totalPrice, 0);
+
+        // Sync CRM
+        const dealRef = doc(db, 'crm_deals', p.id);
+        addSyncTask(updateDoc(dealRef, { value: newTotal, updatedAt: new Date().toISOString() }).catch(console.error));
+        
         return {
           ...p,
           procedures,
-          totalValue: procedures.reduce((acc, curr) => acc + curr.totalPrice, 0)
+          totalValue: newTotal
         };
       }
       return p;
@@ -127,10 +154,17 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
     const updatedProposals = proposals.map(p => {
       if (p.id === proposalId) {
         const procedures = p.procedures.filter(proc => proc.id !== procedureId);
+        
+        const newTotal = procedures.reduce((acc, curr) => acc + curr.totalPrice, 0);
+
+        // Sync CRM
+        const dealRef = doc(db, 'crm_deals', p.id);
+        addSyncTask(updateDoc(dealRef, { value: newTotal, updatedAt: new Date().toISOString() }).catch(console.error));
+        
         return {
           ...p,
           procedures,
-          totalValue: procedures.reduce((acc, curr) => acc + curr.totalPrice, 0)
+          totalValue: newTotal
         };
       }
       return p;
@@ -155,11 +189,19 @@ export const TreatmentPlanTab = ({ patient }: { patient: Patient }) => {
     const proposal = proposals.find(p => p.id === proposalId);
     if (!proposal || !auth.currentUser) return;
 
-    // 1. Mark as selected in proposals
-    const updatedProposals = proposals.map(p => ({
-      ...p,
-      status: p.id === proposalId ? 'selected' : 'rejected' as any
-    }));
+    // 1. Mark as selected in proposals and update CRM
+    const updatedProposals = proposals.map(p => {
+      const newStatus = p.id === proposalId ? 'selected' : 'rejected' as any;
+      const crmStatus = p.id === proposalId ? 'approved' : 'rejected';
+
+      const dealRef = doc(db, 'crm_deals', p.id);
+      addSyncTask(updateDoc(dealRef, { status: crmStatus, updatedAt: new Date().toISOString() }).catch(console.error));
+
+      return {
+        ...p,
+        status: newStatus
+      };
+    });
     saveProposals(updatedProposals);
 
     // 2. Add to Evolution and Payments

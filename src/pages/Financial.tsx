@@ -5,7 +5,7 @@ import { Finance } from '../types';
 import { Plus, Trash2, DollarSign, TrendingUp, TrendingDown, PieChart, Edit2, Check, X, BarChart as BarChartIcon, User, Camera, Loader2, FileText, AlertTriangle, Building, Zap, Calendar, CheckCircle2, XCircle } from 'lucide-react';
 import { AddFinanceForm } from '../components/patient/AddFinanceForm';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Patient } from '../types';
+import { Patient, Dentist } from '../types';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { motion } from 'motion/react';
 import { GoogleGenAI, Type } from '@google/genai';
@@ -127,6 +127,7 @@ export const Financial: React.FC = () => {
   const [isEditingValuationDate, setIsEditingValuationDate] = useState(false);
   const [tempAssetsValue, setTempAssetsValue] = useState('');
   const [tempValuationDate, setTempValuationDate] = useState('');
+  const [dentists, setDentists] = useState<Dentist[]>([]);
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -188,11 +189,20 @@ export const Financial: React.FC = () => {
       }
     });
 
+    // Fetch dentists
+    const dentistsQuery = query(collection(db, 'dentists'), where('dentistId', '==', auth.currentUser.uid));
+    const unsubscribeDentists = onSnapshot(dentistsQuery, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Dentist));
+      // Sort alphabetically
+      setDentists(docs.sort((a, b) => a.name.localeCompare(b.name)));
+    });
+
     return () => {
       unsubscribe();
       unsubscribePatients();
       unsubscribeInv();
       unsubscribeSettings();
+      unsubscribeDentists();
     };
   }, []);
 
@@ -400,6 +410,7 @@ export const Financial: React.FC = () => {
   });
 
   const totalPercentage = splits.reduce((acc, curr) => acc + curr.percentage, 0);
+  const totalDentistPercentage = dentists.reduce((acc, curr) => acc + (curr.commissionPercentage || 0), 0);
 
   // Process data for the chart
   const chartData = React.useMemo(() => {
@@ -452,6 +463,23 @@ export const Financial: React.FC = () => {
     const currentTotal = splits.reduce((acc, curr) => acc + curr.percentage, 0);
     const diff = 100 - currentTotal;
     setSplits(splits.map(s => s.id === id ? { ...s, percentage: Math.max(0, s.percentage + diff) } : s));
+  };
+  
+  const handleAdjustDentistPercentage = async (id: string, newPercentage: number) => {
+    setDentists(prev => prev.map(d => d.id === id ? { ...d, commissionPercentage: newPercentage } : d));
+    const dentistRef = doc(db, 'dentists', id);
+    // Don't await in UI loop to avoid lag, let it sync in bg
+    addSyncTask(updateDoc(dentistRef, { commissionPercentage: newPercentage }).catch(console.error));
+  };
+
+  const adjustDentistTo100 = (id: string) => {
+    const currentTotal = dentists.reduce((acc, curr) => acc + (curr.commissionPercentage || 0), 0);
+    const targetDentist = dentists.find(d => d.id === id);
+    if (targetDentist) {
+      const diff = 100 - currentTotal;
+      const newPercentage = Math.max(0, (targetDentist.commissionPercentage || 0) + diff);
+      handleAdjustDentistPercentage(id, newPercentage);
+    }
   };
 
   const saveEditSplit = () => {
@@ -970,11 +998,12 @@ export const Financial: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-surface rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 p-10 h-fit w-full overflow-hidden">
-          <div className="flex items-center justify-between mb-10">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                <PieChart className="w-6 h-6" />
+        <div className="flex flex-col gap-8">
+          <div className="bg-surface rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 p-10 h-fit w-full overflow-hidden">
+            <div className="flex items-center justify-between mb-10">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                  <PieChart className="w-6 h-6" />
               </div>
               <div>
                 <h3 className="text-xl font-black text-text-primary tracking-tight">Divisão de ganhos</h3>
@@ -1097,11 +1126,7 @@ export const Financial: React.FC = () => {
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: `${split.percentage}%` }}
-                        className="absolute inset-y-0 left-0 rounded-full"
-                        style={{ 
-                          background: `linear-gradient(to right, var(--accent), var(--accent-light))`,
-                          boxShadow: `0 0 10px rgba(var(--accent-rgb), 0.4)`
-                        }}
+                        className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[var(--accent)] to-[var(--accent-light)] dark:to-[var(--accent-dark)] shadow-[0_0_10px_rgba(var(--accent-rgb),0.4)]"
                       />
                       <input 
                         type="range" 
@@ -1131,6 +1156,79 @@ export const Financial: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="bg-surface rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 p-10 h-fit w-full overflow-hidden">
+          <div className="flex items-center justify-between mb-10">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                <User className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-text-primary tracking-tight">Repasse a Dentistas</h3>
+                <p className="text-xs text-text-secondary font-bold uppercase tracking-widest">Divisão entre profissionais</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="space-y-8 w-full">
+            {dentists.length === 0 ? (
+              <p className="text-sm text-text-secondary text-center py-4">Nenhum dentista cadastrado.</p>
+            ) : (
+              dentists.map(dentist => (
+                <div key={dentist.id} className="group space-y-3">
+                  <div className="flex justify-between items-end">
+                    <div className="space-y-1">
+                      <span className="text-xs font-black text-text-secondary uppercase tracking-widest flex items-center gap-2">
+                        {dentist.name}
+                      </span>
+                      <p className="text-lg font-black text-text-primary tracking-tight">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((totalIncome * (dentist.commissionPercentage || 0)) / 100)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-xl">{dentist.commissionPercentage || 0}%</span>
+                      <button 
+                        onClick={() => adjustDentistTo100(dentist.id)}
+                        className="p-1.5 text-text-secondary hover:text-indigo-600 hover:bg-indigo-500/10 rounded-lg transition-all active:scale-90 border border-zinc-200 dark:border-zinc-800"
+                        title="Ajustar para completar 100%"
+                      >
+                        <Zap className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="relative h-3 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden shadow-inner">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${dentist.commissionPercentage || 0}%` }}
+                      className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[var(--accent)] to-[var(--accent-light)] dark:to-[var(--accent-dark)] shadow-[0_0_10px_rgba(var(--accent-rgb),0.4)]"
+                    />
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="100" 
+                      value={dentist.commissionPercentage || 0} 
+                      onChange={(e) => handleAdjustDentistPercentage(dentist.id, parseInt(e.target.value))} 
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                    />
+                  </div>
+                </div>
+              ))
+            )}
+
+            <div className="pt-8 border-t border-zinc-100 dark:border-zinc-800">
+              <div className={`flex items-center justify-center gap-3 px-6 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] transition-all ${totalDentistPercentage === 100 ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-red-500/10 text-red-600 border border-red-500/20 animate-pulse'}`}>
+                {totalDentistPercentage === 100 ? (
+                  <Check className="w-5 h-5" />
+                ) : (
+                  <AlertTriangle className="w-5 h-5" />
+                )}
+                Total: {totalDentistPercentage}% 
+                {totalDentistPercentage !== 100 && <span className="ml-1 opacity-70">(Ajuste para 100%)</span>}
+              </div>
+            </div>
+          </div>
+        </div>
         </div>
       </div>
 

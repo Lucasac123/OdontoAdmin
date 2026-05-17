@@ -27,6 +27,7 @@ export const PatientDetail: React.FC = () => {
   const [activeTab, setActiveTab] = useState('personal');
   const [direction, setDirection] = useState(0);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [customDocumentToPrint, setCustomDocumentToPrint] = useState<{title: string, content: string, type: string} | undefined>(undefined);
 
   useEffect(() => {
     if (!id) return;
@@ -180,7 +181,10 @@ export const PatientDetail: React.FC = () => {
                 opacity: { duration: 0.15 }
               }}
             >
-              <ActiveComponent patient={patient} />
+              <ActiveComponent patient={patient} {...({ onOpenPrintModal: (doc: any) => {
+                setCustomDocumentToPrint(doc);
+                setIsPrintModalOpen(true);
+              } } as any)} />
             </motion.div>
           </AnimatePresence>
         </div>
@@ -191,6 +195,7 @@ export const PatientDetail: React.FC = () => {
         onClose={() => setIsPrintModalOpen(false)}
         patient={patient}
         preSelectedTab={activeTab}
+        customDocument={customDocumentToPrint}
       />
     </motion.div>
   );

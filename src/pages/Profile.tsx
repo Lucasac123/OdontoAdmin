@@ -6,8 +6,9 @@ import { db, OperationType, handleFirestoreError } from '../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { motion } from 'motion/react';
-import { User, Mail, Phone, Calendar, Award, Save, Loader2, Camera, Lock, HardDrive, Download, Upload, Palette, Image as ImageIcon, RotateCcw } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { ImageCropperModal } from '../components/ImageCropperModal';
+import { User, Mail, Phone, Calendar, Award, Save, Loader2, Camera, Lock, HardDrive, Download, Upload, Palette, Image as ImageIcon, RotateCcw, CheckCircle } from 'lucide-react';
 import { storage } from '../firebase';
 import { getDriveAccessToken } from '../services/googleDriveService';
 import { backupToDrive, restoreFromDrive } from '../services/backupService';
@@ -24,6 +25,8 @@ export const Profile: React.FC = () => {
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [colorInput, setColorInput] = useState(accentColor);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const [cropperImageSrc, setCropperImageSrc] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -50,48 +53,25 @@ export const Profile: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      setCropperImageSrc(event.target?.result as string);
+      setIsCropperOpen(true);
+    };
+    e.target.value = ''; // Reset input
+  };
+
+  const handleCropComplete = async (croppedBase64: string) => {
+    if (!user) return;
+    
     try {
       setLogoUploading(true);
-      
-      const compressedBase64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-          const img = new Image();
-          img.src = event.target?.result as string;
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 512;
-            const MAX_HEIGHT = 512;
-            let width = img.width;
-            let height = img.height;
 
-            if (width > height) {
-              if (width > MAX_WIDTH) {
-                height *= MAX_WIDTH / width;
-                width = MAX_WIDTH;
-              }
-            } else {
-              if (height > MAX_HEIGHT) {
-                width *= MAX_HEIGHT / height;
-                height = MAX_HEIGHT;
-              }
-            }
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx?.drawImage(img, 0, 0, width, height);
-            resolve(canvas.toDataURL('image/png', 0.9));
-          };
-          img.onerror = (error) => reject(error);
-        };
-        reader.onerror = (error) => reject(error);
-      });
-
-      let logoURL = compressedBase64;
+      let logoURL = croppedBase64;
       try {
         const storageRef = ref(storage, `app_logos/${user.uid}.png`);
-        const response = await fetch(compressedBase64);
+        const response = await fetch(croppedBase64);
         const blob = await response.blob();
         await uploadBytes(storageRef, blob);
         logoURL = await getDownloadURL(storageRef);
@@ -430,15 +410,20 @@ export const Profile: React.FC = () => {
         </div>
 
         {/* Right Column: Forms */}
-        <div className="flex-1 space-y-6 sm:space-y-8">
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 auto-rows-min">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-surface rounded-[24px] sm:rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+            className="group bg-surface rounded-[24px] sm:rounded-[32px] shadow-sm hover:shadow-md border border-zinc-200 dark:border-zinc-800 overflow-hidden md:col-span-2 transition-all duration-300"
           >
-            <div className="p-6 sm:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
-              <h2 className="text-lg sm:text-xl font-black text-text-primary tracking-tight">Informações Pessoais</h2>
-              <User className="w-5 h-5 text-indigo-600" />
+            <div className="p-6 sm:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-900/20">
+              <div>
+                <h2 className="text-lg sm:text-xl font-black text-text-primary tracking-tight">Informações Pessoais</h2>
+                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Dados fundamentais do seu consultório</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 transition-transform group-hover:scale-110">
+                <User className="w-5 h-5" />
+              </div>
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
@@ -591,61 +576,67 @@ export const Profile: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-surface rounded-[24px] sm:rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+            transition={{ delay: 0.1 }}
+            className="group bg-surface rounded-[24px] sm:rounded-[32px] shadow-sm hover:shadow-md border border-zinc-200 dark:border-zinc-800 overflow-hidden md:col-span-1 transition-all duration-300 flex flex-col"
           >
-            <div className="p-6 sm:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
-              <h2 className="text-lg sm:text-xl font-black text-text-primary tracking-tight">Segurança</h2>
-              <Lock className="w-5 h-5 text-indigo-600" />
+            <div className="p-6 sm:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-900/20">
+              <div>
+                <h2 className="text-lg font-black text-text-primary tracking-tight">Segurança</h2>
+                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Credenciais de Acesso</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 transition-transform group-hover:scale-110">
+                <Lock className="w-5 h-5" />
+              </div>
             </div>
 
-            <form onSubmit={handlePasswordChange} className="p-6 sm:p-8 space-y-6">
+            <form onSubmit={handlePasswordChange} className="p-6 sm:p-8 space-y-6 flex-1 flex flex-col">
               {isGoogleUser ? (
-                <div className="p-6 rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
-                  <p className="text-sm font-medium text-text-secondary">Sua conta está vinculada ao Google. A senha não pode ser alterada por aqui.</p>
+                <div className="p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800 text-center flex-1 flex flex-col justify-center">
+                  <Mail className="w-8 h-8 text-zinc-300 mx-auto mb-4" />
+                  <p className="text-sm font-medium text-text-secondary">Sua conta está vinculada ao Google Login.</p>
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+                  <div className="space-y-5 flex-1">
                     <div className="space-y-2">
-                      <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Senha Atual</label>
+                      <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Senha Atual</label>
                       <input
                         type="password"
                         value={passwordData.currentPassword}
                         onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                        className="w-full px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
+                        className="w-full px-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nova Senha</label>
+                      <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nova Senha</label>
                       <input
                         type="password"
                         value={passwordData.newPassword}
                         onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                        className="w-full px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
+                        className="w-full px-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Confirmar Nova Senha</label>
+                      <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Confirmar Senha</label>
                       <input
                         type="password"
                         value={passwordData.confirmNewPassword}
                         onChange={(e) => setPasswordData(prev => ({ ...prev, confirmNewPassword: e.target.value }))}
-                        className="w-full px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
+                        className="w-full px-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
                         required
                       />
                     </div>
                   </div>
-                  <div className="flex justify-end pt-4">
+                  <div className="pt-6">
                     <button
                       type="submit"
                       disabled={passwordSaving}
-                      className="w-full sm:w-auto px-8 py-4 bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 rounded-xl sm:rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95"
+                      className="w-full px-4 py-3.5 bg-zinc-900 dark:bg-zinc-100 hover:opacity-90 text-white dark:text-zinc-900 rounded-xl sm:rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95 shadow-sm"
                     >
                       {passwordSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Lock className="w-5 h-5" />}
-                      {passwordSaving ? 'Atualizando...' : 'Atualizar Senha'}
+                      Salvar Nova Senha
                     </button>
                   </div>
                 </>
@@ -656,12 +647,17 @@ export const Profile: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="bg-surface rounded-[24px] sm:rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+            transition={{ delay: 0.2 }}
+            className="group bg-surface rounded-[24px] sm:rounded-[32px] shadow-sm hover:shadow-md border border-zinc-200 dark:border-zinc-800 overflow-hidden md:col-span-2 transition-all duration-300"
           >
-            <div className="p-6 sm:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
-              <h2 className="text-lg sm:text-xl font-black text-text-primary tracking-tight">Identidade Visual</h2>
-              <Palette className="w-5 h-5" style={{ color: accentColor }} />
+            <div className="p-6 sm:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-900/20">
+              <div>
+                <h2 className="text-lg sm:text-xl font-black text-text-primary tracking-tight">Identidade Visual</h2>
+                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Sua marca e cores personalizadas</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center transition-transform group-hover:scale-110" style={{ color: accentColor }}>
+                <Palette className="w-5 h-5" />
+              </div>
             </div>
 
             <div className="p-6 sm:p-8 space-y-8">
@@ -773,77 +769,103 @@ export const Profile: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-surface rounded-[24px] sm:rounded-[32px] shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+            transition={{ delay: 0.15 }}
+            className="group bg-surface rounded-[24px] sm:rounded-[32px] shadow-sm hover:shadow-md border border-zinc-200 dark:border-zinc-800 overflow-hidden md:col-span-1 transition-all duration-300 flex flex-col"
           >
-            <div className="p-6 sm:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
-              <h2 className="text-lg sm:text-xl font-black text-text-primary tracking-tight">Armazenamento de Dados</h2>
-              <HardDrive className="w-5 h-5 text-indigo-600" />
+            <div className="p-6 sm:p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-900/20">
+              <div>
+                <h2 className="text-lg font-black text-text-primary tracking-tight">Armazenamento</h2>
+                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Conectividade e Backups</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 transition-transform group-hover:scale-110">
+                <HardDrive className="w-5 h-5" />
+              </div>
             </div>
 
-            <div className="p-6 sm:p-8 space-y-6">
+            <div className="p-6 sm:p-8 space-y-6 flex-1">
               <div className="space-y-4">
-                <label className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Local de Armazenamento</label>
-                <div className="relative">
-                  <select
-                    value={storageLocation}
-                    onChange={handleStorageChange}
-                    disabled={isAuthenticatingDrive}
-                    className="w-full px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium appearance-none cursor-pointer disabled:opacity-50"
-                  >
-                    <option value="firebase">Firebase (Nuvem Padrão)</option>
-                    <option value="drive">Google Drive (Pasta Pessoal)</option>
-                  </select>
-                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                    {isAuthenticatingDrive ? (
-                      <Loader2 className="w-4 h-4 text-indigo-600 animate-spin" />
-                    ) : (
-                      <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                    )}
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Ambiente de Dados</label>
+                  <div className="relative">
+                    <select
+                      value={storageLocation}
+                      onChange={handleStorageChange}
+                      disabled={isAuthenticatingDrive}
+                      className="w-full px-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-800/30 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium appearance-none cursor-pointer disabled:opacity-50"
+                    >
+                      <option value="firebase">Firebase (Cloud Padrão)</option>
+                      <option value="drive">Google Drive Personal</option>
+                    </select>
+                    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                      {isAuthenticatingDrive ? (
+                        <Loader2 className="w-4 h-4 text-indigo-600 animate-spin" />
+                      ) : (
+                        <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                      )}
+                    </div>
                   </div>
                 </div>
-                {storageLocation === 'drive' && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    className="p-4 rounded-xl sm:rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 space-y-4"
-                  >
-                    <p className="text-xs sm:text-sm font-medium text-indigo-700 dark:text-indigo-300 leading-relaxed">
-                      Autenticado com sucesso! Seus dados do Assistente IA (histórico de chat) estão sendo salvos em uma pasta "DentalApp_Data" no seu Google Drive.
-                    </p>
-                    
-                    <div className="pt-4 border-t border-indigo-200 dark:border-indigo-800/50">
-                      <h3 className="text-sm font-bold text-indigo-900 dark:text-indigo-100 mb-3">Backup e Restauração</h3>
-                      <p className="text-xs text-indigo-700 dark:text-indigo-300 mb-4">
-                        Você pode fazer o backup de todos os dados do seu consultório para o Google Drive ou restaurá-los a partir de um backup existente.
+
+                <AnimatePresence>
+                  {storageLocation === 'drive' && (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="p-4 rounded-xl sm:rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 space-y-4"
+                    >
+                      <p className="text-[11px] font-medium text-indigo-700 dark:text-indigo-300 leading-relaxed">
+                        Conectado ao DentalApp_Data.
                       </p>
                       
-                      <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="flex flex-col gap-2 pt-2">
                         <button
                           onClick={handleBackup}
                           disabled={isBackingUp || isRestoring}
-                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all disabled:opacity-50 active:scale-95"
                         >
-                          {isBackingUp ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                          Fazer Backup
+                          {isBackingUp ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                          Backup
                         </button>
                         <button
                           onClick={handleRestore}
                           disabled={isBackingUp || isRestoring}
-                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all disabled:opacity-50 active:scale-95"
                         >
-                          {isRestoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                          Restaurar Dados
+                          {isRestoring ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                          Restaurar
                         </button>
                       </div>
-                    </div>
-                  </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {storageLocation === 'firebase' && (
+                  <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20">
+                    <p className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 leading-relaxed flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 shrink-0" />
+                      Seus dados estão protegidos e sincronizados em tempo real com a nuvem DentalApp.
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
           </motion.div>
         </div>
       </div>
+      
+      {cropperImageSrc && (
+        <ImageCropperModal
+          isOpen={isCropperOpen}
+          onClose={() => {
+            setIsCropperOpen(false);
+            setCropperImageSrc(null);
+          }}
+          imageSrc={cropperImageSrc}
+          onCropComplete={handleCropComplete}
+          accentColor={accentColor}
+        />
+      )}
     </div>
   );
 };

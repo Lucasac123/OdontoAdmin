@@ -1120,7 +1120,7 @@ export const AIAssistant: React.FC = () => {
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                     {suggestions.map((suggestion, index) => (
-                      <div key={index} className="relative group">
+                      <div key={`suggest-${index}`} className="relative group">
                         {editingIndex === index ? (
                           <input
                             value={editValue}
@@ -1168,7 +1168,7 @@ export const AIAssistant: React.FC = () => {
                 <div className="max-w-3xl mx-auto w-full space-y-8">
                   {chatMessages.map((msg, idx) => (
                     <motion.div 
-                      key={idx} 
+                      key={`chat-${idx}`} 
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
@@ -1210,6 +1210,7 @@ export const AIAssistant: React.FC = () => {
                   ))}
                   {isChatLoading && (
                     <motion.div 
+                      key="chat-loading"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       className="flex gap-4"

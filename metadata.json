@@ -1,7 +1,8 @@
-[
-  {
-    "name": "OdontoAdmin",
-    "description": "Gestão inteligente para o seu consultório odontológico.",
-    "requestFramePermissions": []
-  }
-]
+{
+  "name": "OdontoAdmin",
+  "description": "Gestão inteligente para o seu consultório odontológico.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

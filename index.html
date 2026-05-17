@@ -8,6 +8,40 @@
     <title>OdontoAdmin</title>
     <link rel="icon" type="image/png" href="/icon.png" />
     <link rel="apple-touch-icon" href="/icon.png" />
+    <script>
+      (function() {
+        var customLogo = localStorage.getItem('customLogo');
+        var iconUrl = customLogo || '/icon.png';
+        
+        var iconLink = document.querySelector("link[rel='icon']");
+        if (iconLink) iconLink.href = iconUrl;
+        
+        var appleLink = document.querySelector("link[rel='apple-touch-icon']");
+        if (appleLink) appleLink.href = iconUrl;
+
+        var manifestUrl = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify({
+          "name": "OdontoAdmin",
+          "short_name": "OdontoAdmin",
+          "start_url": "/",
+          "display": "standalone",
+          "background_color": "#f5f5f1",
+          "theme_color": "#f5f5f1",
+          "icons": [
+            {
+              "src": iconUrl,
+              "sizes": "192x192 512x512",
+              "type": "image/png"
+            }
+          ]
+        }));
+        
+        var manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        manifestLink.id = 'dynamic-manifest';
+        manifestLink.href = manifestUrl;
+        document.head.appendChild(manifestLink);
+      })();
+    </script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
   </head>
   <body>

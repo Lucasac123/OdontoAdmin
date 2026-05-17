@@ -1,0 +1,6 @@
+src/pages/Inventory.tsx:534:                          {DENTAL_BRANDS.map(b => <option key={b} value={b} />)}
+src/pages/Inventory.tsx:547:                          {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.id}</option>)}
+src/pages/Inventory.tsx:554:                          {kits.map(k => <option key={k.id} value={k.id}>{k.icon} {k.name}</option>)}
+src/pages/Pricing.tsx:675:                            {inventory.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+src/pages/Agenda.tsx:376:                    {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+src/pages/Agenda.tsx:383:                    {dentists.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}

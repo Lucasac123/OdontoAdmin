@@ -14,7 +14,13 @@ import { PrintHeader } from '../print/PrintHeader';
 import { PrintFooter } from '../print/PrintFooter';
 import { TWO_COPY_MEDICATIONS } from '../../data/clinicalData';
 
-export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
+export const PrescriptionTab = ({ 
+  patient,
+  onOpenPrintModal 
+}: { 
+  patient: Patient;
+  onOpenPrintModal?: (customDocument?: { title: string; content: string; type: string }) => void;
+}) => {
   const [documentType, setDocumentType] = useState<'prescription' | 'certificate' | 'attendance' | 'referral' | 'postop' | 'laudo' | 'exame'>('prescription');
   const [prescriptionText, setPrescriptionText] = useState(`Para: ${patient.name}\nData: ${new Date().toLocaleDateString('pt-BR')}\n\nUso Interno:\n1. Amoxicilina 500mg\nTomar 1 cápsula de 8 em 8 horas por 7 dias.\n\nUso Externo:\n1. Periogard\nBochechar 15ml por 1 minuto a cada 12 horas.`);
   const [certificateText, setCertificateText] = useState(`ATESTADO ODONTOLÓGICO\n\nAtesto para os devidos fins que o(a) paciente ${patient.name}, portador(a) do CPF _________________, esteve sob meus cuidados profissionais no dia ${new Date().toLocaleDateString('pt-BR')}, das ____ às ____ horas, necessitando de ____ dias de repouso por motivo de tratamento odontológico.\n\nCID-10: K04 (Exemplo)`);
@@ -64,7 +70,32 @@ export const PrescriptionTab = ({ patient }: { patient: Patient }) => {
   };
 
   const handlePrint = () => {
-    window.print();
+    if (onOpenPrintModal) {
+      const titleMap: Record<string, string> = {
+        prescription: 'Receituário Médico-Odontológico',
+        certificate:  'Atestado Odontológico',
+        attendance:   'Declaração de Comparecimento',
+        referral:     'Encaminhamento Médico',
+        postop:       'Recomendações Pós-Operatórias',
+        laudo:        'Laudo Odontológico',
+        exame:        'Solicitação de Exames',
+      };
+      const activeText =
+        documentType === 'prescription' ? prescriptionText :
+        documentType === 'certificate'  ? certificateText  :
+        documentType === 'attendance'   ? attendanceText   :
+        documentType === 'referral'     ? referralText     :
+        documentType === 'postop'       ? postopText       :
+        documentType === 'laudo'        ? laudoText        : exameText;
+
+      onOpenPrintModal({
+        title: titleMap[documentType] ?? 'Documento Odontológico',
+        content: activeText,
+        type: documentType
+      });
+    } else {
+      window.print();
+    }
   };
 
   const calculatePosology = () => {
