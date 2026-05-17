@@ -298,9 +298,8 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
                     </div>
                   </div>
                 </div>
-                  </div>
-                </div>
               </div>
+            </div>
 
               {/* Preview Area */}
               <div className="flex-1 bg-zinc-200 dark:bg-zinc-800 overflow-y-auto p-4 sm:p-8 flex justify-center">
