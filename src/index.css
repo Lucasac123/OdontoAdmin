@@ -357,5 +357,46 @@ body {
   body:not(.is-unified-printing) .unified-print-only {
     display: none !important;
   }
+
+  body.is-unified-printing > :not(.unified-print-only) {
+    display: none !important;
+  }
+
+  body.is-unified-printing #root > :not(.unified-print-only) {
+    display: none !important;
+  }
+
+  body.is-unified-printing .unified-print-only {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    background: white !important;
+  }
+
+  /* ── Override generic print resets inside our premium print-page-sheets ── */
+  .print-page-sheet .flex {
+    display: flex !important;
+  }
+  .print-page-sheet .flex-col {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .print-page-sheet .flex-row {
+    display: flex !important;
+    flex-direction: row !important;
+  }
+  .print-page-sheet [class*="flex-1"] {
+    display: flex !important;
+    flex: 1 1 0% !important;
+  }
+  .print-page-sheet [class*="h-full"] {
+    height: 100% !important;
+  }
+  .print-page-sheet .justify-between {
+    justify-content: space-between !important;
+  }
+  .print-page-sheet .items-end {
+    align-items: flex-end !important;
+  }
 }
 
