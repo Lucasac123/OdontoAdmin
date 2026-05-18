@@ -412,6 +412,9 @@ export const Financial: React.FC = () => {
   const totalPercentage = splits.reduce((acc, curr) => acc + curr.percentage, 0);
   const totalDentistPercentage = dentists.reduce((acc, curr) => acc + (curr.commissionPercentage || 0), 0);
 
+  const dentistSplit = splits.find(s => s.name.toLowerCase().includes('dentista') || s.name.toLowerCase().includes('dentistas') || s.id === '1');
+  const amountForDentists = dentistSplit ? (totalIncome * dentistSplit.percentage) / 100 : totalIncome;
+
   // Process data for the chart
   const chartData = React.useMemo(() => {
     const months: { [key: string]: { name: string; income: number; expense: number } } = {};
@@ -1183,7 +1186,7 @@ export const Financial: React.FC = () => {
                         {dentist.name}
                       </span>
                       <p className="text-lg font-black text-text-primary tracking-tight">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((totalIncome * (dentist.commissionPercentage || 0)) / 100)}
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((amountForDentists * (dentist.commissionPercentage || 0)) / 100)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
