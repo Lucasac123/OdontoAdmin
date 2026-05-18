@@ -210,6 +210,8 @@ body {
     width: 297mm !important;
     height: 210mm !important;
     padding: 8mm !important;
+    display: flex !important;
+    flex-direction: row !important;
   }
 }
 
@@ -247,6 +249,8 @@ body {
     width: 100% !important;
     height: 190mm !important; /* A4 landscape height 210mm minus 20mm margin */
     max-height: 190mm !important;
+    display: flex !important;
+    flex-direction: row !important;
   }
 
   html, body {

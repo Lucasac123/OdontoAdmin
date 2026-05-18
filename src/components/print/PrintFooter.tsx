@@ -54,6 +54,7 @@ export const PrintFooter: React.FC<PrintFooterProps> = ({
   const pCpf = patient?.cpf;
   const dName = dentist?.name || dentistName;
   const dCro = dentist?.cro || cro;
+  const isDefaultCro = !dCro || dCro.toUpperCase() === 'CRO XXXXX' || dCro.toUpperCase() === 'CRO-XXXXX';
 
   return (
     <div className="print-only mt-12 pt-6 border-t-[1.5px] border-slate-800 avoid-break w-full shrink-0">
@@ -79,7 +80,6 @@ export const PrintFooter: React.FC<PrintFooterProps> = ({
             <div className="border-t border-slate-400 w-full mb-3"></div>
             <p className="font-bold text-xs text-slate-800 uppercase tracking-wide">{dName}</p>
             <p className="text-[9px] uppercase tracking-widest text-slate-500 mt-0.5">{dentistLabelOverride || dentist?.specialty || 'Cirurgião-Dentista'}</p>
-            <p className="text-[9px] text-slate-400 mt-1 font-mono">{dCro}</p>
           </div>
         )}
       </div>
