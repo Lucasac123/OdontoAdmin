@@ -302,31 +302,29 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
             </div>
 
               {/* Preview Area */}
-              <div className="flex-1 bg-zinc-200 dark:bg-zinc-800 overflow-y-auto p-4 sm:p-8 flex justify-center">
-                <div className="bg-white w-full max-w-[210mm] min-h-[297mm] shadow-2xl print-preview-container text-black">
-                  {/* We render PatientPrintView inside the preview container so the user can see it */}
-                  {/* To ensure light mode colors, we force text-black and light mode backgrounds inside PatientPrintView */}
-                  {(selectedSections.length > 0 || selectedTemplates.length > 0 || includeCustomDocument) ? (
-                    <div className="p-10 pointer-events-none">
-                      <PatientPrintView 
-                        patient={patient}
-                        selectedSections={selectedSections}
-                        selectedTemplates={templates.filter(t => selectedTemplates.includes(t.id))}
-                        evolutions={evolutions}
-                        payments={payments}
-                        customDocument={includeCustomDocument ? customDocument : undefined}
-                        showDentistSignature={showDentistSignature}
-                        showPatientSignature={showPatientSignature}
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-zinc-400 p-20 text-center">
-                      <FileText className="w-16 h-16 mb-4 opacity-20" />
-                      <p className="text-lg font-medium">Nenhum item selecionado</p>
-                      <p className="text-sm">Selecione ao menos um elemento na aba lateral para visualizar a impressão.</p>
-                    </div>
-                  )}
-                </div>
+              <div className="flex-1 bg-zinc-200 dark:bg-zinc-800 overflow-y-auto p-4 sm:p-8 flex justify-center print-preview-container">
+                {/* We render PatientPrintView inside the preview container so the user can see it */}
+                {/* To ensure light mode colors, we force text-black and light mode backgrounds inside PatientPrintView */}
+                {(selectedSections.length > 0 || selectedTemplates.length > 0 || includeCustomDocument) ? (
+                  <div className="w-full flex flex-col items-center pointer-events-none">
+                    <PatientPrintView 
+                      patient={patient}
+                      selectedSections={selectedSections}
+                      selectedTemplates={templates.filter(t => selectedTemplates.includes(t.id))}
+                      evolutions={evolutions}
+                      payments={payments}
+                      customDocument={includeCustomDocument ? customDocument : undefined}
+                      showDentistSignature={showDentistSignature}
+                      showPatientSignature={showPatientSignature}
+                    />
+                  </div>
+                ) : (
+                  <div className="bg-white w-[210mm] h-[297mm] flex flex-col items-center justify-center text-zinc-400 p-20 text-center shadow-xl border border-zinc-200">
+                    <FileText className="w-16 h-16 mb-4 opacity-20" />
+                    <p className="text-lg font-medium">Nenhum item selecionado</p>
+                    <p className="text-sm">Selecione ao menos um elemento na aba lateral para visualizar a impressão.</p>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>

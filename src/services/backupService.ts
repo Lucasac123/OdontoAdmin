@@ -21,47 +21,40 @@ const COLLECTIONS = [
 ];
 
 export const backupToDrive = async (userId: string): Promise<boolean> => {
-  try {
-    const backupData: Record<string, any[]> = {};
+  const backupData: Record<string, any[]> = {};
 
-    for (const collName of COLLECTIONS) {
+  for (const collName of COLLECTIONS) {
+    try {
       const querySnapshot = await getDocs(collection(db, collName));
       backupData[collName] = querySnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
         .filter((data: any) => data.dentistId === userId || data.userId === userId || collName === 'procedure_templates' || collName === 'documentTemplates');
+    } catch (collError) {
+      console.warn(`Could not backup collection ${collName} due to permission restrictions or empty table:`, collError);
+      // Skip unauthorized tables and continue backing up the rest of the available tables
     }
-
-    const backupString = JSON.stringify(backupData);
-    
-    await googleDriveService.saveData('backups', `backup_${userId}.json`, backupData);
-    return true;
-  } catch (error) {
-    console.error('Error backing up to Drive:', error);
-    return false;
   }
+
+  await googleDriveService.saveData('backups', `backup_${userId}.json`, backupData);
+  return true;
 };
 
 export const restoreFromDrive = async (userId: string): Promise<boolean> => {
-  try {
-    const backupData = await googleDriveService.getData('backups', `backup_${userId}.json`);
-    if (!backupData) return false;
+  const backupData = await googleDriveService.getData('backups', `backup_${userId}.json`);
+  if (!backupData) return false;
 
-    const batch = writeBatch(db);
+  const batch = writeBatch(db);
 
-    for (const collName of COLLECTIONS) {
-      if (backupData[collName] && Array.isArray(backupData[collName])) {
-        for (const item of backupData[collName]) {
-          const { id, ...data } = item;
-          const docRef = doc(db, collName, id);
-          batch.set(docRef, data, { merge: true });
-        }
+  for (const collName of COLLECTIONS) {
+    if (backupData[collName] && Array.isArray(backupData[collName])) {
+      for (const item of backupData[collName]) {
+        const { id, ...data } = item;
+        const docRef = doc(db, collName, id);
+        batch.set(docRef, data, { merge: true });
       }
     }
-
-    await batch.commit();
-    return true;
-  } catch (error) {
-    console.error('Error restoring from Drive:', error);
-    return false;
   }
+
+  await batch.commit();
+  return true;
 };

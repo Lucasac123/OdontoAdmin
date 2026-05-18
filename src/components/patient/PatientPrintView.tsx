@@ -36,7 +36,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
 
   /* ── 1. Dados Pessoais ──────────────────────────────────────────────────── */
   const renderPersonal = () => (
-    <div className="flex flex-col h-full print:break-after-page mb-10">
+    <div className="print-page-sheet">
       <PrintHeader
         title="Ficha de Identificação"
         patientName={patient.name}
@@ -100,7 +100,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     ];
 
     return (
-      <div className="flex flex-col h-full print:break-after-page mb-10">
+      <div className="print-page-sheet">
         <PrintHeader
           title="Ficha de Anamnese"
           subtitle="Histórico de Saúde do Paciente"
@@ -109,36 +109,36 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
           patientDob={patientDob}
         />
 
-        <div className="flex-grow space-y-8">
+        <div className="flex-grow space-y-4">
           <section>
-            <h3 className="text-[11px] font-black tracking-widest text-slate-800 uppercase border-b-[1.5px] border-slate-800 pb-1.5 mb-4 flex items-center gap-2">
+            <h3 className="text-[11px] font-black tracking-widest text-slate-800 uppercase border-b-[1.5px] border-slate-800 pb-1.5 mb-2 flex items-center gap-2">
               <span className="w-4 h-4 bg-slate-800 text-white rounded-full flex items-center justify-center text-[9px] print:bg-slate-800 print:text-white">1</span>
               Queixas e Histórico Clínico
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-xs px-2">
-              <div className="border-b border-slate-200 pb-2"><span className="text-[9px] uppercase tracking-widest text-slate-500 block mb-0.5">Queixa Principal</span> {fd.mainComplaint || 'Não informado'}</div>
-              <div className="border-b border-slate-200 pb-2"><span className="text-[9px] uppercase tracking-widest text-slate-500 block mb-0.5">Histórico Médico</span> {fd.medicalHistory || 'Não informado'}</div>
-              <div className="border-b border-slate-200 pb-2"><span className="text-[9px] uppercase tracking-widest text-slate-500 block mb-0.5">Alergias</span> {fd.allergies || 'Não informado'}</div>
-              <div className="border-b border-slate-200 pb-2"><span className="text-[9px] uppercase tracking-widest text-slate-500 block mb-0.5">Medicamentos em Uso</span> {fd.medications || 'Não informado'}</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-[10px] px-2">
+              <div className="border-b border-slate-200 pb-1"><span className="text-[8px] uppercase tracking-widest text-slate-500 block mb-0.5">Queixa Principal</span> {fd.mainComplaint || 'Não informado'}</div>
+              <div className="border-b border-slate-200 pb-1"><span className="text-[8px] uppercase tracking-widest text-slate-500 block mb-0.5">Histórico Médico</span> {fd.medicalHistory || 'Não informado'}</div>
+              <div className="border-b border-slate-200 pb-1"><span className="text-[8px] uppercase tracking-widest text-slate-500 block mb-0.5">Alergias</span> {fd.allergies || 'Não informado'}</div>
+              <div className="border-b border-slate-200 pb-1"><span className="text-[8px] uppercase tracking-widest text-slate-500 block mb-0.5">Medicamentos em Uso</span> {fd.medications || 'Não informado'}</div>
             </div>
           </section>
 
           <section>
-            <h3 className="text-[11px] font-black tracking-widest text-slate-800 uppercase border-b-[1.5px] border-slate-800 pb-1.5 mb-4 flex items-center gap-2">
+            <h3 className="text-[11px] font-black tracking-widest text-slate-800 uppercase border-b-[1.5px] border-slate-800 pb-1.5 mb-2 flex items-center gap-2">
               <span className="w-4 h-4 bg-slate-800 text-white rounded-full flex items-center justify-center text-[9px] print:bg-slate-800 print:text-white">2</span>
               Questionário de Saúde
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-3 mt-3 text-xs px-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-2 mt-2 text-[10px] px-2">
               {conditions.map(([key, label]) => {
                 const checked = Boolean(fd[key]);
                 return (
-                  <div key={key} className="flex justify-between items-center border-b border-dashed border-slate-200 py-1.5">
+                  <div key={key} className="flex justify-between items-center border-b border-dashed border-slate-200 py-1">
                     <span className="font-medium text-slate-700">{label}</span>
                     <div className="flex gap-2 items-center">
-                      <span className={`w-3.5 h-3.5 flex items-center justify-center border border-slate-800 rounded-sm text-[9px] font-bold ${checked ? 'bg-slate-800 text-white print:bg-slate-800 print:text-white' : 'bg-white text-transparent print:bg-white print:text-transparent'}`}>✓</span>
-                      <span className="text-[9px] font-bold text-slate-500">S</span>
-                      <span className={`w-3.5 h-3.5 flex items-center justify-center border border-slate-800 rounded-sm text-[9px] font-bold ${!checked ? 'bg-slate-800 text-white print:bg-slate-800 print:text-white' : 'bg-white text-transparent print:bg-white print:text-transparent'}`}>✓</span>
-                      <span className="text-[9px] font-bold text-slate-500">N</span>
+                      <span className={`w-3 h-3 flex items-center justify-center border border-slate-800 rounded-sm text-[8px] font-bold ${checked ? 'bg-slate-800 text-white print:bg-slate-800 print:text-white' : 'bg-white text-transparent print:bg-white print:text-transparent'}`}>✓</span>
+                      <span className="text-[8px] font-bold text-slate-500">S</span>
+                      <span className={`w-3 h-3 flex items-center justify-center border border-slate-800 rounded-sm text-[8px] font-bold ${!checked ? 'bg-slate-800 text-white print:bg-slate-800 print:text-white' : 'bg-white text-transparent print:bg-white print:text-transparent'}`}>✓</span>
+                      <span className="text-[8px] font-bold text-slate-500">N</span>
                     </div>
                   </div>
                 );
@@ -146,9 +146,9 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
             </div>
           </section>
 
-          <section className="bg-slate-50 p-5 border border-slate-200 rounded-lg mt-8 print:break-inside-avoid print:bg-slate-50/50">
-            <p className="text-[9px] font-black uppercase text-slate-800 tracking-widest mb-2 text-center">Declaração de Veracidade</p>
-            <p className="text-xs text-slate-600 leading-relaxed text-justify px-4">
+          <section className="bg-slate-50 p-3 border border-slate-200 rounded-lg mt-4 print:break-inside-avoid print:bg-slate-50/50">
+            <p className="text-[8px] font-black uppercase text-slate-800 tracking-widest mb-1 text-center">Declaração de Veracidade</p>
+            <p className="text-[9px] text-slate-600 leading-relaxed text-justify px-2">
               Declaro que as informações prestadas nesta ficha de anamnese são a expressão da verdade, não tendo omitido qualquer dado relativo ao meu estado de saúde. Comprometo-me a informar qualquer alteração relevante ao profissional responsável pelo meu tratamento.
             </p>
           </section>
@@ -191,16 +191,16 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     ];
 
     return (
-      <div className="flex flex-col h-full print:break-after-page mb-10">
+      <div className="print-page-sheet">
         <PrintHeader title="Odontograma Clínico" patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
         
-        <div className="flex-grow space-y-8">
+        <div className="flex-grow space-y-6">
           <section>
-            <h3 className="text-[11px] font-black tracking-widest text-slate-800 uppercase border-b-[1.5px] border-slate-800 pb-1.5 mb-4 flex items-center gap-2">
+            <h3 className="text-[11px] font-black tracking-widest text-slate-800 uppercase border-b-[1.5px] border-slate-800 pb-1.5 mb-2 flex items-center gap-2">
               <span className="w-4 h-4 bg-slate-800 text-white rounded-full flex items-center justify-center text-[9px] print:bg-slate-800 print:text-white">1</span>
               Representação Gráfica
             </h3>
-            <div className="bg-slate-50 p-6 rounded-lg border border-slate-200 print:bg-slate-50/50 print:border-slate-300 text-center">
+            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 print:bg-slate-50/50 print:border-slate-300 text-center">
               <svg viewBox="0 0 800 240" className="w-full h-auto max-w-2xl mx-auto drop-shadow-sm">
                 <g transform="translate(40, 20)">
                   {adultTeeth[0].map((id, index) => (
@@ -223,21 +223,21 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
           </section>
 
           <section>
-            <h3 className="text-[11px] font-black tracking-widest text-slate-800 uppercase border-b-[1.5px] border-slate-800 pb-1.5 mb-4 flex items-center gap-2">
+            <h3 className="text-[11px] font-black tracking-widest text-slate-800 uppercase border-b-[1.5px] border-slate-800 pb-1.5 mb-2 flex items-center gap-2">
               <span className="w-4 h-4 bg-slate-800 text-white rounded-full flex items-center justify-center text-[9px] print:bg-slate-800 print:text-white">2</span>
               Detalhamento Clínico
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mt-3 text-xs px-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 mt-2 text-xs px-2 max-h-[120px] overflow-y-auto">
               {Object.entries(teethState).filter(([_, t]: any) => t.notes || t.status !== 'healthy').length === 0 ? (
-                <p className="col-span-2 text-center italic text-slate-400 py-4">Nenhuma alteração registrada em dentes isolados.</p>
+                <p className="col-span-2 text-center italic text-slate-400 py-2">Nenhuma alteração registrada em dentes isolados.</p>
               ) : (
                 Object.entries(teethState).filter(([_, t]: any) => t.notes || t.status !== 'healthy').map(([toothId, t]: any, idx) => (
-                  <div key={`${toothId}-${idx}`} className="border-b border-slate-200 pb-3 print:break-inside-avoid">
-                    <div className="flex items-center gap-3 mb-1.5">
+                  <div key={`${toothId}-${idx}`} className="border-b border-slate-200 pb-2 print:break-inside-avoid">
+                    <div className="flex items-center gap-3 mb-1">
                       <span className="font-bold text-slate-800">Dente {toothId}</span>
                       <span className="text-[8px] px-2 py-0.5 border border-slate-800 text-slate-800 rounded font-bold uppercase tracking-widest bg-slate-50">{t.status}</span>
                     </div>
-                    {t.notes && <p className="text-xs text-slate-600 leading-relaxed">"{t.notes}"</p>}
+                    {t.notes && <p className="text-[10px] text-slate-600 leading-relaxed">"{t.notes}"</p>}
                   </div>
                 ))
               )}
@@ -252,17 +252,17 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
 
   /* ── 4. Evolução Clínica ────────────────────────────────────────────────── */
   const renderEvolution = () => (
-    <div className="flex flex-col h-full print:break-after-page mb-10">
+    <div className="print-page-sheet">
       <PrintHeader title="Evolução Clínica" patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
       
-      <div className="flex-grow">
+      <div className="flex-grow overflow-y-auto max-h-[60%]">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="border-b-[1.5px] border-slate-800 text-[9px] uppercase tracking-widest text-slate-500">
-              <th className="py-3 px-2 font-bold w-24">Data</th>
-              <th className="py-3 px-2 font-bold">Procedimento</th>
-              <th className="py-3 px-2 font-bold w-1/2">Notas Clínicas</th>
-              <th className="py-3 px-2 font-bold w-24 text-right">Status</th>
+              <th className="py-2 px-2 font-bold w-24">Data</th>
+              <th className="py-2 px-2 font-bold">Procedimento</th>
+              <th className="py-2 px-2 font-bold w-1/2">Notas Clínicas</th>
+              <th className="py-2 px-2 font-bold w-24 text-right">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -273,16 +273,16 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
             ) : (
               evolutions.map((evo, idx) => (
                 <tr key={`${evo.id || 'evo'}-${idx}`} className="border-b border-slate-200 print:break-inside-avoid">
-                  <td className="py-4 px-2 align-top font-mono text-[10px] text-slate-500">
+                  <td className="py-3 px-2 align-top font-mono text-[10px] text-slate-500">
                     {new Date(evo.createdAt).toLocaleDateString('pt-BR')}
                   </td>
-                  <td className="py-4 px-2 align-top font-bold text-slate-800">
+                  <td className="py-3 px-2 align-top font-bold text-slate-800">
                     {evo.procedure || 'Consulta'}
                   </td>
-                  <td className="py-4 px-2 align-top text-slate-600 text-justify leading-relaxed">
+                  <td className="py-3 px-2 align-top text-slate-600 text-justify leading-relaxed text-[11px]">
                     {evo.content}
                   </td>
-                  <td className="py-4 px-2 align-top text-right">
+                  <td className="py-3 px-2 align-top text-right">
                     <span className={`inline-block px-2 py-0.5 rounded-[3px] text-[8px] font-bold uppercase tracking-widest border ${evo.status?.toLowerCase() === 'realizado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 print:bg-emerald-50/50' : 'bg-slate-50 text-slate-600 border-slate-200 print:bg-slate-50/50'}`}>
                       {evo.status || 'Registrado'}
                     </span>
@@ -312,17 +312,17 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
     return (
-      <div className="flex flex-col h-full print:break-after-page mb-10">
+      <div className="print-page-sheet">
         <PrintHeader title={planTitle || 'Plano de Tratamento'} patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
         
-        <div className="flex-grow">
-          <table className="w-full text-left text-xs border-collapse mb-8">
+        <div className="flex-grow overflow-y-auto max-h-[60%]">
+          <table className="w-full text-left text-xs border-collapse mb-4">
             <thead>
               <tr className="border-b-[1.5px] border-slate-800 text-[9px] uppercase tracking-widest text-slate-500">
-                <th className="py-3 px-2 font-bold w-1/2">Procedimento</th>
-                <th className="py-3 px-2 font-bold text-center">Dente/Região</th>
-                <th className="py-3 px-2 font-bold text-center">Qtd</th>
-                <th className="py-3 px-2 font-bold text-right">Valor (R$)</th>
+                <th className="py-2 px-2 font-bold w-1/2">Procedimento</th>
+                <th className="py-2 px-2 font-bold text-center">Dente/Região</th>
+                <th className="py-2 px-2 font-bold text-center">Qtd</th>
+                <th className="py-2 px-2 font-bold text-right">Valor (R$)</th>
               </tr>
             </thead>
             <tbody>
@@ -331,23 +331,23 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
               ) : (
                 procs.map((p, index) => (
                   <tr key={`${p.id || 'proc'}-${index}`} className="border-b border-slate-200 print:break-inside-avoid">
-                    <td className="py-3 px-2 font-semibold text-slate-800">{p.name}</td>
-                    <td className="py-3 px-2 text-center text-slate-500 font-mono text-[10px]">{p.tooth || '—'}</td>
-                    <td className="py-3 px-2 text-center text-slate-600">{p.quantity || 1}</td>
-                    <td className="py-3 px-2 text-right whitespace-nowrap font-mono font-medium text-slate-700">{fmt(p.totalPrice || p.cost)}</td>
+                    <td className="py-2 px-2 font-semibold text-slate-800">{p.name}</td>
+                    <td className="py-2 px-2 text-center text-slate-500 font-mono text-[10px]">{p.tooth || '—'}</td>
+                    <td className="py-2 px-2 text-center text-slate-600">{p.quantity || 1}</td>
+                    <td className="py-2 px-2 text-right whitespace-nowrap font-mono font-medium text-slate-700">{fmt(p.totalPrice || p.cost)}</td>
                   </tr>
                 ))
               )}
             </tbody>
             <tfoot>
               <tr className="border-t-[1.5px] border-slate-800">
-                <td colSpan={3} className="pt-4 pb-2 px-2 text-right uppercase text-[9px] tracking-widest text-slate-500 font-bold">Valor Total Estimado</td>
-                <td className="pt-4 pb-2 px-2 text-right text-sm font-bold text-slate-900">{fmt(total)}</td>
+                <td colSpan={3} className="pt-2 pb-1 px-2 text-right uppercase text-[9px] tracking-widest text-slate-500 font-bold">Valor Total Estimado</td>
+                <td className="pt-2 pb-1 px-2 text-right text-sm font-bold text-slate-900">{fmt(total)}</td>
               </tr>
             </tfoot>
           </table>
 
-          <div className="text-[9px] leading-relaxed text-slate-500 border border-slate-200 p-4 rounded-lg bg-slate-50 print:bg-slate-50/50">
+          <div className="text-[9px] leading-relaxed text-slate-500 border border-slate-200 p-3 rounded-lg bg-slate-50 print:bg-slate-50/50">
             <p><span className="font-bold text-slate-700 uppercase tracking-widest mr-2">Atenção</span> Os valores acima são uma estimativa baseada na avaliação clínica inicial e em radiografias prévias. O plano de tratamento pode sofrer alterações durante a execução dos procedimentos, caso novas necessidades sejam identificadas. Este orçamento é válido por 30 dias.</p>
           </div>
         </div>
@@ -363,17 +363,17 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     const total = payments.filter(p => p.paymentStatus !== 'pendente').reduce((s, p) => s + p.amount, 0);
 
     return (
-      <div className="flex flex-col h-full print:break-after-page mb-10">
+      <div className="print-page-sheet">
         <PrintHeader title="Extrato Financeiro" patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
         
-        <div className="flex-grow">
+        <div className="flex-grow overflow-y-auto max-h-[60%]">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b-[1.5px] border-slate-800 text-[9px] uppercase tracking-widest text-slate-500">
-                <th className="py-3 px-2 font-bold w-28">Data</th>
-                <th className="py-3 px-2 font-bold">Descrição do Lançamento</th>
-                <th className="py-3 px-2 font-bold text-center">Status</th>
-                <th className="py-3 px-2 font-bold text-right">Valor</th>
+                <th className="py-2 px-2 font-bold w-28">Data</th>
+                <th className="py-2 px-2 font-bold">Descrição do Lançamento</th>
+                <th className="py-2 px-2 font-bold text-center">Status</th>
+                <th className="py-2 px-2 font-bold text-right">Valor</th>
               </tr>
             </thead>
             <tbody>
@@ -382,9 +382,9 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
               ) : (
                 payments.map((p, i) => (
                   <tr key={`${p.id || 'pay'}-${i}`} className="border-b border-slate-200">
-                    <td className="py-4 px-2 text-[10px] font-mono text-slate-500">{new Date(p.date).toLocaleDateString('pt-BR')}</td>
-                    <td className="py-4 px-2 font-semibold text-slate-800">{p.description}</td>
-                    <td className="py-4 px-2 text-center">
+                    <td className="py-3 px-2 text-[10px] font-mono text-slate-500">{new Date(p.date).toLocaleDateString('pt-BR')}</td>
+                    <td className="py-3 px-2 font-semibold text-slate-800">{p.description}</td>
+                    <td className="py-3 px-2 text-center">
                       <span className={`px-2 py-0.5 border rounded-[3px] text-[8px] font-bold uppercase tracking-widest ${
                         p.paymentStatus === 'pendente' 
                           ? 'bg-amber-50 text-amber-700 border-amber-200 print:bg-amber-50/50' 
@@ -393,15 +393,15 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
                         {p.paymentStatus || 'RECEBIDO'}
                       </span>
                     </td>
-                    <td className="py-4 px-2 text-right font-mono font-medium text-slate-700">{fmt(p.amount)}</td>
+                    <td className="py-3 px-2 text-right font-mono font-medium text-slate-700">{fmt(p.amount)}</td>
                   </tr>
                 ))
               )}
             </tbody>
             <tfoot>
               <tr className="border-t-[1.5px] border-slate-800">
-                <td colSpan={3} className="pt-4 pb-2 px-2 text-right uppercase text-[9px] tracking-widest text-slate-500 font-bold">Total Acumulado Pago</td>
-                <td className="pt-4 pb-2 px-2 text-right text-sm font-bold text-slate-900">{fmt(total)}</td>
+                <td colSpan={3} className="pt-2 pb-1 px-2 text-right uppercase text-[9px] tracking-widest text-slate-500 font-bold">Total Acumulado Pago</td>
+                <td className="pt-2 pb-1 px-2 text-right text-sm font-bold text-slate-900">{fmt(total)}</td>
               </tr>
             </tfoot>
           </table>
@@ -414,7 +414,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
 
   /* ── Atestado Odontológico ─────────────────────────────────────────────── */
   const renderAtestado = () => (
-    <div className="flex flex-col h-full print:break-after-page mb-10">
+    <div className="print-page-sheet">
       <PrintHeader
         title="Atestado Odontológico"
         patientName={patient.name}
@@ -425,7 +425,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
         <p className="indent-8">
           Atesto para os devidos fins que o(a) paciente <strong className="font-semibold">{patient.name}</strong>, portador(a) do CPF nº <strong className="font-semibold">{patient.cpf || '_________________'}</strong>, esteve sob meus cuidados profissionais no dia {new Date().toLocaleDateString('pt-BR')}, das ___:___ às ___:___ horas, necessitando de <strong className="font-semibold">_______</strong> dias de repouso por motivo de tratamento odontológico.
         </p>
-        <div className="mt-12 flex justify-end">
+        <div className="mt-6 flex justify-end">
           <p className="font-bold border border-slate-300 px-4 py-2 rounded bg-slate-50 text-slate-700 w-48 text-center print:bg-slate-50/50">
             CID: _______
           </p>
@@ -436,51 +436,72 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
   );
 
   /* ── Recomendações Pós-Operatórias ─────────────────────────────────────── */
-  const renderRecomendacoes = () => (
-    <div className="flex flex-col h-full print:break-after-page mb-10">
-      <PrintHeader
-        title="Recomendações Pós-Operatórias"
-        patientName={patient.name}
-        patientCpf={patient.cpf}
-        patientDob={patientDob}
-      />
-      <div className="flex-grow text-[13px] text-slate-800 leading-loose text-justify mt-8 px-4">
-        <ul className="space-y-6">
-          <li className="print:break-inside-avoid flex gap-3">
-            <span className="font-bold text-slate-400">01.</span>
-            <div><strong className="text-slate-900">Alimentação:</strong> Líquida e pastosa, fria ou gelada nas primeiras 24 horas. Evitar alimentos quentes, duros ou condimentados.</div>
-          </li>
-          <li className="print:break-inside-avoid flex gap-3">
-            <span className="font-bold text-slate-400">02.</span>
-            <div><strong className="text-slate-900">Repouso:</strong> Evitar esforço físico, sol e calor por 48 horas. Dormir com a cabeça mais elevada que o resto do corpo.</div>
-          </li>
-          <li className="print:break-inside-avoid flex gap-3">
-            <span className="font-bold text-slate-400">03.</span>
-            <div><strong className="text-slate-900">Higiene:</strong> Não bochechar vigorosamente nas primeiras 24 horas para não remover o coágulo. Escovar os dentes normalmente, mas com muito cuidado na área operada.</div>
-          </li>
-          <li className="print:break-inside-avoid flex gap-3">
-            <span className="font-bold text-slate-400">04.</span>
-            <div><strong className="text-slate-900">Sangramento:</strong> É normal um leve sangramento (saliva rosada) nas primeiras horas. Em caso de hemorragia, dobre uma gaze limpa e morda em cima do local por 30 minutos.</div>
-          </li>
-          <li className="print:break-inside-avoid flex gap-3">
-            <span className="font-bold text-slate-400">05.</span>
-            <div><strong className="text-slate-900">Inchaço:</strong> Aplicar bolsa de gelo no rosto (lado operado) nas primeiras 24 horas (20 minutos aplica, 20 minutos descansa) para minimizar o edema.</div>
-          </li>
-          <li className="print:break-inside-avoid flex gap-3">
-            <span className="font-bold text-slate-400">06.</span>
-            <div><strong className="text-slate-900">Medicação:</strong> Tomar rigorosamente os medicamentos prescritos no receituário nos horários indicados.</div>
-          </li>
-        </ul>
-        <div className="mt-10 border border-slate-300 p-5 rounded-lg bg-slate-50 print:bg-slate-50/50 print:border-slate-400 flex items-start gap-4">
-          <span className="text-xl">⚠️</span>
-          <p className="font-semibold text-slate-800 text-sm m-0 leading-relaxed">
-            Em caso de dor intensa, sangramento abundante ou dúvidas, entre em contato com a clínica imediatamente.
-          </p>
+  const renderRecomendacoes = () => {
+    const renderColumnContent = (viaTitle: string) => (
+      <div className="flex-1 flex flex-col justify-between h-full px-2 border-r border-dashed border-slate-300 last:border-r-0 last:pr-0">
+        <div>
+          {/* Header */}
+          <div className="border-b border-slate-300 pb-1.5 mb-2 flex justify-between items-end">
+            <div>
+              <h1 className="text-xs font-serif font-bold text-slate-900 tracking-tight">Clínica Odontológica</h1>
+              <p className="text-[7px] uppercase tracking-widest text-slate-500">Odontologia Integrada</p>
+            </div>
+            <div className="text-right">
+              <span className="text-[7px] font-black uppercase text-slate-900 border border-slate-900 px-1.5 py-0.5 rounded tracking-widest">
+                {viaTitle}
+              </span>
+            </div>
+          </div>
+
+          <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-900 text-center mb-2">Recomendações Pós-Operatórias</h2>
+
+          {/* Patient Card */}
+          <div className="bg-slate-50 border border-slate-200 rounded p-1.5 mb-2 flex justify-between text-[8px] text-slate-600">
+            <span><strong>Paciente:</strong> {patient.name}</span>
+            {patientDob && <span><strong>Nascimento:</strong> {patientDob}</span>}
+          </div>
+
+          {/* Guidelines */}
+          <ul className="space-y-1.5 text-[8px] text-slate-700 leading-normal">
+            <li><strong className="text-slate-900">1. Alimentação:</strong> Líquida e pastosa, fria ou gelada nas primeiras 24 horas. Evitar alimentos quentes, duros ou condimentados.</li>
+            <li><strong className="text-slate-900">2. Repouso:</strong> Evitar esforço físico, sol e calor por 48 horas. Dormir com a cabeça mais elevada que o resto do corpo.</li>
+            <li><strong className="text-slate-900">3. Higiene:</strong> Não bochechar vigorosamente nas primeiras 24 horas para não remover o coágulo. Escovar os dentes normalmente com muito cuidado.</li>
+            <li><strong className="text-slate-900">4. Sangramento:</strong> Leve sangramento é normal. Em caso de hemorragia, dobre gaze limpa e morda por 30 minutos.</li>
+            <li><strong className="text-slate-900">5. Inchaço:</strong> Aplicar bolsa de gelo nas primeiras 24 horas (20 min aplica, 20 min descansa).</li>
+            <li><strong className="text-slate-900">6. Medicação:</strong> Tomar rigorosamente os medicamentos prescritos.</li>
+          </ul>
+
+          <div className="mt-2 border border-slate-200 p-1.5 rounded bg-slate-50 text-[7px] font-semibold text-slate-700 leading-snug">
+            ⚠️ Em caso de dor intensa, sangramento abundante ou dúvidas, entre em contato imediatamente.
+          </div>
+        </div>
+
+        {/* Footer Signatures */}
+        <div className="pt-1.5 border-t border-slate-300 mt-2">
+          <div className="flex justify-between items-end">
+            <div className="text-center w-[45%]">
+              <div className="border-t border-slate-400 w-full mb-0.5"></div>
+              <p className="font-bold text-[7px] text-slate-800 uppercase truncate">{patient.name}</p>
+              <p className="text-[6px] uppercase tracking-wider text-slate-400">Paciente</p>
+            </div>
+            <div className="text-center w-[45%]">
+              <div className="border-t border-slate-400 w-full mb-0.5"></div>
+              <p className="font-bold text-[7px] text-slate-800 uppercase truncate">Cirurgião-Dentista</p>
+              <p className="text-[6px] uppercase tracking-wider text-slate-400">Assinatura / Carimbo</p>
+            </div>
+          </div>
+          <p className="text-[6px] text-slate-400 font-mono text-center mt-1 uppercase">OdontoAdmin Gestão Clínica © {new Date().getFullYear()}</p>
         </div>
       </div>
-      <PrintFooter showDentistSignature={showDentistSignature} showPatientSignature={showPatientSignature} signatureType="dentist" />
-    </div>
-  );
+    );
+
+    return (
+      <div className="print-page-sheet print-landscape gap-4 flex-row">
+        {renderColumnContent("Via do Paciente")}
+        {renderColumnContent("Via da Clínica")}
+      </div>
+    );
+  };
 
   /* ── 7. Document Templates ─────────────────────────────────────────────── */
   const renderTemplate = (template: DocumentTemplate, idx: number) => {
@@ -493,7 +514,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     const sigType = (template.type === 'tcle' || template.type === 'image-release') ? 'both' : 'dentist';
 
     return (
-    <div key={`${template.id || 'tpl'}-${idx}`} className="flex flex-col h-full print:break-after-page mb-10">
+      <div key={`${template.id || 'tpl'}-${idx}`} className="print-page-sheet">
         <PrintHeader title={title} patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
         <div className="flex-grow text-sm text-slate-800 leading-loose text-justify space-y-6 whitespace-pre-wrap px-4">
           {content}
@@ -504,13 +525,79 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
   };
 
   /* ── 8. Custom Document ────────────────────────────────────────────────── */
+  const renderCustomDocumentLandscape = (title: string, content: string, type: string) => {
+    const renderColumnContent = (viaTitle: string, showPatientSig: boolean) => (
+      <div className="flex-1 flex flex-col justify-between h-full px-2 border-r border-dashed border-slate-300 last:border-r-0 last:pr-0">
+        <div>
+          {/* Header */}
+          <div className="border-b border-slate-300 pb-1.5 mb-2 flex justify-between items-end">
+            <div>
+              <h1 className="text-xs font-serif font-bold text-slate-900 tracking-tight">Clínica Odontológica</h1>
+              <p className="text-[7px] uppercase tracking-widest text-slate-500">Odontologia Integrada</p>
+            </div>
+            <div className="text-right">
+              <span className="text-[7px] font-black uppercase text-slate-900 border border-slate-900 px-1.5 py-0.5 rounded tracking-widest">
+                {viaTitle}
+              </span>
+            </div>
+          </div>
+
+          <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-900 text-center mb-2">{title}</h2>
+
+          {/* Patient Card */}
+          <div className="bg-slate-50 border border-slate-200 rounded p-1.5 mb-2 flex justify-between text-[8px] text-slate-600">
+            <span><strong>Paciente:</strong> {patient.name}</span>
+            {patientDob && <span><strong>Nascimento:</strong> {patientDob}</span>}
+          </div>
+
+          {/* Content */}
+          <div className="text-[8px] text-slate-800 leading-relaxed whitespace-pre-wrap font-sans text-justify mt-2 max-h-[105mm] overflow-hidden">
+            {content}
+          </div>
+        </div>
+
+        {/* Footer Signatures */}
+        <div className="pt-1.5 border-t border-slate-300 mt-2">
+          <div className="flex justify-between items-end">
+            {showPatientSig && (
+              <div className="text-center w-[45%]">
+                <div className="border-t border-slate-400 w-full mb-0.5"></div>
+                <p className="font-bold text-[7px] text-slate-800 uppercase truncate">{patient.name}</p>
+                <p className="text-[6px] uppercase tracking-wider text-slate-400">Paciente</p>
+              </div>
+            )}
+            <div className={`text-center ${showPatientSig ? 'w-[45%]' : 'w-full'}`}>
+              <div className="border-t border-slate-400 w-full mb-0.5"></div>
+              <p className="font-bold text-[7px] text-slate-800 uppercase truncate">Cirurgião-Dentista</p>
+              <p className="text-[6px] uppercase tracking-wider text-slate-400">Assinatura / Carimbo</p>
+            </div>
+          </div>
+          <p className="text-[6px] text-slate-400 font-mono text-center mt-1 uppercase">OdontoAdmin Gestão Clínica © {new Date().getFullYear()}</p>
+        </div>
+      </div>
+    );
+
+    return (
+      <div className="print-page-sheet print-landscape gap-4 flex-row">
+        {renderColumnContent("Via do Paciente", type !== 'prescription')}
+        {renderColumnContent(type === 'prescription' ? "Via do Dentista" : "Via da Clínica", true)}
+      </div>
+    );
+  };
+
   const renderCustomDocument = () => {
     if (!customDocument) return null;
     const title = customDocument.title || 'Documento Odontológico';
     const sigType = customDocument.type === 'tcle' ? 'both' : 'dentist';
 
+    const isLandscape = customDocument.type === 'prescription' || customDocument.type === 'postop' || customDocument.type === 'recomendacoes';
+    
+    if (isLandscape) {
+      return renderCustomDocumentLandscape(title, customDocument.content, customDocument.type);
+    }
+
     return (
-      <div className="flex flex-col h-full print:break-after-page mb-10">
+      <div className="print-page-sheet">
         <PrintHeader title={title} patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
         <div className="flex-grow text-sm text-slate-800 leading-loose text-justify space-y-6 whitespace-pre-wrap px-4">
           {customDocument.content}

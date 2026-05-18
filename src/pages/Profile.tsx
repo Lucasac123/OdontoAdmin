@@ -19,12 +19,12 @@ import { backupToDrive, restoreFromDrive } from '../services/backupService';
 
 // Premium color presets specifically designed for clinical and dental aesthetics
 const COLOR_PRESETS = [
-  { id: 'bronze', label: 'Ouro Clínico', value: '#af571b', desc: 'Bronze clássico e acolhedor' },
-  { id: 'teal', label: 'Verde Turquesa', value: '#0d9488', desc: 'Moderno e tranquilizante' },
-  { id: 'blue', label: 'Azul Odonto', value: '#2563eb', desc: 'Profissional e tecnológico' },
-  { id: 'emerald', label: 'Menta Fresca', value: '#059669', desc: 'Suave, orgânico e natural' },
-  { id: 'violet', label: 'Roxo Ametista', value: '#7c3aed', desc: 'Sofisticado e contemporâneo' },
-  { id: 'slate', label: 'Mineral Neutro', value: '#4b5563', desc: 'Minimalista e ultra limpo' },
+  { id: 'bronze', label: 'Ouro Clínico', value: '#af571b', desc: 'Bronze clássico' },
+  { id: 'teal', label: 'Verde Turquesa', value: '#0d9488', desc: 'Tranquilizante' },
+  { id: 'blue', label: 'Azul Odonto', value: '#2563eb', desc: 'Tecnológico' },
+  { id: 'emerald', label: 'Menta Fresca', value: '#059669', desc: 'Suave e natural' },
+  { id: 'violet', label: 'Roxo Ametista', value: '#7c3aed', desc: 'Sofisticado' },
+  { id: 'slate', label: 'Mineral Neutro', value: '#4b5563', desc: 'Minimalista' },
 ];
 
 export const Profile: React.FC = () => {
@@ -335,9 +335,9 @@ export const Profile: React.FC = () => {
       } else {
         alert('Erro ao realizar backup. Tente novamente.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Backup error:', error);
-      alert('Erro ao realizar backup.');
+      alert(`Erro ao realizar backup: ${error?.message || error}`);
     } finally {
       setIsBackingUp(false);
     }
@@ -358,9 +358,9 @@ export const Profile: React.FC = () => {
       } else {
         alert('Nenhum backup encontrado ou erro ao restaurar.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Restore error:', error);
-      alert('Erro ao restaurar dados.');
+      alert(`Erro ao restaurar dados: ${error?.message || error}`);
     } finally {
       setIsRestoring(false);
     }
@@ -384,7 +384,7 @@ export const Profile: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto pb-24 lg:pb-8 px-4 sm:px-6">
-      <div className="flex flex-col lg:flex-row gap-8 items-start">
+      <div className="flex flex-col lg:flex-row gap-6 sm:gap-8 items-start">
         
         {/* ================= LEFT SIDEBAR (Profile Summary & Tab Nav) ================= */}
         <div className="w-full lg:w-[320px] shrink-0 space-y-6">
@@ -393,7 +393,7 @@ export const Profile: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-surface rounded-3xl shadow-premium border border-zinc-200 dark:border-zinc-800 p-6 text-center relative overflow-hidden glass"
+            className="bg-surface rounded-2xl sm:rounded-3xl shadow-premium border border-zinc-200 dark:border-zinc-800 p-4 sm:p-6 text-center relative overflow-hidden glass"
           >
             {/* Elegant glass background decoration */}
             <div className="absolute top-0 right-0 w-36 h-36 bg-indigo-500/5 dark:bg-indigo-400/5 blur-3xl -mr-12 -mt-12 pointer-events-none" />
@@ -402,17 +402,17 @@ export const Profile: React.FC = () => {
               {/* Avatar Container with Hover Glow */}
               <div className="relative inline-block group">
                 <div 
-                  className="w-28 h-28 sm:w-32 sm:h-32 rounded-[36px] bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-center border-4 border-white dark:border-zinc-800 shadow-xl overflow-hidden transition-all duration-500 group-hover:scale-105"
+                  className="w-24 h-24 sm:w-32 sm:h-32 rounded-[30px] sm:rounded-[36px] bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-center border-4 border-white dark:border-zinc-800 shadow-xl overflow-hidden transition-all duration-500 group-hover:scale-105"
                   style={{ borderColor: accentColor }}
                 >
                   {user?.photoURL ? (
                     <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   ) : (
-                    <User className="w-12 h-12 text-zinc-400" />
+                    <User className="w-10 h-10 sm:w-12 sm:h-12 text-zinc-400" />
                   )}
                   
                   <label className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer backdrop-blur-xs">
-                    <Camera className="w-6 h-6 text-white mb-1 animate-pulse" />
+                    <Camera className="w-5 h-5 sm:w-6 sm:h-6 text-white mb-1 animate-pulse" />
                     <span className="text-[9px] font-black text-white uppercase tracking-widest">Alterar</span>
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={saving} />
                   </label>
@@ -420,20 +420,20 @@ export const Profile: React.FC = () => {
                 
                 {/* Accent Badge */}
                 <div 
-                  className="absolute -bottom-1 -right-1 w-9 h-9 rounded-2xl flex items-center justify-center text-white shadow-lg border-4 border-white dark:border-zinc-800 transition-transform duration-500 group-hover:rotate-12"
+                  className="absolute -bottom-1 -right-1 w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl flex items-center justify-center text-white shadow-lg border-4 border-white dark:border-zinc-800 transition-transform duration-500 group-hover:rotate-12"
                   style={{ backgroundColor: accentColor }}
                 >
-                  <Award className="w-4 h-4" />
+                  <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
               </div>
 
               {/* Title & Registration Details */}
-              <div className="mt-5">
-                <h1 className="text-xl font-black text-text-primary tracking-tight truncate px-2">
+              <div className="mt-4 sm:mt-5">
+                <h1 className="text-lg sm:text-xl font-black text-text-primary tracking-tight truncate px-2">
                   {formData.name || 'Dentista'}
                 </h1>
                 <p 
-                  className="text-xs font-bold uppercase tracking-wider mt-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/20 inline-block"
+                  className="text-[10px] sm:text-xs font-bold uppercase tracking-wider mt-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/20 inline-block"
                   style={{ color: accentColor }}
                 >
                   {formData.cro ? `CRO: ${formData.cro}` : 'Cirurgião Dentista'}
@@ -441,23 +441,23 @@ export const Profile: React.FC = () => {
               </div>
 
               {/* Quick Profile Meta Rows */}
-              <div className="mt-6 pt-5 border-t border-zinc-100 dark:border-zinc-800/80 space-y-4">
-                <div className="flex items-center gap-3.5 text-left">
-                  <div className="w-9 h-9 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-center text-zinc-400 shrink-0 border border-zinc-100 dark:border-zinc-800">
-                    <Mail className="w-4 h-4" />
+              <div className="mt-5 pt-4 sm:pt-5 border-t border-zinc-100 dark:border-zinc-800/80 space-y-3.5">
+                <div className="flex items-center gap-3 text-left">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-center text-zinc-400 shrink-0 border border-zinc-100 dark:border-zinc-800">
+                    <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">E-mail</p>
+                    <p className="text-[8px] sm:text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">E-mail</p>
                     <p className="text-xs sm:text-sm font-semibold text-text-primary truncate">{formData.email}</p>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3.5 text-left">
-                  <div className="w-9 h-9 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-center text-zinc-400 shrink-0 border border-zinc-100 dark:border-zinc-800">
-                    <Phone className="w-4 h-4" />
+                <div className="flex items-center gap-3 text-left">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-center text-zinc-400 shrink-0 border border-zinc-100 dark:border-zinc-800">
+                    <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Telefone</p>
+                    <p className="text-[8px] sm:text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Telefone</p>
                     <p className="text-xs sm:text-sm font-semibold text-text-primary truncate">{formData.phone || 'Não informado'}</p>
                   </div>
                 </div>
@@ -512,17 +512,27 @@ export const Profile: React.FC = () => {
             </nav>
           </div>
 
-          {/* Navigation Tabs - Mobile/Tablet (Horizontal Scroll) */}
-          <div className="block lg:hidden w-full overflow-x-auto hide-scrollbar -mx-4 px-4 pb-2 sticky top-[60px] z-20 bg-zinc-50 dark:bg-zinc-900/10 backdrop-blur-md">
-            <div className="flex gap-2.5 min-w-max p-1 bg-surface dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm">
+          {/* Navigation Tabs - Mobile/Tablet (Grid 4 columns, no scroll!) */}
+          <div className="block lg:hidden w-full pb-2 sticky top-[60px] z-20 bg-zinc-50/80 dark:bg-zinc-950/80 backdrop-blur-md">
+            <div className="grid grid-cols-4 gap-1 p-1 bg-surface dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm w-full">
               {TABS.map((tab) => {
                 const IconComponent = tab.icon;
                 const isSelected = activeTab === tab.id;
+                
+                // Extremely short labels for mobile to guarantee perfect fitting
+                const mobileLabels: Record<string, string> = {
+                  profile: 'Perfil',
+                  appearance: 'Visual',
+                  security: 'Senha',
+                  storage: 'Nuvem'
+                };
+                const shortLabel = mobileLabels[tab.id];
+
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className="relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-left transition-all duration-300 cursor-pointer"
+                    className="relative flex flex-col items-center justify-center py-2.5 rounded-xl text-center transition-all duration-300 cursor-pointer min-w-0"
                   >
                     {/* Active tab sliding highlight pill for mobile */}
                     {isSelected && (
@@ -535,11 +545,13 @@ export const Profile: React.FC = () => {
                     )}
                     
                     <IconComponent 
-                      className="w-4 h-4" 
+                      className="w-4.5 h-4.5 mb-1 shrink-0" 
                       style={isSelected ? { color: accentColor } : { color: 'var(--text-secondary)' }}
                     />
-                    <span className={`text-xs font-black tracking-tight ${isSelected ? 'text-text-primary' : 'text-text-secondary'}`}>
-                      {tab.label}
+                    <span className={`text-[9px] font-black tracking-tight uppercase leading-none truncate w-full px-1 ${
+                      isSelected ? 'text-text-primary font-black' : 'text-text-secondary font-bold'
+                    }`}>
+                      {shortLabel}
                     </span>
                   </button>
                 );
@@ -552,17 +564,17 @@ export const Profile: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="rounded-3xl p-5 text-white shadow-premium relative overflow-hidden"
+            className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 text-white shadow-premium relative overflow-hidden"
             style={{ background: `linear-gradient(135deg, ${accentColor} 0%, #1e1b4b 100%)` }}
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-2xl -mr-12 -mt-12 pointer-events-none" />
             <div className="relative z-10 flex gap-4">
-              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
-                <CheckCircle className="w-5 h-5 text-white" />
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
+                <CheckCircle className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-xs font-black uppercase tracking-widest text-white/95">Status da Conta</h3>
-                <p className="text-white/80 text-[10px] font-semibold leading-relaxed mt-1">
+                <h3 className="text-xs font-black uppercase tracking-widest text-white/95 leading-none">Status</h3>
+                <p className="text-white/80 text-[10px] font-semibold leading-relaxed mt-1.5">
                   Sua conta está ativa e protegida. Acesso total a recursos em nuvem, agendamentos e IA.
                 </p>
               </div>
@@ -585,30 +597,30 @@ export const Profile: React.FC = () => {
               
               {/* ----------------- TAB: PROFILE & CLINIC ----------------- */}
               {activeTab === 'profile' && (
-                <div className="bg-surface rounded-[32px] border border-zinc-200 dark:border-zinc-800 shadow-premium overflow-hidden glass">
-                  <div className="p-6 sm:p-8 border-b border-zinc-150 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between">
-                    <div>
-                      <h2 className="text-xl font-black text-text-primary tracking-tight">Informações Cadastrais</h2>
-                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Configuração do seu perfil e ambiente clínico</p>
+                <div className="bg-surface rounded-2xl sm:rounded-[32px] border border-zinc-200 dark:border-zinc-800 shadow-premium overflow-hidden glass">
+                  <div className="p-4 sm:p-8 border-b border-zinc-150 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="text-lg sm:text-xl font-black text-text-primary tracking-tight truncate">Informações Cadastrais</h2>
+                      <p className="text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1 truncate">Configuração do seu perfil e clínica</p>
                     </div>
                     <div 
-                      className="w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm transition-transform shrink-0"
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center border shadow-sm transition-transform shrink-0"
                       style={{ color: accentColor, borderColor: `${accentColor}22`, backgroundColor: `${accentColor}11` }}
                     >
-                      <User className="w-5 h-5" />
+                      <User className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                     </div>
                   </div>
 
-                  <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-8">
+                  <form onSubmit={handleSubmit} className="p-4 sm:p-8 space-y-6 sm:space-y-8">
                     
                     {/* Subsection: Pessoal */}
                     <div className="space-y-4">
                       <div className="flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-2">
-                        <User className="w-4 h-4 text-zinc-400" />
-                        <h3 className="text-xs font-black uppercase tracking-wider text-zinc-450 dark:text-zinc-400">Dados Pessoais</h3>
+                        <User className="w-4 h-4 text-zinc-400 shrink-0" />
+                        <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-zinc-450 dark:text-zinc-400">Dados Pessoais</h3>
                       </div>
                       
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                         <div className="space-y-2">
                           <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nome Completo</label>
                           <div className="relative group">
@@ -618,7 +630,7 @@ export const Profile: React.FC = () => {
                               name="name"
                               value={formData.name}
                               onChange={handleChange}
-                              className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                              className="w-full pl-11 pr-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
                               style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
                               required
                             />
@@ -635,7 +647,7 @@ export const Profile: React.FC = () => {
                               value={formData.phone}
                               onChange={handleChange}
                               placeholder="(00) 00000-0000"
-                              className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                              className="w-full pl-11 pr-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
                               style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
                             />
                           </div>
@@ -650,7 +662,7 @@ export const Profile: React.FC = () => {
                               name="birthDate"
                               value={formData.birthDate}
                               onChange={handleChange}
-                              className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                              className="w-full pl-11 pr-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
                               style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
                             />
                           </div>
@@ -663,7 +675,7 @@ export const Profile: React.FC = () => {
                             <input
                               type="email"
                               value={formData.email}
-                              className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900/50 text-zinc-450 dark:text-zinc-500 outline-none cursor-not-allowed text-sm font-semibold"
+                              className="w-full pl-11 pr-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900/50 text-zinc-450 dark:text-zinc-500 outline-none cursor-not-allowed text-sm font-semibold"
                               disabled
                             />
                           </div>
@@ -674,11 +686,11 @@ export const Profile: React.FC = () => {
                     {/* Subsection: Clínica / Atendimento */}
                     <div className="space-y-4 pt-4 border-t border-zinc-100 dark:border-zinc-800/80">
                       <div className="flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-2">
-                        <Building className="w-4 h-4 text-zinc-400" />
-                        <h3 className="text-xs font-black uppercase tracking-wider text-zinc-450 dark:text-zinc-400">Dados do Consultório / Clínica</h3>
+                        <Building className="w-4 h-4 text-zinc-400 shrink-0" />
+                        <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-zinc-450 dark:text-zinc-400">Dados do Consultório / Clínica</h3>
                       </div>
                       
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                         <div className="space-y-2">
                           <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nome Fantasia do Consultório</label>
                           <div className="relative group">
@@ -688,7 +700,7 @@ export const Profile: React.FC = () => {
                               name="clinicName"
                               value={formData.clinicName}
                               onChange={handleChange}
-                              className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                              className="w-full pl-11 pr-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
                               style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
                             />
                           </div>
@@ -701,7 +713,7 @@ export const Profile: React.FC = () => {
                               name="type"
                               value={formData.type}
                               onChange={handleChange}
-                              className="w-full pl-4 pr-10 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent appearance-none cursor-pointer"
+                              className="w-full pl-4 pr-10 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent appearance-none cursor-pointer"
                               style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
                             >
                               <option value="consultorio">Consultório Odontológico</option>
@@ -723,7 +735,7 @@ export const Profile: React.FC = () => {
                               value={formData.cro}
                               onChange={handleChange}
                               placeholder="UF-12345"
-                              className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                              className="w-full pl-11 pr-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
                               style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
                             />
                           </div>
@@ -738,8 +750,8 @@ export const Profile: React.FC = () => {
                               name="address"
                               value={formData.address}
                               onChange={handleChange}
-                              placeholder="Av. Paulista, 1000 - Cj. 41"
-                              className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                              placeholder="Av. Paulista, 1000"
+                              className="w-full pl-11 pr-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
                               style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
                             />
                           </div>
@@ -754,7 +766,7 @@ export const Profile: React.FC = () => {
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.3 }}
-                            className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-3 overflow-hidden"
+                            className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 pt-2 overflow-hidden"
                           >
                             <div className="space-y-2">
                               <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Número EPAO (Clínicas)</label>
@@ -766,7 +778,7 @@ export const Profile: React.FC = () => {
                                   value={formData.epao}
                                   onChange={handleChange}
                                   placeholder="EPAO-1234"
-                                  className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                                  className="w-full pl-11 pr-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
                                   style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
                                 />
                               </div>
@@ -781,8 +793,8 @@ export const Profile: React.FC = () => {
                                   name="responsibleTechnician"
                                   value={formData.responsibleTechnician}
                                   onChange={handleChange}
-                                  placeholder="Nome do Responsável Técnico"
-                                  className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                                  placeholder="Nome do Responsável"
+                                  className="w-full pl-11 pr-4 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
                                   style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
                                 />
                               </div>
@@ -793,11 +805,11 @@ export const Profile: React.FC = () => {
                     </div>
 
                     {/* Submit Actions Button */}
-                    <div className="pt-6 border-t border-zinc-150 dark:border-zinc-800/80 flex justify-end">
+                    <div className="pt-5 border-t border-zinc-150 dark:border-zinc-800/80 flex justify-end">
                       <button
                         type="submit"
                         disabled={saving}
-                        className="w-full sm:w-auto px-8 py-3.5 rounded-2xl font-black uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98] shadow-md hover:brightness-105 cursor-pointer text-white"
+                        className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-xl sm:rounded-2xl font-black uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 active:scale-[0.98] shadow-md hover:brightness-105 cursor-pointer text-white"
                         style={{ backgroundColor: accentColor }}
                       >
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -813,29 +825,29 @@ export const Profile: React.FC = () => {
                 <div className="space-y-6">
                   
                   {/* Theme Color Configuration Card */}
-                  <div className="bg-surface rounded-[32px] border border-zinc-200 dark:border-zinc-800 shadow-premium overflow-hidden glass">
-                    <div className="p-6 sm:p-8 border-b border-zinc-150 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between">
-                      <div>
-                        <h2 className="text-xl font-black text-text-primary tracking-tight">Cores & Paleta Visual</h2>
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Selecione o tom que melhor representa sua clínica</p>
+                  <div className="bg-surface rounded-2xl sm:rounded-[32px] border border-zinc-200 dark:border-zinc-800 shadow-premium overflow-hidden glass">
+                    <div className="p-4 sm:p-8 border-b border-zinc-150 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <h2 className="text-lg sm:text-xl font-black text-text-primary tracking-tight truncate">Cores & Paleta Visual</h2>
+                        <p className="text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1 truncate">Selecione o tom do seu aplicativo</p>
                       </div>
                       <div 
-                        className="w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm transition-transform shrink-0"
+                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center border shadow-sm transition-transform shrink-0"
                         style={{ color: accentColor, borderColor: `${accentColor}22`, backgroundColor: `${accentColor}11` }}
                       >
-                        <Palette className="w-5 h-5" />
+                        <Palette className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                       </div>
                     </div>
 
-                    <div className="p-6 sm:p-8 space-y-8">
-                      {/* Presets Grid */}
+                    <div className="p-4 sm:p-8 space-y-6 sm:space-y-8">
+                      {/* Presets Grid - Optimized into 2 cols on mobile */}
                       <div className="space-y-4">
                         <div className="flex items-center gap-2">
                           <Sparkles className="w-4 h-4 text-zinc-400" />
-                          <h3 className="text-xs font-black uppercase tracking-wider text-zinc-450 dark:text-zinc-400">Presets Premium</h3>
+                          <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-zinc-450 dark:text-zinc-400">Presets Premium</h3>
                         </div>
                         
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                           {COLOR_PRESETS.map((preset) => {
                             const isPresetActive = accentColor.toLowerCase() === preset.value.toLowerCase();
                             return (
@@ -845,7 +857,7 @@ export const Profile: React.FC = () => {
                                   setAccentColor(preset.value);
                                   setColorInput(preset.value);
                                 }}
-                                className={`p-4 rounded-2xl border text-left flex items-start gap-3 transition-all duration-300 group relative overflow-hidden cursor-pointer ${
+                                className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border text-left flex items-start gap-2.5 sm:gap-3 transition-all duration-300 group relative overflow-hidden cursor-pointer min-w-0 ${
                                   isPresetActive 
                                   ? 'border-indigo-200 dark:border-indigo-800 shadow-md' 
                                   : 'border-zinc-200 dark:border-zinc-800/80 bg-zinc-50/20 dark:bg-zinc-900/10 hover:border-zinc-350 dark:hover:border-zinc-700 hover:shadow-sm'
@@ -853,14 +865,14 @@ export const Profile: React.FC = () => {
                                 style={isPresetActive ? { backgroundColor: `${preset.value}05` } : {}}
                               >
                                 <div 
-                                  className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm shrink-0 transition-transform duration-300 group-hover:scale-105 text-white"
+                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center shadow-sm shrink-0 transition-transform duration-300 group-hover:scale-105 text-white"
                                   style={{ backgroundColor: preset.value }}
                                 >
-                                  {isPresetActive && <Check className="w-4.5 h-4.5 stroke-[3]" />}
+                                  {isPresetActive && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                                 </div>
-                                <div className="min-w-0">
-                                  <p className="text-xs font-black text-text-primary tracking-tight leading-tight">{preset.label}</p>
-                                  <p className="text-[9px] font-medium text-zinc-400 dark:text-zinc-500 mt-1 leading-snug">{preset.desc}</p>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-[10px] sm:text-xs font-black text-text-primary tracking-tight leading-tight truncate">{preset.label}</p>
+                                  <p className="hidden xs:block text-[8px] sm:text-[9px] font-medium text-zinc-400 dark:text-zinc-500 mt-1 leading-snug truncate">{preset.desc}</p>
                                 </div>
                               </button>
                             );
@@ -872,14 +884,14 @@ export const Profile: React.FC = () => {
                       <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800/80 space-y-4">
                         <div className="flex items-center gap-2">
                           <Palette className="w-4 h-4 text-zinc-400" />
-                          <h3 className="text-xs font-black uppercase tracking-wider text-zinc-450 dark:text-zinc-400">Cor Personalizada (Hexadecimal)</h3>
+                          <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-zinc-450 dark:text-zinc-400">Cor Personalizada (Hexadecimal)</h3>
                         </div>
                         
                         <form onSubmit={handleColorSubmit} className="flex flex-col sm:flex-row gap-4">
                           <div className="flex-1 flex gap-3">
                             <div className="relative group shrink-0">
                               <div 
-                                className="w-12 h-12 rounded-xl border border-zinc-250 dark:border-zinc-700 shadow-sm transition-transform group-hover:scale-105 cursor-pointer" 
+                                className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl border border-zinc-250 dark:border-zinc-700 shadow-sm transition-transform group-hover:scale-105 cursor-pointer" 
                                 style={{ backgroundColor: accentColor }}
                               />
                               <input 
@@ -899,10 +911,10 @@ export const Profile: React.FC = () => {
                             />
                           </div>
                           
-                          <div className="flex gap-2.5">
+                          <div className="flex gap-2 w-full sm:w-auto">
                             <button
                               type="submit"
-                              className="px-6 py-3 rounded-xl font-black text-xs uppercase tracking-wider hover:brightness-105 active:scale-95 transition-all text-white cursor-pointer"
+                              className="flex-1 sm:flex-none px-6 py-3 rounded-xl font-black text-xs uppercase tracking-wider hover:brightness-105 active:scale-95 transition-all text-white cursor-pointer"
                               style={{ backgroundColor: accentColor }}
                             >
                               Aplicar
@@ -917,7 +929,7 @@ export const Profile: React.FC = () => {
                               className="p-3 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-text-primary rounded-xl hover:shadow-sm active:scale-95 transition-all cursor-pointer"
                               title="Redefinir Cor Padrão"
                             >
-                              <RotateCcw className="w-5 h-5" />
+                              <RotateCcw className="w-4.5 h-4.5" />
                             </button>
                           </div>
                         </form>
@@ -925,8 +937,8 @@ export const Profile: React.FC = () => {
                         {/* Recent colors history */}
                         {colorHistory.length > 0 && (
                           <div className="pt-3">
-                            <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-3 ml-0.5">Utilizadas Recentemente</p>
-                            <div className="flex flex-wrap gap-2.5">
+                            <p className="text-[8px] sm:text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-3 ml-0.5">Utilizadas Recentemente</p>
+                            <div className="flex flex-wrap gap-2">
                               {colorHistory.map((color, i) => (
                                 <button
                                   key={`${color}-${i}`}
@@ -935,7 +947,7 @@ export const Profile: React.FC = () => {
                                     setAccentColor(color);
                                     setColorInput(color);
                                   }}
-                                  className="w-8 h-8 rounded-lg border border-zinc-200 dark:border-zinc-750 shadow-sm transition-all hover:scale-110 active:scale-90 cursor-pointer"
+                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg border border-zinc-200 dark:border-zinc-750 shadow-sm transition-all hover:scale-110 active:scale-90 cursor-pointer shrink-0"
                                   style={{ backgroundColor: color }}
                                   title={color}
                                 />
@@ -948,25 +960,25 @@ export const Profile: React.FC = () => {
                   </div>
 
                   {/* Logo Customized Banner Card */}
-                  <div className="bg-surface rounded-[32px] border border-zinc-200 dark:border-zinc-800 shadow-premium overflow-hidden glass">
-                    <div className="p-6 sm:p-8 border-b border-zinc-150 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between">
-                      <div>
-                        <h2 className="text-xl font-black text-text-primary tracking-tight">Logomarca do Aplicativo</h2>
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Insira seu logotipo e personalize o cabeçalho</p>
+                  <div className="bg-surface rounded-2xl sm:rounded-[32px] border border-zinc-200 dark:border-zinc-800 shadow-premium overflow-hidden glass">
+                    <div className="p-4 sm:p-8 border-b border-zinc-150 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <h2 className="text-lg sm:text-xl font-black text-text-primary tracking-tight truncate">Logomarca do Aplicativo</h2>
+                        <p className="text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1 truncate">Personalize a marca da sua clínica</p>
                       </div>
                       <div 
-                        className="w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm transition-transform shrink-0"
+                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center border shadow-sm transition-transform shrink-0"
                         style={{ color: accentColor, borderColor: `${accentColor}22`, backgroundColor: `${accentColor}11` }}
                       >
-                        <ImageIcon className="w-5 h-5" />
+                        <ImageIcon className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                       </div>
                     </div>
 
-                    <div className="p-6 sm:p-8">
-                      <div className="flex flex-col md:flex-row items-center gap-6 p-5 rounded-2xl bg-zinc-50/30 dark:bg-zinc-900/20 border border-zinc-200 dark:border-zinc-800">
+                    <div className="p-4 sm:p-8">
+                      <div className="flex flex-col md:flex-row items-center gap-5 sm:gap-6 p-4 sm:p-5 rounded-2xl bg-zinc-50/30 dark:bg-zinc-900/20 border border-zinc-200 dark:border-zinc-800">
                         {/* Mockup Card Design showing Tooth / Custom Logo */}
                         <div 
-                          className="w-24 h-24 rounded-2xl border border-zinc-200 dark:border-zinc-750 flex items-center justify-center overflow-hidden shadow-md shrink-0 bg-white"
+                          className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-750 flex items-center justify-center overflow-hidden shadow-md shrink-0 bg-white"
                         >
                           <img 
                             src={customLogo || "/icon.png"} 
@@ -975,16 +987,16 @@ export const Profile: React.FC = () => {
                           />
                         </div>
                         
-                        <div className="flex-1 space-y-4 text-center md:text-left">
+                        <div className="flex-1 space-y-3.5 text-center md:text-left min-w-0">
                           <div className="space-y-1">
-                            <h4 className="text-sm font-black text-text-primary">Marca Integrada no Cabeçalho</h4>
+                            <h4 className="text-xs sm:text-sm font-black text-text-primary">Marca Integrada no Cabeçalho</h4>
                             <p className="text-xs font-semibold text-text-secondary leading-relaxed">
-                              Substitua a logomarca do OdontoAdmin pelo seu próprio logotipo corporativo. Ele será exibido na barra de navegação principal. Formato recomendado: **PNG transparente de 512x512px**.
+                              Substitua a logomarca do OdontoAdmin pelo seu próprio logotipo corporativo. Formato recomendado: **PNG transparente de 512x512px**.
                             </p>
                           </div>
                           
-                          <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                            <label className="flex items-center gap-2 px-5 py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl font-black text-[10px] uppercase tracking-widest cursor-pointer hover:opacity-90 active:scale-95 shadow-sm transition-all shrink-0">
+                          <div className="flex flex-wrap justify-center md:justify-start gap-2.5">
+                            <label className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl font-black text-[9px] sm:text-[10px] uppercase tracking-widest cursor-pointer hover:opacity-90 active:scale-95 shadow-sm transition-all shrink-0">
                               {logoUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                               {logoUploading ? 'Enviando...' : 'Fazer Upload'}
                               <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={logoUploading} />
@@ -993,7 +1005,7 @@ export const Profile: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => setCustomLogo(null)}
-                              className="flex items-center gap-2 px-5 py-2.5 bg-surface dark:bg-zinc-900/50 text-zinc-500 hover:text-text-primary border border-zinc-200 dark:border-zinc-700 rounded-xl font-black text-[10px] uppercase tracking-widest hover:shadow-sm active:scale-95 transition-all cursor-pointer shrink-0"
+                              className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-surface dark:bg-zinc-900/50 text-zinc-500 hover:text-text-primary border border-zinc-200 dark:border-zinc-700 rounded-xl font-black text-[9px] sm:text-[10px] uppercase tracking-widest hover:shadow-sm active:scale-95 transition-all cursor-pointer shrink-0"
                             >
                               <RotateCcw className="w-3.5 h-3.5" />
                               Restaurar Padrão
@@ -1009,34 +1021,34 @@ export const Profile: React.FC = () => {
 
               {/* ----------------- TAB: PASSWORD SECURITY ----------------- */}
               {activeTab === 'security' && (
-                <div className="bg-surface rounded-[32px] border border-zinc-200 dark:border-zinc-800 shadow-premium overflow-hidden glass">
-                  <div className="p-6 sm:p-8 border-b border-zinc-150 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between">
-                    <div>
-                      <h2 className="text-xl font-black text-text-primary tracking-tight">Segurança da Conta</h2>
-                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Controle de credenciais de acesso</p>
+                <div className="bg-surface rounded-2xl sm:rounded-[32px] border border-zinc-200 dark:border-zinc-800 shadow-premium overflow-hidden glass">
+                  <div className="p-4 sm:p-8 border-b border-zinc-150 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="text-lg sm:text-xl font-black text-text-primary tracking-tight truncate">Segurança da Conta</h2>
+                      <p className="text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1 truncate">Controle de credenciais de acesso</p>
                     </div>
                     <div 
-                      className="w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm transition-transform shrink-0"
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center border shadow-sm transition-transform shrink-0"
                       style={{ color: accentColor, borderColor: `${accentColor}22`, backgroundColor: `${accentColor}11` }}
                     >
-                      <Lock className="w-5 h-5" />
+                      <Lock className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                     </div>
                   </div>
 
-                  <div className="p-6 sm:p-8">
+                  <div className="p-4 sm:p-8">
                     {isGoogleUser ? (
                       /* SSO Auth Modern Badge Panel */
-                      <div className="p-6 sm:p-8 rounded-2xl bg-zinc-50/30 dark:bg-zinc-900/20 border border-zinc-200 dark:border-zinc-800 text-center max-w-xl mx-auto space-y-5">
-                        <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mx-auto shadow-sm">
-                          <ShieldCheck className="w-7 h-7" />
+                      <div className="p-5 sm:p-8 rounded-2xl bg-zinc-50/30 dark:bg-zinc-900/20 border border-zinc-200 dark:border-zinc-800 text-center max-w-xl mx-auto space-y-4 sm:space-y-5">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-150 dark:border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mx-auto shadow-sm">
+                          <ShieldCheck className="w-6 h-6 sm:w-7 sm:h-7" />
                         </div>
                         <div className="space-y-2">
-                          <h3 className="text-base font-black text-text-primary">Autenticação SSO via Google</h3>
+                          <h3 className="text-sm sm:text-base font-black text-text-primary">Autenticação SSO via Google</h3>
                           <p className="text-xs font-semibold text-text-secondary leading-relaxed">
-                            Sua conta está vinculada e protegida com as credenciais do Google Login. 
+                            Sua conta está protegida com as credenciais do Google Login. 
                           </p>
-                          <p className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 leading-relaxed max-w-md mx-auto">
-                            Por utilizar este provedor de login integrado de alta segurança, sua senha é gerenciada diretamente pela Google. Não há necessidade de alteração de senha local no OdontoAdmin.
+                          <p className="text-[10px] sm:text-[11px] font-medium text-zinc-400 dark:text-zinc-500 leading-relaxed max-w-md mx-auto">
+                            Por utilizar este provedor de login integrado de alta segurança, sua senha é gerenciada pela Google. Não há necessidade de alteração de senha local no OdontoAdmin.
                           </p>
                         </div>
                         
@@ -1045,16 +1057,16 @@ export const Profile: React.FC = () => {
                             href="https://myaccount.google.com/security" 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-6 py-2.5 bg-zinc-900 dark:bg-zinc-100 hover:opacity-90 active:scale-95 text-white dark:text-zinc-900 text-[10px] font-black uppercase tracking-wider rounded-xl shadow-sm transition-all"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-zinc-900 dark:bg-zinc-100 hover:opacity-90 active:scale-95 text-white dark:text-zinc-900 text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded-xl shadow-sm transition-all"
                           >
-                            <ShieldCheck className="w-4 h-4" />
+                            <ShieldCheck className="w-3.5 h-3.5" />
                             Segurança da Conta Google
                           </a>
                         </div>
                       </div>
                     ) : (
                       /* Standard Password Configuration Form */
-                      <form onSubmit={handlePasswordChange} className="space-y-6 max-w-xl mx-auto">
+                      <form onSubmit={handlePasswordChange} className="space-y-5 sm:space-y-6 max-w-xl mx-auto">
                         <div className="space-y-4">
                           
                           <div className="space-y-2">
@@ -1065,7 +1077,7 @@ export const Profile: React.FC = () => {
                                 type={showCurrentPassword ? 'text' : 'password'}
                                 value={passwordData.currentPassword}
                                 onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                                className="w-full pl-11 pr-12 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                                className="w-full pl-11 pr-12 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
                                 style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
                                 required
                               />
@@ -1087,7 +1099,7 @@ export const Profile: React.FC = () => {
                                 type={showNewPassword ? 'text' : 'password'}
                                 value={passwordData.newPassword}
                                 onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                                className="w-full pl-11 pr-12 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                                className="w-full pl-11 pr-12 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
                                 style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
                                 required
                               />
@@ -1109,7 +1121,7 @@ export const Profile: React.FC = () => {
                                 type={showConfirmPassword ? 'text' : 'password'}
                                 value={passwordData.confirmNewPassword}
                                 onChange={(e) => setPasswordData(prev => ({ ...prev, confirmNewPassword: e.target.value }))}
-                                className="w-full pl-11 pr-12 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
+                                className="w-full pl-11 pr-12 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/20 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent"
                                 style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
                                 required
                               />
@@ -1128,7 +1140,7 @@ export const Profile: React.FC = () => {
                           <button
                             type="submit"
                             disabled={passwordSaving}
-                            className="w-full sm:w-auto px-8 py-3.5 rounded-2xl font-black uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98] shadow-md hover:brightness-105 cursor-pointer text-white"
+                            className="w-full sm:w-auto px-8 py-3.5 rounded-xl sm:rounded-2xl font-black uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98] shadow-md hover:brightness-105 cursor-pointer text-white"
                             style={{ backgroundColor: accentColor }}
                           >
                             {passwordSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
@@ -1143,74 +1155,74 @@ export const Profile: React.FC = () => {
 
               {/* ----------------- TAB: DATA STORAGE & BACKUP ----------------- */}
               {activeTab === 'storage' && (
-                <div className="bg-surface rounded-[32px] border border-zinc-200 dark:border-zinc-800 shadow-premium overflow-hidden glass">
-                  <div className="p-6 sm:p-8 border-b border-zinc-150 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between">
-                    <div>
-                      <h2 className="text-xl font-black text-text-primary tracking-tight">Armazenamento & Nuvem</h2>
-                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Configuração de sincronização e backups secundários</p>
+                <div className="bg-surface rounded-2xl sm:rounded-[32px] border border-zinc-200 dark:border-zinc-800 shadow-premium overflow-hidden glass">
+                  <div className="p-4 sm:p-8 border-b border-zinc-150 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="text-lg sm:text-xl font-black text-text-primary tracking-tight truncate">Armazenamento & Nuvem</h2>
+                      <p className="text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1 truncate">Sincronização e backups secundários</p>
                     </div>
                     <div 
-                      className="w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm transition-transform shrink-0"
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center border shadow-sm transition-transform shrink-0"
                       style={{ color: accentColor, borderColor: `${accentColor}22`, backgroundColor: `${accentColor}11` }}
                     >
-                      <HardDrive className="w-5 h-5" />
+                      <HardDrive className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                     </div>
                   </div>
 
-                  <div className="p-6 sm:p-8 space-y-8">
+                  <div className="p-4 sm:p-8 space-y-6 sm:space-y-8">
                     
                     {/* Database Cloud Panel Indicators */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                       
-                      {/* Firebase Indicator Card */}
-                      <div className="p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-900/20 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-150 dark:border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400">
-                              <Database className="w-5 h-5" />
+                      {/* Firebase Indicator Card - Built with Flex shrink security */}
+                      <div className="p-4 sm:p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-900/20 flex flex-col justify-between gap-4 min-w-0">
+                        <div className="flex items-center justify-between gap-3 min-w-0">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-150 dark:border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                              <Database className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                             </div>
-                            <div>
-                              <h4 className="text-xs font-black text-text-primary">Banco de Dados principal</h4>
-                              <p className="text-[9px] font-bold text-zinc-450 dark:text-zinc-500 uppercase tracking-widest leading-none mt-1">Firebase Cloud</p>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="text-xs font-black text-text-primary truncate">Firebase Cloud</h4>
+                              <p className="text-[8px] sm:text-[9px] font-bold text-zinc-455 dark:text-zinc-500 uppercase tracking-widest leading-none mt-1 truncate">Banco de Dados principal</p>
                             </div>
                           </div>
                           
-                          <span className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 rounded-full text-[9px] font-black uppercase tracking-wider border border-emerald-100 dark:border-emerald-850 animate-pulse">
+                          <span className="flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider border border-emerald-100 dark:border-emerald-850 animate-pulse shrink-0">
                             <CheckCircle className="w-3 h-3" />
                             Ativo
                           </span>
                         </div>
                         <p className="text-[11px] font-semibold text-text-secondary leading-relaxed">
-                          Seu prontuário, ficha de pacientes, agenda e movimentações financeiras estão armazenados na rede segura e replicados globalmente.
+                          Seu prontuário, ficha de pacientes e agenda estão armazenados com segurança e replicados globalmente.
                         </p>
                       </div>
 
-                      {/* Google Drive Connection Card */}
-                      <div className="p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-900/20 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-150 dark:border-indigo-500/20 flex items-center justify-center text-indigo-650 dark:text-indigo-400">
-                              <CloudLightning className="w-5 h-5" />
+                      {/* Google Drive Connection Card - Built with Flex shrink security */}
+                      <div className="p-4 sm:p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-900/20 flex flex-col justify-between gap-4 min-w-0">
+                        <div className="flex items-center justify-between gap-3 min-w-0">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-150 dark:border-indigo-500/20 flex items-center justify-center text-indigo-650 dark:text-indigo-400 shrink-0">
+                              <CloudLightning className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                             </div>
-                            <div>
-                              <h4 className="text-xs font-black text-text-primary">Nuvem de Segurança</h4>
-                              <p className="text-[9px] font-bold text-zinc-450 dark:text-zinc-500 uppercase tracking-widest leading-none mt-1">Google Drive</p>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="text-xs font-black text-text-primary truncate">Google Drive</h4>
+                              <p className="text-[8px] sm:text-[9px] font-bold text-zinc-455 dark:text-zinc-500 uppercase tracking-widest leading-none mt-1 truncate">Nuvem de Segurança</p>
                             </div>
                           </div>
                           
                           {storageLocation === 'drive' ? (
-                            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-full text-[9px] font-black uppercase tracking-wider border border-indigo-100 dark:border-indigo-850">
+                            <span className="flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider border border-indigo-100 dark:border-indigo-850 shrink-0">
                               <CheckCircle className="w-3 h-3" />
                               Conectado
                             </span>
                           ) : (
-                            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-450 dark:text-zinc-500 rounded-full text-[9px] font-black uppercase tracking-wider border border-zinc-200 dark:border-zinc-750">
+                            <span className="flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 bg-zinc-105 dark:bg-zinc-800 text-zinc-455 dark:text-zinc-500 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider border border-zinc-200 dark:border-zinc-750 shrink-0">
                               Offline
                             </span>
                           )}
                         </div>
                         <p className="text-[11px] font-semibold text-text-secondary leading-relaxed">
-                          Habilite backups secundários em seu próprio Google Drive pessoal para garantir a integridade absoluta dos seus relatórios de clínica.
+                          Habilite backups secundários em seu próprio Google Drive pessoal para garantir a integridade absoluta dos seus relatórios.
                         </p>
                       </div>
                     </div>
@@ -1224,7 +1236,7 @@ export const Profile: React.FC = () => {
                             value={storageLocation}
                             onChange={handleStorageChange}
                             disabled={isAuthenticatingDrive}
-                            className="w-full pl-4 pr-10 py-3 sm:py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/25 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent appearance-none cursor-pointer disabled:opacity-50"
+                            className="w-full pl-4 pr-10 py-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/25 dark:bg-zinc-800/10 focus:ring-2 outline-none transition-all text-sm font-semibold text-text-primary focus:border-transparent appearance-none cursor-pointer disabled:opacity-50"
                             style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
                           >
                             <option value="firebase">Firebase (Cloud Padrão do Sistema)</option>
@@ -1247,16 +1259,16 @@ export const Profile: React.FC = () => {
                             initial={{ opacity: 0, scale: 0.98, y: 10 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.98, y: 10 }}
-                            className="p-5 rounded-2xl bg-indigo-50/20 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800/30 space-y-4 mt-4"
+                            className="p-4 sm:p-5 rounded-2xl bg-indigo-50/20 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800/30 space-y-4 mt-4"
                           >
                             <div className="flex gap-2">
                               <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: accentColor }} />
                               <p className="text-xs font-semibold text-text-primary leading-relaxed">
-                                Você está conectado à pasta remota **DentalApp_Data** em sua conta do Google Drive. Utilize os botões abaixo para sincronizar seus dados manualmente:
+                                Você está conectado à pasta remota **DentalApp_Data** no Google Drive. Use os botões abaixo para gerenciar backups:
                               </p>
                             </div>
                             
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                               <button
                                 onClick={handleBackup}
                                 disabled={isBackingUp || isRestoring}
@@ -1280,10 +1292,10 @@ export const Profile: React.FC = () => {
                       </AnimatePresence>
 
                       {storageLocation === 'firebase' && (
-                        <div className="p-4 rounded-2xl bg-emerald-50/20 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-850/55 mt-4">
+                        <div className="p-4 rounded-xl bg-emerald-50/20 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-850/55 mt-4">
                           <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 leading-relaxed flex items-center gap-2.5">
                             <CheckCircle className="w-4 h-4 shrink-0 stroke-[2.5]" />
-                            Seus dados clínicos estão altamente protegidos, replicados em múltiplos servidores na nuvem e sincronizados em tempo real. Sinta-se seguro.
+                            Seus dados clínicos estão seguros e sincronizados em tempo real com a nuvem DentalApp.
                           </p>
                         </div>
                       )}

@@ -187,15 +187,68 @@ body {
   .print-preview-container .unified-print-only {
     display: block !important;
   }
+
+  /* Sheet Layout for Live Preview */
+  .print-page-sheet {
+    background: white !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-radius: 4px !important;
+    margin: 20px auto !important;
+    padding: 15mm !important;
+    box-sizing: border-box !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    overflow: hidden !important;
+    color: #1f2937 !important;
+  }
+
+  .print-page-sheet.print-landscape {
+    width: 297mm !important;
+    height: 210mm !important;
+    padding: 8mm !important;
+  }
 }
 
 @media print {
   @page {
     size: A4 portrait;
-    margin: 14mm 16mm 16mm 16mm;
+    margin: 15mm 15mm 15mm 15mm;
   }
 
-  /* ── 1. Full reset: kill all heights / overflows that cause clipping ──── */
+  @page landscape-layout {
+    size: A4 landscape;
+    margin: 10mm 10mm 10mm 10mm;
+  }
+
+  .print-page-sheet {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    height: 267mm !important; /* A4 height 297mm minus 30mm margin */
+    max-height: 267mm !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    background: white !important;
+  }
+
+  .print-page-sheet.print-landscape {
+    page: landscape-layout !important;
+    width: 100% !important;
+    height: 190mm !important; /* A4 landscape height 210mm minus 20mm margin */
+    max-height: 190mm !important;
+  }
+
   html, body {
     width: 100% !important;
     height: auto !important;

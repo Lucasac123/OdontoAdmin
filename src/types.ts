@@ -225,7 +225,7 @@ export interface LabJob {
   labPhone?: string;
   sendDate: string;
   expectedDate: string;
-  status: 'Enviado' | 'Em Confecção' | 'Recebido' | 'Instalado';
+  status: 'Planejado' | 'Em Confecção' | 'Recebido' | 'Instalado';
   cost: number;
   notes?: string;
   createdAt: string;

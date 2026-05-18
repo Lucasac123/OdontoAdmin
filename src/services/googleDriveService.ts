@@ -109,10 +109,10 @@ const getFileId = async (token: string, folderId: string, fileName: string): Pro
 export const googleDriveService = {
   getData: async (collection: string, id: string) => {
     const token = await getDriveAccessToken();
-    if (!token) return null;
+    if (!token) throw new Error('Não autenticado no Google Drive');
 
     const folderId = await getAppFolderId(token);
-    if (!folderId) return null;
+    if (!folderId) throw new Error('Falha ao obter pasta do aplicativo no Google Drive');
 
     const fileName = `${collection}_${id}.json`;
     const fileId = await getFileId(token, folderId, fileName);
@@ -123,16 +123,19 @@ export const googleDriveService = {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Google Drive API error: ${response.status} - ${errorText}`);
+    }
     return await response.json();
   },
   
   saveData: async (collection: string, id: string, data: any) => {
     const token = await getDriveAccessToken();
-    if (!token) return;
+    if (!token) throw new Error('Não autenticado no Google Drive');
 
     const folderId = await getAppFolderId(token);
-    if (!folderId) return;
+    if (!folderId) throw new Error('Falha ao obter pasta do aplicativo no Google Drive');
 
     const fileName = `${collection}_${id}.json`;
     const fileId = await getFileId(token, folderId, fileName);
@@ -160,7 +163,7 @@ export const googleDriveService = {
       ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
       : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
 
-    await fetch(url, {
+    const response = await fetch(url, {
       method: fileId ? 'PATCH' : 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -168,5 +171,10 @@ export const googleDriveService = {
       },
       body: multipartRequestBody
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Google Drive API error: ${response.status} - ${errorText}`);
+    }
   }
 };

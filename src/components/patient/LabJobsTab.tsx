@@ -22,7 +22,7 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
     prosthesisType: '',
     sendDate: new Date().toISOString().split('T')[0],
     expectedDate: '',
-    status: 'Enviado' as LabJob['status'],
+    status: 'Planejado' as LabJob['status'],
     cost: '' as number | ''
   });
 
@@ -66,7 +66,7 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
         prosthesisType: '',
         sendDate: new Date().toISOString().split('T')[0],
         expectedDate: '',
-        status: 'Enviado',
+        status: 'Planejado',
         cost: 0
       });
     }
@@ -126,7 +126,7 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
     setJobToDelete(null);
   };
 
-  const statusOrder: LabJob['status'][] = ['Enviado', 'Em Confecção', 'Recebido', 'Instalado'];
+  const statusOrder: LabJob['status'][] = ['Planejado', 'Em Confecção', 'Recebido', 'Instalado'];
 
   const handleAdvanceStatus = async (job: LabJob) => {
     const currentIndex = statusOrder.indexOf(job.status);
@@ -158,12 +158,25 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
     return null;
   };
 
+  const getAdvanceStatusColor = (nextStatus: LabJob['status'] | null) => {
+    switch (nextStatus) {
+      case 'Em Confecção':
+        return 'text-yellow-700 bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-500/10 dark:text-yellow-400 dark:hover:bg-yellow-500/20';
+      case 'Recebido':
+        return 'text-purple-700 bg-purple-50 hover:bg-purple-100 dark:bg-purple-500/10 dark:text-purple-400 dark:hover:bg-purple-500/20';
+      case 'Instalado':
+        return 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20';
+      default:
+        return 'text-zinc-700 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-500/10 dark:text-zinc-400';
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Enviado': return <Truck size={16} className="text-blue-500" />;
+      case 'Planejado': return <Truck size={16} className="text-blue-500" />;
       case 'Em Confecção': return <Clock size={16} className="text-yellow-500" />;
-      case 'Recebido': return <CheckCircle size={16} className="text-emerald-500" />;
-      case 'Instalado': return <CheckCircle size={16} className="text-indigo-500" />;
+      case 'Recebido': return <CheckCircle size={16} className="text-purple-500" />;
+      case 'Instalado': return <CheckCircle size={16} className="text-emerald-500" />;
       default: return null;
     }
   };
@@ -174,10 +187,10 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Enviado': return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20';
+      case 'Planejado': return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20';
       case 'Em Confecção': return 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-500/10 dark:text-yellow-400 dark:border-yellow-500/20';
-      case 'Recebido': return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20';
-      case 'Instalado': return 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20';
+      case 'Recebido': return 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20';
+      case 'Instalado': return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20';
       default: return 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-zinc-500/10 dark:text-zinc-400 dark:border-zinc-500/20';
     }
   };
@@ -255,7 +268,7 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
                   {getNextStatusLabel(job.status) && (
                     <button
                       onClick={() => handleAdvanceStatus(job)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 rounded-lg transition-all active:scale-95"
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all active:scale-95 border border-transparent ${getAdvanceStatusColor(getNextStatusLabel(job.status))}`}
                     >
                       <ArrowRightCircle size={14} />
                       {getNextStatusLabel(job.status)}
@@ -379,7 +392,7 @@ export const LabJobsTab = ({ patient }: { patient: Patient }) => {
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as LabJob['status'] })}
                     className="w-full px-4 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-indigo-500 text-text-primary disabled:opacity-50"
                   >
-                    <option value="Enviado">Enviado</option>
+                    <option value="Planejado">Planejado</option>
                     <option value="Em Confecção">Em Confecção</option>
                     <option value="Recebido">Recebido</option>
                     <option value="Instalado">Instalado</option>

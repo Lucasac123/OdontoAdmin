@@ -27,7 +27,7 @@ const Laboratory = () => {
     labPhone: '',
     sendDate: new Date().toISOString().split('T')[0],
     expectedDate: '',
-    status: 'Enviado' as LabJob['status'],
+    status: 'Planejado' as LabJob['status'],
     cost: '' as number | '',
     notes: ''
   });
@@ -92,7 +92,7 @@ const Laboratory = () => {
         labPhone: '',
         sendDate: new Date().toISOString().split('T')[0],
         expectedDate: '',
-        status: 'Enviado',
+        status: 'Planejado',
         cost: 0,
         notes: ''
       });
@@ -160,7 +160,7 @@ const Laboratory = () => {
     setDeleteError(null);
   };
 
-  const statusOrder: LabJob['status'][] = ['Enviado', 'Em Confecção', 'Recebido', 'Instalado'];
+  const statusOrder: LabJob['status'][] = ['Planejado', 'Em Confecção', 'Recebido', 'Instalado'];
 
   const handleAdvanceStatus = async (job: LabJob) => {
     const currentIndex = statusOrder.indexOf(job.status);
@@ -192,9 +192,22 @@ const Laboratory = () => {
     return null;
   };
 
+  const getAdvanceStatusColor = (nextStatus: LabJob['status'] | null) => {
+    switch (nextStatus) {
+      case 'Em Confecção':
+        return 'text-yellow-700 bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-500/10 dark:text-yellow-400 dark:hover:bg-yellow-500/20';
+      case 'Recebido':
+        return 'text-purple-700 bg-purple-50 hover:bg-purple-100 dark:bg-purple-500/10 dark:text-purple-400 dark:hover:bg-purple-500/20';
+      case 'Instalado':
+        return 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20';
+      default:
+        return 'text-zinc-700 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-500/10 dark:text-zinc-400';
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Enviado': return <Truck size={16} className="text-blue-500" />;
+      case 'Planejado': return <Truck size={16} className="text-blue-500" />;
       case 'Em Confecção': return <Clock size={16} className="text-yellow-500" />;
       case 'Recebido': return <FileText size={16} className="text-purple-500" />;
       case 'Instalado': return <CheckCircle size={16} className="text-green-500" />;
@@ -204,7 +217,7 @@ const Laboratory = () => {
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case 'Enviado': return 'bg-blue-100 text-blue-800';
+      case 'Planejado': return 'bg-blue-100 text-blue-800';
       case 'Em Confecção': return 'bg-yellow-100 text-yellow-800';
       case 'Recebido': return 'bg-purple-100 text-purple-800';
       case 'Instalado': return 'bg-green-100 text-green-800';
@@ -305,7 +318,7 @@ const Laboratory = () => {
                       {getNextStatusLabel(job.status) && (
                         <button
                           onClick={() => handleAdvanceStatus(job)}
-                          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 rounded-lg transition-all"
+                          className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold rounded-lg transition-all active:scale-[0.98] border border-transparent ${getAdvanceStatusColor(getNextStatusLabel(job.status))}`}
                           title={`Avançar para: ${getNextStatusLabel(job.status)}`}
                         >
                           <ArrowRightCircle size={14} />
@@ -384,7 +397,7 @@ const Laboratory = () => {
                   {getNextStatusLabel(job.status) && (
                     <button
                       onClick={() => handleAdvanceStatus(job)}
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-2 px-4 text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-xl text-xs font-bold transition-all active:scale-95"
+                      className={`flex-1 sm:flex-none flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-xs font-bold transition-all active:scale-95 border border-transparent ${getAdvanceStatusColor(getNextStatusLabel(job.status))}`}
                     >
                       <ArrowRightCircle size={14} /> {getNextStatusLabel(job.status)}
                     </button>
@@ -523,7 +536,7 @@ const Laboratory = () => {
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as LabJob['status'] })}
                     className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                   >
-                    <option value="Enviado">Enviado</option>
+                    <option value="Planejado">Planejado</option>
                     <option value="Em Confecção">Em Confecção</option>
                     <option value="Recebido">Recebido</option>
                     <option value="Instalado">Instalado</option>
