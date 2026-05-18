@@ -5,10 +5,12 @@ import { STLLoader } from 'three-stdlib';
 import * as THREE from 'three';
 import daikon from 'daikon';
 import { FileText, Save, FileBox, Cuboid, Stethoscope, Layers } from 'lucide-react';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import { useStorage } from '../context/StorageContext';
 import { getDataService } from '../services/storageService';
 import { useAuth } from '../context/AuthContext';
+import { db, auth } from '../firebase';
+import { collection, addDoc } from 'firebase/firestore';
 import { webLlmService } from '../services/webLlm';
 import { 
   Send, 
@@ -227,7 +229,6 @@ export const AIAssistant: React.FC = () => {
   });
   const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
   const [isHybridMode, setIsHybridMode] = useState(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 640) return false;
     return localStorage.getItem('odontoadmin_ai_hybrid') === 'true';
   });
   const [localModelStatus, setLocalModelStatus] = useState<'idle' | 'downloading' | 'ready' | 'not_installed'>('idle');
@@ -246,15 +247,7 @@ export const AIAssistant: React.FC = () => {
     localStorage.setItem('odontoadmin_ai_permission', actionPermission);
   }, [selectedModel, isHybridMode, actionPermission]);
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 640 && isHybridMode) {
-        setIsHybridMode(false);
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isHybridMode]);
+
 
   const MODELS = [
     { id: 'gemini-3-flash-preview', name: 'G3 Flash', fullName: 'Gemini 3 Flash', description: 'O mais novo e rápido: excelente para quase todas as tarefas' },
@@ -264,13 +257,77 @@ export const AIAssistant: React.FC = () => {
   
   const currentModel = MODELS.find(m => m.id === selectedModel) || MODELS[0];
   
+  const handleRestoreSearch = (search: any) => {
+    setActiveTab('search');
+    setSearchQuery(search.query || '');
+    setSearchResult(search.result || '');
+    setSearchLinks(search.links || []);
+    setIsSearchError(false);
+    setShowHistoryModal(false);
+  };
+
+  const handleRestoreAnalysis = (analysis: any) => {
+    setActiveTab('analyze');
+    setAnalyzePrompt(analysis.prompt || '');
+    setAnalyzeResult(analysis.result || '');
+    setAnalyzeImage(analysis.thumbnail || null);
+    
+    const presetObj = PRESETS.find(p => p.name === analysis.preset);
+    setSelectedPreset(presetObj ? presetObj.id : 'geral');
+    
+    setShowHistoryModal(false);
+  };
+
+  const handleRestoreChat = (chat: any) => {
+    setActiveTab('chat');
+    setChatMessages(chat.messages || []);
+    setChatSessionId(chat.id || chat.date || new Date().toISOString());
+    setShowHistoryModal(false);
+  };
+
   // Chat State
-  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'model', text: string, isError?: boolean}[]>([]);
+  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'model', text: string, isError?: boolean, filePreview?: string | null}[]>([]);
+  const [chatSessionId, setChatSessionId] = useState<string | null>(null);
   const [isChatLoaded, setIsChatLoaded] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const [chatFileBase64, setChatFileBase64] = useState<string | null>(null);
+  const [chatFileMimeType, setChatFileMimeType] = useState<string | null>(null);
+  const [chatFilePreview, setChatFilePreview] = useState<string | null>(null);
+
+  const handleChatFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const fileName = file.name.toLowerCase();
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const base64 = result.split(',')[1];
+      let mime = result.match(/data:(.*?);/)?.[1] || file.type;
+      if (fileName.endsWith('.pdf')) {
+        mime = 'application/pdf';
+      }
+      
+      setChatFileBase64(base64);
+      setChatFileMimeType(mime);
+      if (mime.startsWith('image/')) {
+        setChatFilePreview(result);
+      } else {
+        setChatFilePreview(file.name);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  
+  const removeChatFile = () => {
+    setChatFileBase64(null);
+    setChatFileMimeType(null);
+    setChatFilePreview(null);
+  };
 
   // Load chat history
   useEffect(() => {
@@ -279,8 +336,11 @@ export const AIAssistant: React.FC = () => {
       try {
         const service = getDataService(storageLocation);
         const history = await service.getData('chats', user.uid);
-        if (history && history.messages) {
+        if (history && history.messages && history.messages.length > 0) {
           setChatMessages(history.messages);
+          setChatSessionId(history.sessionId || new Date().toISOString());
+        } else {
+          setChatSessionId(new Date().toISOString());
         }
       } catch (err) {
         console.error("Erro ao carregar chat", err);
@@ -294,20 +354,51 @@ export const AIAssistant: React.FC = () => {
   // Save chat history
   useEffect(() => {
     const saveHistory = async () => {
-      if (!user || !isChatLoaded) return;
+      if (!user || !isChatLoaded || !chatSessionId) return;
       const service = getDataService(storageLocation);
-      await service.saveData('chats', user.uid, { messages: chatMessages });
+      await service.saveData('chats', user.uid, { messages: chatMessages, sessionId: chatSessionId });
+
+      if (chatMessages.length > 0) {
+        try {
+          const sessionsData = await service.getData('ai_chat_sessions', user.uid) || { sessions: [] };
+          let title = "Conversa sem título";
+          const firstUserMsg = chatMessages.find(m => m.role === 'user');
+          if (firstUserMsg && firstUserMsg.text) {
+             title = firstUserMsg.text.substring(0, 60) + (firstUserMsg.text.length > 60 ? '...' : '');
+          }
+
+          const existingSessionIndex = sessionsData.sessions.findIndex((s: any) => (s.id || s.date) === chatSessionId);
+          const currentSession = {
+             id: chatSessionId,
+             title,
+             messages: [...chatMessages],
+             date: chatSessionId
+          };
+          
+          let newSessions = [...sessionsData.sessions];
+          if (existingSessionIndex >= 0) {
+            newSessions[existingSessionIndex] = currentSession;
+          } else {
+            newSessions = [currentSession, ...newSessions].slice(0, 30);
+          }
+          await service.saveData('ai_chat_sessions', user.uid, { sessions: newSessions });
+        } catch (error) {
+          console.error("Erro ao salvar sessão de chat no histórico", error);
+        }
+      }
     };
     saveHistory();
-  }, [chatMessages, user, storageLocation, isChatLoaded]);
+  }, [chatMessages, user, storageLocation, isChatLoaded, chatSessionId]);
 
   const confirmClearChat = async () => {
     setShowClearConfirm(false);
     setChatMessages([]);
+    const newSessionId = new Date().toISOString();
+    setChatSessionId(newSessionId);
     if (user) {
       try {
         const service = getDataService(storageLocation);
-        await service.saveData('chats', user.uid, { messages: [] });
+        await service.saveData('chats', user.uid, { messages: [], sessionId: newSessionId });
       } catch (error) {
         console.error('Error clearing chat history:', error);
       }
@@ -393,18 +484,27 @@ export const AIAssistant: React.FC = () => {
 
   const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatInput.trim()) return;
+    if (!chatInput.trim() && !chatFileBase64) return;
 
     const userMessage = chatInput.trim();
     setChatInput('');
-    setChatMessages(prev => [...prev, { role: 'user', text: userMessage }]);
+    setChatMessages(prev => [...prev, { 
+      role: 'user', 
+      text: userMessage || 'Arquivo enviado',
+      filePreview: chatFilePreview 
+    }]);
+
+    const fileBase64 = chatFileBase64;
+    const fileMime = chatFileMimeType;
+    removeChatFile();
+
     setIsChatLoading(true);
 
     try {
       // Simple routing logic for Hybrid Mode
       const requiresWebSearch = /pesquise|busque|notícias|atual|hoje|agora|internet|google/i.test(userMessage);
       
-      if (isHybridMode && !requiresWebSearch && localModelStatus === 'ready') {
+      if (isHybridMode && !requiresWebSearch && localModelStatus === 'ready' && !fileBase64) {
         if (!webLlmService.isReady()) {
           throw new Error('Modelo local não está pronto.');
         }
@@ -436,18 +536,78 @@ export const AIAssistant: React.FC = () => {
         systemInstruction += `\n\nO usuário conectou uma base de conhecimento do Google Drive (${driveLink}). Caso necessário, você pode consultar ou referenciar os livros de odontologia presentes nesta pasta para embasar suas respostas.`;
       }
       
+      const parts: any[] = [{ text: `${systemInstruction}\n\nUSUÁRIO: ${userMessage}` }];
+      if (fileBase64 && fileMime) {
+        parts.push({
+           inlineData: {
+             data: fileBase64,
+             mimeType: fileMime
+           }
+        });
+      }
+
+      const createPatientDeclaration: any = {
+          name: "addPatient",
+          description: "Adiciona um paciente ao sistema com informações extraídas de documentos, imagens ou pedidos diretos.",
+          parameters: {
+            type: Type.OBJECT,
+            properties: {
+              name: { type: Type.STRING, description: "Nome completo do paciente" },
+              phone: { type: Type.STRING, description: "Telefone do paciente" },
+              observations: { type: Type.STRING, description: "Observações médicas detalhadas e estruturadas em texto" }
+            },
+            required: ["name"]
+          }
+      };
+
       const response = await genAI.models.generateContent({
         model: selectedModel,
         contents: [
+          ...chatMessages.map(m => ({
+            role: m.role,
+            parts: [{ text: m.text }]
+          })), 
           {
             role: 'user',
-            parts: [{ text: `${systemInstruction}\n\nUSUÁRIO: ${userMessage}` }]
+            parts
           }
         ],
         config: {
-          tools: [{ googleSearch: {} } as any]
+          tools: [
+            { functionDeclarations: [createPatientDeclaration] },
+            { googleSearch: {} }
+          ]
         }
       });
+      
+      const functionCalls = response.functionCalls;
+      if (functionCalls && functionCalls.length > 0) {
+        for (const call of functionCalls) {
+          if (call.name === 'addPatient' && auth.currentUser) {
+             const args = call.args as any;
+             const patientData = {
+                dentistId: auth.currentUser.uid,
+                name: args.name || 'Sem nome',
+                phone: args.phone || null,
+                source: 'IA Assistente',
+                status: 'Controlado',
+                observations: args.observations || null,
+                createdAt: new Date().toISOString()
+             };
+             await addDoc(collection(db, 'patients'), patientData);
+             
+             let addMsg = `*(Ação Automática Executada)* \n\nO paciente **${args.name}** foi cadastrado com sucesso nas fichas da clínica.`;
+             if (response.text) addMsg += `\n\n${response.text}`;
+             
+             setChatMessages(prev => [...prev, { 
+               role: 'model', 
+               text: addMsg 
+             }]);
+          }
+        }
+        setIsChatLoading(false);
+        return;
+      }
       
       const text = response.text;
       
@@ -471,12 +631,13 @@ export const AIAssistant: React.FC = () => {
     setDownloadText('Iniciando...');
     
     try {
-      const hwCheck = await webLlmService.checkHardwareCompatibility();
-      if (!hwCheck.compatible) {
-        alert(`Hardware incompatível: ${hwCheck.reason}`);
-        setLocalModelStatus('not_installed');
-        return;
-      }
+      // Hardware check bypassed locally per user request.
+      // const hwCheck = await webLlmService.checkHardwareCompatibility();
+      // if (!hwCheck.compatible) {
+      //   alert(`Hardware incompatível: ${hwCheck.reason}`);
+      //   setLocalModelStatus('not_installed');
+      //   return;
+      // }
 
       webLlmService.setInitProgressCallback((report) => {
         // report.progress is between 0 and 1
@@ -551,7 +712,7 @@ export const AIAssistant: React.FC = () => {
         try {
           const service = getDataService(storageLocation);
           const history = await service.getData('ai_searches', user.uid) || { searches: [] };
-          const newSearch = { query: searchQuery, result: text, date: new Date().toISOString() };
+          const newSearch = { query: searchQuery, result: text, links: searchLinks, date: new Date().toISOString() };
           const newSearches = [newSearch, ...history.searches].slice(0, 50);
           await service.saveData('ai_searches', user.uid, { searches: newSearches });
         } catch (err) {
@@ -866,7 +1027,7 @@ export const AIAssistant: React.FC = () => {
                     </div>
 
                     {/* Hybrid Mode Toggle */}
-                    <div className="hidden sm:block mb-4 p-4 bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/10 dark:to-zinc-900 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl">
+                    <div className="mb-4 p-4 bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/10 dark:to-zinc-900 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
@@ -948,39 +1109,43 @@ export const AIAssistant: React.FC = () => {
                               </div>
                             )}
                           </div>
-
-                          <div className="pt-2 border-t border-indigo-100 dark:border-indigo-500/20">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Sparkles className="w-4 h-4 text-text-secondary" />
-                              <span className="text-xs text-text-secondary font-bold">Automação de Fichas</span>
-                            </div>
-                            <div className="flex flex-col gap-2">
-                              <label className="flex items-center gap-2 cursor-pointer">
-                                <input 
-                                  type="radio" 
-                                  name="actionPermission" 
-                                  value="ask"
-                                  checked={actionPermission === 'ask'}
-                                  onChange={() => setActionPermission('ask')}
-                                  className="text-indigo-600 focus:ring-indigo-500"
-                                />
-                                <span className="text-xs text-text-secondary">Perguntar antes de agir</span>
-                              </label>
-                              <label className="flex items-center gap-2 cursor-pointer">
-                                <input 
-                                  type="radio" 
-                                  name="actionPermission" 
-                                  value="direct"
-                                  checked={actionPermission === 'direct'}
-                                  onChange={() => setActionPermission('direct')}
-                                  className="text-indigo-600 focus:ring-indigo-500"
-                                />
-                                <span className="text-xs text-text-secondary">Agir automaticamente</span>
-                              </label>
-                            </div>
-                          </div>
                         </div>
                       )}
+                    </div>
+
+                    {/* Automação de Fichas */}
+                    <div className="mb-4 p-4 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 rounded-2xl">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Sparkles className="w-5 h-5 text-indigo-500" />
+                        <span className="text-sm text-text-primary font-bold tracking-tight">Automação de Fichas</span>
+                      </div>
+                      <p className="text-xs text-text-secondary leading-normal mb-4">
+                        Permita que a IA cadastre pacientes e extraia informações de documentos e imagens diretamente para o sistema.
+                      </p>
+                      <div className="flex flex-col gap-3">
+                        <label className="flex items-center gap-3 cursor-pointer group">
+                          <input 
+                            type="radio" 
+                            name="actionPermission" 
+                            value="ask"
+                            checked={actionPermission === 'ask'}
+                            onChange={() => setActionPermission('ask')}
+                            className="text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                          />
+                          <span className="text-sm font-medium text-text-primary group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Perguntar antes de agir</span>
+                        </label>
+                        <label className="flex items-center gap-3 cursor-pointer group">
+                          <input 
+                            type="radio" 
+                            name="actionPermission" 
+                            value="direct"
+                            checked={actionPermission === 'direct'}
+                            onChange={() => setActionPermission('direct')}
+                            className="text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                          />
+                          <span className="text-sm font-medium text-text-primary group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Agir automaticamente</span>
+                        </label>
+                      </div>
                     </div>
 
                     <div className="space-y-1 opacity-100 transition-opacity">
@@ -1031,7 +1196,10 @@ export const AIAssistant: React.FC = () => {
           {showHistoryModal && (
             <AIHistoryModal 
               isOpen={showHistoryModal} 
-              onClose={() => setShowHistoryModal(false)} 
+              onClose={() => setShowHistoryModal(false)}
+              onRestoreSearch={handleRestoreSearch}
+              onRestoreAnalysis={handleRestoreAnalysis}
+              onRestoreChat={handleRestoreChat}
             />
           )}
         </div>
@@ -1187,7 +1355,18 @@ export const AIAssistant: React.FC = () => {
                             : 'text-text-primary prose dark:prose-invert prose-sm max-w-none'
                         }`}>
                           {msg.role === 'user' ? (
-                            msg.text
+                            <>
+                              {msg.filePreview && msg.filePreview.startsWith('data:image/') && (
+                                <img src={msg.filePreview} alt="Enviado pelo usuário" className="max-w-xs rounded-xl mb-2" />
+                              )}
+                              {msg.filePreview && !msg.filePreview.startsWith('data:image/') && (
+                                <div className="flex items-center gap-2 mb-2 p-2 bg-white dark:bg-zinc-700/50 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                                   <FileText className="w-5 h-5 text-indigo-500" />
+                                   <span className="text-xs font-bold text-text-primary">{msg.filePreview}</span>
+                                </div>
+                              )}
+                              {msg.text}
+                            </>
                           ) : (
                             <div className="space-y-4">
                               <div className="markdown-body">
@@ -1231,28 +1410,77 @@ export const AIAssistant: React.FC = () => {
             </div>
             
             <div className="p-3 sm:p-6 bg-surface border-t border-zinc-200 dark:border-zinc-800 shrink-0">
-              <div className="max-w-3xl mx-auto relative">
-                <form onSubmit={handleChatSubmit} className="relative flex items-end gap-1.5 sm:gap-2 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-1.5 sm:p-2 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all shadow-sm">
+              <div className="max-w-3xl mx-auto relative flex flex-col gap-2">
+                {chatFilePreview && (
+                  <div className="relative inline-flex items-center gap-2 p-2 px-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl self-start overflow-hidden border border-zinc-200 dark:border-zinc-700 group">
+                    {chatFileMimeType?.startsWith('image/') ? (
+                      <ImageIcon className="w-4 h-4 text-indigo-500 shrink-0" />
+                    ) : (
+                      <FileText className="w-4 h-4 text-indigo-500 shrink-0" />
+                    )}
+                    <span className="text-xs font-semibold text-text-primary max-w-[200px] truncate">
+                       {chatFileMimeType?.startsWith('image/') ? 'Imagem Anexada' : chatFilePreview}
+                    </span>
+                    <button 
+                       type="button"
+                       onClick={removeChatFile} 
+                       className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg text-text-secondary hover:text-red-500 transition-colors shrink-0"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                    {chatFileMimeType?.startsWith('image/') && (
+                      <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-50">
+                        <img src={chatFilePreview} className="w-48 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 bg-white" />
+                      </div>
+                    )}
+                  </div>
+                )}
+                <form onSubmit={handleChatSubmit} className="relative flex items-center gap-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[24px] p-1.5 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all shadow-sm">
+                  <div className="relative shrink-0">
+                    <input 
+                      type="file" 
+                      id="chat-file-upload" 
+                      className="hidden" 
+                      accept="image/*, application/pdf, .dcm" 
+                      onChange={handleChatFileUpload}
+                    />
+                    <label 
+                      htmlFor="chat-file-upload" 
+                      className="w-10 h-10 flex items-center justify-center text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-all cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400"
+                    >
+                      <Plus className="w-5 h-5" />
+                    </label>
+                  </div>
                   <textarea
                     value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
+                    onChange={(e) => {
+                      setChatInput(e.target.value);
+                      e.target.style.height = '40px';
+                      const newHeight = Math.min(e.target.scrollHeight, 128);
+                      if (e.target.value === '') {
+                        e.target.style.height = '40px';
+                      } else {
+                        e.target.style.height = `${newHeight}px`;
+                      }
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
                         handleChatSubmit(e);
+                        e.currentTarget.style.height = '40px';
                       }
                     }}
-                    placeholder="Envie uma mensagem para a IA..."
-                    className="w-full bg-transparent border-none resize-none max-h-32 min-h-[44px] py-3 px-2 sm:px-4 text-sm text-text-primary focus:outline-none focus:ring-0 placeholder:text-zinc-400"
+                    placeholder="Envie uma mensagem..."
+                    className="flex-1 bg-transparent border-none resize-none min-h-[40px] h-[40px] py-[9px] px-1 m-0 text-sm text-text-primary focus:outline-none focus:ring-0 placeholder:text-zinc-500 leading-normal"
                     rows={1}
                     disabled={isChatLoading}
                   />
                   <button 
                     type="submit" 
-                    disabled={isChatLoading || !chatInput.trim()}
-                    className="w-11 h-11 shrink-0 flex items-center justify-center bg-indigo-600 text-white rounded-2xl disabled:opacity-50 hover:bg-indigo-700 transition-all shadow-md active:scale-95"
+                    disabled={isChatLoading || (!chatInput.trim() && !chatFileBase64)}
+                    className="w-10 h-10 shrink-0 flex items-center justify-center bg-indigo-600 text-white rounded-full disabled:opacity-50 hover:bg-indigo-700 transition-all shadow-sm active:scale-95"
                   >
-                    <Send className="w-5 h-5" />
+                    <Send className="w-4 h-4 ml-0.5" />
                   </button>
                 </form>
                 <p className="text-center text-[10px] text-text-secondary mt-3 font-medium">

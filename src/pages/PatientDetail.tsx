@@ -65,6 +65,59 @@ export const PatientDetail: React.FC = () => {
     return () => unsubscribe();
   }, [patient?.responsibleDentistId]);
 
+  const tabsRef = React.useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!tabsRef.current) return;
+    setIsDragging(false);
+    const startX = e.pageX - tabsRef.current.offsetLeft;
+    const scrollLeft = tabsRef.current.scrollLeft;
+    
+    const onMouseMove = (e: MouseEvent) => {
+      if (!tabsRef.current) return;
+      const x = e.pageX - tabsRef.current.offsetLeft;
+      const walk = (x - startX) * 2;
+      if (Math.abs(walk) > 10) {
+        setIsDragging(true);
+      }
+      tabsRef.current.scrollLeft = scrollLeft - walk;
+    };
+
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      // Wait a tiny bit to reset dragging to prevent click firing
+      setTimeout(() => setIsDragging(false), 50);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // We let native scroll handle touch, but we need to track it to prevent click if moved
+    const startX = e.touches[0].pageX;
+    const startY = e.touches[0].pageY;
+    
+    const onTouchMove = (e: TouchEvent) => {
+      const x = e.touches[0].pageX;
+      const y = e.touches[0].pageY;
+      if (Math.abs(x - startX) > 10 || Math.abs(y - startY) > 10) {
+        setIsDragging(true);
+      }
+    };
+
+    const onTouchEnd = () => {
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchend', onTouchEnd);
+      setTimeout(() => setIsDragging(false), 50);
+    };
+
+    document.addEventListener('touchmove', onTouchMove);
+    document.addEventListener('touchend', onTouchEnd);
+  };
+
   if (!patient) return <div className="p-8 text-center text-zinc-500">Carregando...</div>;
 
   const tabs = [
@@ -128,13 +181,18 @@ export const PatientDetail: React.FC = () => {
 
       <div className="bg-surface rounded-2xl shadow-premium border border-zinc-200 dark:border-zinc-800 overflow-hidden text-sm">
         <div className="border-b border-zinc-200 dark:border-zinc-800">
-          <div className="flex overflow-x-auto hide-scrollbar scroll-smooth md:justify-center">
+          <div 
+            ref={tabsRef}
+            onMouseDown={handleMouseDown}
+            onTouchStart={handleTouchStart}
+            className={`flex overflow-x-auto hide-scrollbar md:justify-start ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
+          >
             {tabs.map((tab) => (
               <motion.button
                 key={tab.id}
                 whileHover={{ backgroundColor: 'rgba(0,0,0,0.02)' }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => handleTabChange(tab.id)}
+                onClick={() => !isDragging && handleTabChange(tab.id)}
                 className={`flex items-center gap-2 px-4 py-3 md:px-6 md:py-4 text-sm font-medium whitespace-nowrap transition-colors relative flex-shrink-0 ${
                   activeTab === tab.id 
                     ? 'text-indigo-600 dark:text-indigo-400' 

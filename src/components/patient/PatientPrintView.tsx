@@ -13,6 +13,7 @@ interface PatientPrintViewProps {
     title: string;
     content: string;
     type: string;
+    numCopies?: number;
   };
   showDentistSignature?: boolean;
   showPatientSignature?: boolean;
@@ -580,7 +581,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     return (
       <div key="customdoc-landscape-section" className="print-page-sheet print-landscape gap-4 flex-row">
         {renderColumnContent("Via do Paciente", type !== 'prescription')}
-        {renderColumnContent(type === 'prescription' ? "Via do Dentista" : "Via da Clínica", true)}
+        {renderColumnContent(type === 'prescription' ? "Via da Farmácia" : "Via da Clínica", type !== 'prescription')}
       </div>
     );
   };
@@ -590,7 +591,9 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     const title = customDocument.title || 'Documento Odontológico';
     const sigType = customDocument.type === 'tcle' ? 'both' : 'dentist';
 
-    const isLandscape = customDocument.type === 'prescription' || customDocument.type === 'postop' || customDocument.type === 'recomendacoes';
+    const isLandscape = (customDocument.type === 'prescription' && customDocument.numCopies === 2) || 
+                        customDocument.type === 'postop' || 
+                        customDocument.type === 'recomendacoes';
     
     if (isLandscape) {
       return renderCustomDocumentLandscape(title, customDocument.content, customDocument.type);

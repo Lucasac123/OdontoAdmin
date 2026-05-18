@@ -61,9 +61,6 @@ export const AnamnesisTab = ({ patient }: { patient: Patient }) => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h2 className="text-xl font-bold text-text-primary">Ficha de Anamnese</h2>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <button onClick={() => window.print()} className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white dark:bg-zinc-800 text-text-primary border border-zinc-200 dark:border-zinc-700 px-4 py-2 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-sm">
-              <Printer className="w-4 h-4" /> Exportar PDF
-            </button>
             <button onClick={handleSave} disabled={isSaving} className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors text-sm">
               <Save className="w-4 h-4" /><span className="truncate">Salvar Anamnese</span>
             </button>

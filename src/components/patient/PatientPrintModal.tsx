@@ -16,6 +16,7 @@ interface PatientPrintModalProps {
     title: string;
     content: string;
     type: string;
+    numCopies?: number;
   };
 }
 
@@ -124,15 +125,24 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
     // Dynamically inject A4 orientation stylesheet to force browser settings
     const selectedTemplateObjects = templates.filter(t => selectedTemplates.includes(t.id));
 
+    const isPrescriptionTwoCopies = includeCustomDocument && customDocument && 
+                                    customDocument.type === 'prescription' && 
+                                    customDocument.numCopies === 2;
+
+    const isPrescriptionOneCopy = includeCustomDocument && customDocument && 
+                                   customDocument.type === 'prescription' && 
+                                   customDocument.numCopies === 1;
+
     const hasLandscape = selectedSections.includes('recomendacoes') || 
                          selectedTemplateObjects.some(t => t.type === 'prescription' || t.type === 'postop') ||
+                         isPrescriptionTwoCopies ||
                          (includeCustomDocument && customDocument && 
-                           (customDocument.type === 'prescription' || 
-                            customDocument.type === 'postop' || 
+                           (customDocument.type === 'postop' || 
                             customDocument.type === 'recomendacoes'));
 
     const hasPortrait = selectedSections.some(s => s !== 'recomendacoes') || 
                         selectedTemplateObjects.some(t => t.type !== 'prescription' && t.type !== 'postop') || 
+                        isPrescriptionOneCopy ||
                         (includeCustomDocument && customDocument && 
                           customDocument.type !== 'prescription' && 
                           customDocument.type !== 'postop' && 

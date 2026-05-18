@@ -192,7 +192,7 @@ const Laboratory = () => {
     return null;
   };
 
-  const getAdvanceStatusColor = (nextStatus: LabJob['status'] | null) => {
+  const getAdvanceStatusColor = (nextStatus: LabJob['status'] | string | null) => {
     switch (nextStatus) {
       case 'Em Confecção':
         return 'text-yellow-700 bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-500/10 dark:text-yellow-400 dark:hover:bg-yellow-500/20';

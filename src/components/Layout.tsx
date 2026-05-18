@@ -212,11 +212,19 @@ const SidebarContent = ({
             <Settings className={isCollapsed ? "w-4 h-4" : "w-5 h-5"} />
           </NavLink>
   
-          <button 
+          <div 
             onClick={() => setShowSettings(!showSettings)}
-            className={`flex items-center gap-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 relative ${isCollapsed ? 'w-10 h-10 justify-center' : 'flex-1 p-2 min-w-0'}`}
+            className={`flex items-center gap-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 relative cursor-pointer ${isCollapsed ? 'w-10 h-10 justify-center' : 'flex-1 p-2 min-w-0'}`}
             aria-label="Menu do usuário"
             aria-expanded={showSettings}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === 'Space') {
+                e.preventDefault();
+                setShowSettings(!showSettings);
+              }
+            }}
           >
             {user?.photoURL && (
               <img 
@@ -227,7 +235,7 @@ const SidebarContent = ({
               />
             )}
             {!isCollapsed && (
-              <span className="text-sm font-medium text-text-primary truncate flex-1 text-left">
+              <span className="text-sm font-medium text-text-primary truncate flex-1 text-left select-none">
                 {user?.displayName || user?.email}
               </span>
             )}
@@ -241,7 +249,10 @@ const SidebarContent = ({
                   className={`absolute bottom-full mb-2 bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg overflow-hidden z-50 p-1 min-w-[160px] ${isCollapsed ? 'left-full ml-4 bottom-0' : 'left-0 right-0'}`}
                 >
                   <button
-                    onClick={handleLogout}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLogout();
+                    }}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors text-sm font-medium"
                   >
                     <LogOut className="w-4 h-4" />
@@ -250,7 +261,7 @@ const SidebarContent = ({
                 </motion.div>
               )}
             </AnimatePresence>
-          </button>
+          </div>
           
           {deferredPrompt && (
             <button

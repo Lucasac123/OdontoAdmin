@@ -229,13 +229,6 @@ export const ClinicalEvolutionTab = ({ patient }: { patient: Patient }) => {
           <Activity className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
           Evolução Clínica
         </h2>
-        <button 
-          onClick={handlePrint}
-          className="flex items-center gap-2 bg-white dark:bg-zinc-800 text-text-primary border border-zinc-200 dark:border-zinc-700 px-4 py-2 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors shadow-sm"
-        >
-          <Printer className="w-4 h-4" />
-          Exportar PDF
-        </button>
       </div>
 
       <div className="bg-surface rounded-3xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm">

@@ -19,9 +19,10 @@ export const PrescriptionTab = ({
   onOpenPrintModal 
 }: { 
   patient: Patient;
-  onOpenPrintModal?: (customDocument?: { title: string; content: string; type: string }) => void;
+  onOpenPrintModal?: (customDocument?: { title: string; content: string; type: string; numCopies?: number }) => void;
 }) => {
   const [documentType, setDocumentType] = useState<'prescription' | 'certificate' | 'attendance' | 'referral' | 'postop' | 'laudo' | 'exame'>('prescription');
+  const [numCopies, setNumCopies] = useState<1 | 2>(2);
   const [prescriptionText, setPrescriptionText] = useState(`Para: ${patient.name}\nData: ${new Date().toLocaleDateString('pt-BR')}\n\nUso Interno:\n1. Amoxicilina 500mg\nTomar 1 cápsula de 8 em 8 horas por 7 dias.\n\nUso Externo:\n1. Periogard\nBochechar 15ml por 1 minuto a cada 12 horas.`);
   const [certificateText, setCertificateText] = useState(`ATESTADO ODONTOLÓGICO\n\nAtesto para os devidos fins que o(a) paciente ${patient.name}, portador(a) do CPF _________________, esteve sob meus cuidados profissionais no dia ${new Date().toLocaleDateString('pt-BR')}, das ____ às ____ horas, necessitando de ____ dias de repouso por motivo de tratamento odontológico.\n\nCID-10: K04 (Exemplo)`);
   const [attendanceText, setAttendanceText] = useState(`DECLARAÇÃO DE COMPARECIMENTO\n\nDeclaro para os devidos fins que o(a) paciente ${patient.name}, portador(a) do CPF _________________, compareceu a esta clínica odontológica no dia ${new Date().toLocaleDateString('pt-BR')}, das ____ às ____ horas, para realização de consulta/tratamento odontológico.`);
@@ -91,7 +92,8 @@ export const PrescriptionTab = ({
       onOpenPrintModal({
         title: titleMap[documentType] ?? 'Documento Odontológico',
         content: activeText,
-        type: documentType
+        type: documentType,
+        numCopies: documentType === 'prescription' ? numCopies : 1
       });
     } else {
       window.print();
@@ -207,7 +209,7 @@ export const PrescriptionTab = ({
     );
   };
 
-  const needsTwoCopies = documentType === 'prescription' && checkNeedsTwoCopies(prescriptionText);
+  const needsTwoCopies = documentType === 'prescription' && numCopies === 2;
 
   return (
     <>
@@ -310,13 +312,49 @@ export const PrescriptionTab = ({
             </button>
             <button 
               onClick={handlePrint}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-4 py-2 rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors text-sm font-medium"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2 rounded-xl hover:bg-indigo-700 transition-colors text-sm font-bold shadow-sm shadow-indigo-200 dark:shadow-none"
             >
               <Printer className="w-4 h-4" />
               Imprimir
             </button>
           </div>
         </div>
+
+        {documentType === 'prescription' && (
+          <div className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 p-4 rounded-2xl flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-text-primary">Número de Vias</p>
+                <p className="text-xs text-text-secondary">Selecione a quantidade de vias para impressão</p>
+              </div>
+            </div>
+            <div className="flex bg-zinc-100 dark:bg-zinc-900 p-1 rounded-xl">
+              <button
+                onClick={() => setNumCopies(1)}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  numCopies === 1
+                    ? 'bg-white dark:bg-zinc-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                    : 'text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                1 Via (A4)
+              </button>
+              <button
+                onClick={() => setNumCopies(2)}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  numCopies === 2
+                    ? 'bg-white dark:bg-zinc-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                    : 'text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                2 Vias (A5)
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="bg-surface rounded-3xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm">
           <textarea
@@ -644,14 +682,68 @@ export const PrescriptionTab = ({
         </div>
       );
 
+      const renderLandscapeColumn = (viaTitle: string, extraStyle: React.CSSProperties = {}) => (
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          height: '100%',
+          padding: '0 20px',
+          borderRight: '1px dashed #d4d4d8',
+          ...extraStyle
+        }}>
+          <div>
+            <div style={{ borderBottom: '1px solid #d4d4d8', paddingBottom: '8px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <div>
+                <h1 style={{ fontSize: '14px', fontWeight: 'bold', margin: 0 }}>Clínica Odontológica</h1>
+                <p style={{ fontSize: '8px', textTransform: 'uppercase', color: '#71717a', margin: 0 }}>Odontologia Integrada</p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ fontSize: '8px', fontWeight: '900', textTransform: 'uppercase', border: '1.5px solid #18181b', padding: '2px 10px', borderRadius: '4px' }}>
+                  {viaTitle}
+                </span>
+              </div>
+            </div>
+            <h2 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', textAlign: 'center', margin: '14px 0' }}>{docTitle}</h2>
+            <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#475569' }}>
+               <span><strong>Paciente:</strong> {patient.name}</span>
+               {patientDob && <span><strong>Nascimento:</strong> {patientDob}</span>}
+            </div>
+            <div style={{ fontSize: '10px', color: '#18181b', lineHeight: '1.6', whiteSpace: 'pre-wrap', textAlign: 'justify', marginTop: '12px' }}>
+              {activeText}
+            </div>
+          </div>
+          <div style={{ paddingTop: '8px', borderTop: '1px solid #d4d4d8', marginTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <div style={{ textAlign: 'center', width: '60%' }}>
+                <div style={{ borderTop: '1px solid #94a3b8', width: '100%', marginBottom: '2px' }}></div>
+                <p style={{ fontWeight: 'bold', fontSize: '8.5px', textTransform: 'uppercase', margin: 0 }}>Cirurgião-Dentista</p>
+                <p style={{ fontSize: '7px', textTransform: 'uppercase', color: '#94a3b8', margin: 0 }}>Assinatura / Carimbo</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+
       return (
-        <div className="print-only" style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <div className="print-only">
           {needsTwoCopies ? (
-            <>
-              {renderCopy('1ª Via – Farmácia')}
-              {renderCopy('2ª Via – Paciente')}
-            </>
-          ) : renderCopy()}
+            <div style={{ 
+              width: '29.7cm', 
+              height: '21cm', 
+              display: 'flex', 
+              padding: '10mm',
+              gap: '20px'
+            }}>
+              {renderLandscapeColumn('Via da Farmácia')}
+              {renderLandscapeColumn('Via do Paciente', { borderRight: 'none' })}
+            </div>
+          ) : (
+            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+              {renderCopy()}
+            </div>
+          )}
         </div>
       );
     })()}

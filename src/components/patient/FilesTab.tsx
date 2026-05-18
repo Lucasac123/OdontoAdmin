@@ -505,13 +505,6 @@ export const FilesTab = ({ patient }: { patient: Patient }) => {
                     <Download className="w-5 h-5" />
                   </a>
                   <button 
-                    onClick={() => handlePrintFile(selectedFile)}
-                    className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-xl transition-colors"
-                    title="Imprimir"
-                  >
-                    <Printer className="w-5 h-5" />
-                  </button>
-                  <button 
                     onClick={() => {
                       setSelectedFile(null);
                       setZoom(1);
