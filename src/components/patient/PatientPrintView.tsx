@@ -36,7 +36,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
 
   /* ── 1. Dados Pessoais ──────────────────────────────────────────────────── */
   const renderPersonal = () => (
-    <div className="print-page-sheet">
+    <div key="personal-section" className="print-page-sheet">
       <PrintHeader
         title="Ficha de Identificação"
         patientName={patient.name}
@@ -100,7 +100,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     ];
 
     return (
-      <div className="print-page-sheet">
+      <div key="anamnesis-section" className="print-page-sheet">
         <PrintHeader
           title="Ficha de Anamnese"
           subtitle="Histórico de Saúde do Paciente"
@@ -191,7 +191,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     ];
 
     return (
-      <div className="print-page-sheet">
+      <div key="odontogram-section" className="print-page-sheet">
         <PrintHeader title="Odontograma Clínico" patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
         
         <div className="flex-grow space-y-6">
@@ -252,7 +252,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
 
   /* ── 4. Evolução Clínica ────────────────────────────────────────────────── */
   const renderEvolution = () => (
-    <div className="print-page-sheet">
+    <div key="evolution-section" className="print-page-sheet">
       <PrintHeader title="Evolução Clínica" patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
       
       <div className="flex-grow overflow-y-auto max-h-[60%]">
@@ -312,7 +312,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
     return (
-      <div className="print-page-sheet">
+      <div key="treatmentplan-section" className="print-page-sheet">
         <PrintHeader title={planTitle || 'Plano de Tratamento'} patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
         
         <div className="flex-grow overflow-y-auto max-h-[60%]">
@@ -363,7 +363,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     const total = payments.filter(p => p.paymentStatus !== 'pendente').reduce((s, p) => s + p.amount, 0);
 
     return (
-      <div className="print-page-sheet">
+      <div key="payments-section" className="print-page-sheet">
         <PrintHeader title="Extrato Financeiro" patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
         
         <div className="flex-grow overflow-y-auto max-h-[60%]">
@@ -414,7 +414,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
 
   /* ── Atestado Odontológico ─────────────────────────────────────────────── */
   const renderAtestado = () => (
-    <div className="print-page-sheet">
+    <div key="atestado-section" className="print-page-sheet">
       <PrintHeader
         title="Atestado Odontológico"
         patientName={patient.name}
@@ -438,31 +438,31 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
   /* ── Recomendações Pós-Operatórias ─────────────────────────────────────── */
   const renderRecomendacoes = () => {
     const renderColumnContent = (viaTitle: string) => (
-      <div className="flex-1 flex flex-col justify-between h-full px-2 border-r border-dashed border-slate-300 last:border-r-0 last:pr-0">
+      <div className="flex-1 flex flex-col justify-between h-full px-4 border-r border-dashed border-slate-300 last:border-r-0 last:pr-0">
         <div>
           {/* Header */}
-          <div className="border-b border-slate-300 pb-1.5 mb-2 flex justify-between items-end">
+          <div className="border-b border-slate-300 pb-2 mb-3 flex justify-between items-end">
             <div>
-              <h1 className="text-xs font-serif font-bold text-slate-900 tracking-tight">Clínica Odontológica</h1>
-              <p className="text-[7px] uppercase tracking-widest text-slate-500">Odontologia Integrada</p>
+              <h1 className="text-sm font-serif font-bold text-slate-900 tracking-tight">Clínica Odontológica</h1>
+              <p className="text-[8px] uppercase tracking-widest text-slate-500">Odontologia Integrada</p>
             </div>
             <div className="text-right">
-              <span className="text-[7px] font-black uppercase text-slate-900 border border-slate-900 px-1.5 py-0.5 rounded tracking-widest">
+              <span className="text-[8px] font-black uppercase text-slate-900 border-[1.5px] border-slate-900 px-2.5 py-0.5 rounded tracking-widest">
                 {viaTitle}
               </span>
             </div>
           </div>
 
-          <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-900 text-center mb-2">Recomendações Pós-Operatórias</h2>
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-900 text-center my-3.5">Recomendações Pós-Operatórias</h2>
 
           {/* Patient Card */}
-          <div className="bg-slate-50 border border-slate-200 rounded p-1.5 mb-2 flex justify-between text-[8px] text-slate-600">
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 mb-4 flex justify-between text-[10px] text-slate-600">
             <span><strong>Paciente:</strong> {patient.name}</span>
             {patientDob && <span><strong>Nascimento:</strong> {patientDob}</span>}
           </div>
 
           {/* Guidelines */}
-          <ul className="space-y-1.5 text-[8px] text-slate-700 leading-normal">
+          <ul className="space-y-3.5 text-[10px] text-slate-700 leading-relaxed px-1">
             <li><strong className="text-slate-900">1. Alimentação:</strong> Líquida e pastosa, fria ou gelada nas primeiras 24 horas. Evitar alimentos quentes, duros ou condimentados.</li>
             <li><strong className="text-slate-900">2. Repouso:</strong> Evitar esforço físico, sol e calor por 48 horas. Dormir com a cabeça mais elevada que o resto do corpo.</li>
             <li><strong className="text-slate-900">3. Higiene:</strong> Não bochechar vigorosamente nas primeiras 24 horas para não remover o coágulo. Escovar os dentes normalmente com muito cuidado.</li>
@@ -471,32 +471,32 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
             <li><strong className="text-slate-900">6. Medicação:</strong> Tomar rigorosamente os medicamentos prescritos.</li>
           </ul>
 
-          <div className="mt-2 border border-slate-200 p-1.5 rounded bg-slate-50 text-[7px] font-semibold text-slate-700 leading-snug">
+          <div className="mt-4 border border-red-100 p-2.5 rounded-lg bg-red-50/50 text-[9px] font-semibold text-red-800 leading-relaxed">
             ⚠️ Em caso de dor intensa, sangramento abundante ou dúvidas, entre em contato imediatamente.
           </div>
         </div>
 
         {/* Footer Signatures */}
-        <div className="pt-1.5 border-t border-slate-300 mt-2">
+        <div className="pt-2 border-t border-slate-300 mt-4">
           <div className="flex justify-between items-end">
             <div className="text-center w-[45%]">
               <div className="border-t border-slate-400 w-full mb-0.5"></div>
-              <p className="font-bold text-[7px] text-slate-800 uppercase truncate">{patient.name}</p>
-              <p className="text-[6px] uppercase tracking-wider text-slate-400">Paciente</p>
+              <p className="font-bold text-[8.5px] text-slate-800 uppercase truncate">{patient.name}</p>
+              <p className="text-[7px] uppercase tracking-wider text-slate-400">Paciente</p>
             </div>
             <div className="text-center w-[45%]">
               <div className="border-t border-slate-400 w-full mb-0.5"></div>
-              <p className="font-bold text-[7px] text-slate-800 uppercase truncate">Cirurgião-Dentista</p>
-              <p className="text-[6px] uppercase tracking-wider text-slate-400">Assinatura / Carimbo</p>
+              <p className="font-bold text-[8.5px] text-slate-800 uppercase truncate">Cirurgião-Dentista</p>
+              <p className="text-[7px] uppercase tracking-wider text-slate-400">Assinatura / Carimbo</p>
             </div>
           </div>
-          <p className="text-[6px] text-slate-400 font-mono text-center mt-1 uppercase">OdontoAdmin Gestão Clínica © {new Date().getFullYear()}</p>
+          <p className="text-[7px] text-slate-400 font-mono text-center mt-1.5 uppercase">OdontoAdmin Gestão Clínica © {new Date().getFullYear()}</p>
         </div>
       </div>
     );
 
     return (
-      <div className="print-page-sheet print-landscape gap-4 flex-row">
+      <div key="recomendacoes-section" className="print-page-sheet print-landscape gap-4 flex-row">
         {renderColumnContent("Via do Paciente")}
         {renderColumnContent("Via da Clínica")}
       </div>
@@ -527,58 +527,58 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
   /* ── 8. Custom Document ────────────────────────────────────────────────── */
   const renderCustomDocumentLandscape = (title: string, content: string, type: string) => {
     const renderColumnContent = (viaTitle: string, showPatientSig: boolean) => (
-      <div className="flex-1 flex flex-col justify-between h-full px-2 border-r border-dashed border-slate-300 last:border-r-0 last:pr-0">
+      <div className="flex-1 flex flex-col justify-between h-full px-4 border-r border-dashed border-slate-300 last:border-r-0 last:pr-0">
         <div>
           {/* Header */}
-          <div className="border-b border-slate-300 pb-1.5 mb-2 flex justify-between items-end">
+          <div className="border-b border-slate-300 pb-2 mb-3 flex justify-between items-end">
             <div>
-              <h1 className="text-xs font-serif font-bold text-slate-900 tracking-tight">Clínica Odontológica</h1>
-              <p className="text-[7px] uppercase tracking-widest text-slate-500">Odontologia Integrada</p>
+              <h1 className="text-sm font-serif font-bold text-slate-900 tracking-tight">Clínica Odontológica</h1>
+              <p className="text-[8px] uppercase tracking-widest text-slate-500">Odontologia Integrada</p>
             </div>
             <div className="text-right">
-              <span className="text-[7px] font-black uppercase text-slate-900 border border-slate-900 px-1.5 py-0.5 rounded tracking-widest">
+              <span className="text-[8px] font-black uppercase text-slate-900 border-[1.5px] border-slate-900 px-2.5 py-0.5 rounded tracking-widest">
                 {viaTitle}
               </span>
             </div>
           </div>
 
-          <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-900 text-center mb-2">{title}</h2>
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-900 text-center my-3.5">{title}</h2>
 
           {/* Patient Card */}
-          <div className="bg-slate-50 border border-slate-200 rounded p-1.5 mb-2 flex justify-between text-[8px] text-slate-600">
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 mb-4 flex justify-between text-[10px] text-slate-600">
             <span><strong>Paciente:</strong> {patient.name}</span>
             {patientDob && <span><strong>Nascimento:</strong> {patientDob}</span>}
           </div>
 
           {/* Content */}
-          <div className="text-[8px] text-slate-800 leading-relaxed whitespace-pre-wrap font-sans text-justify mt-2 max-h-[105mm] overflow-hidden">
+          <div className="text-[10px] text-slate-800 leading-relaxed whitespace-pre-wrap font-sans text-justify mt-3 max-h-[120mm] overflow-hidden px-1">
             {content}
           </div>
         </div>
 
         {/* Footer Signatures */}
-        <div className="pt-1.5 border-t border-slate-300 mt-2">
+        <div className="pt-2 border-t border-slate-300 mt-4">
           <div className="flex justify-between items-end">
             {showPatientSig && (
               <div className="text-center w-[45%]">
                 <div className="border-t border-slate-400 w-full mb-0.5"></div>
-                <p className="font-bold text-[7px] text-slate-800 uppercase truncate">{patient.name}</p>
-                <p className="text-[6px] uppercase tracking-wider text-slate-400">Paciente</p>
+                <p className="font-bold text-[8.5px] text-slate-800 uppercase truncate">{patient.name}</p>
+                <p className="text-[7px] uppercase tracking-wider text-slate-400">Paciente</p>
               </div>
             )}
             <div className={`text-center ${showPatientSig ? 'w-[45%]' : 'w-full'}`}>
               <div className="border-t border-slate-400 w-full mb-0.5"></div>
-              <p className="font-bold text-[7px] text-slate-800 uppercase truncate">Cirurgião-Dentista</p>
-              <p className="text-[6px] uppercase tracking-wider text-slate-400">Assinatura / Carimbo</p>
+              <p className="font-bold text-[8.5px] text-slate-800 uppercase truncate">Cirurgião-Dentista</p>
+              <p className="text-[7px] uppercase tracking-wider text-slate-400">Assinatura / Carimbo</p>
             </div>
           </div>
-          <p className="text-[6px] text-slate-400 font-mono text-center mt-1 uppercase">OdontoAdmin Gestão Clínica © {new Date().getFullYear()}</p>
+          <p className="text-[7px] text-slate-400 font-mono text-center mt-1.5 uppercase">OdontoAdmin Gestão Clínica © {new Date().getFullYear()}</p>
         </div>
       </div>
     );
 
     return (
-      <div className="print-page-sheet print-landscape gap-4 flex-row">
+      <div key="customdoc-landscape-section" className="print-page-sheet print-landscape gap-4 flex-row">
         {renderColumnContent("Via do Paciente", type !== 'prescription')}
         {renderColumnContent(type === 'prescription' ? "Via do Dentista" : "Via da Clínica", true)}
       </div>
@@ -597,7 +597,7 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
     }
 
     return (
-      <div className="print-page-sheet">
+      <div key="customdoc-section" className="print-page-sheet">
         <PrintHeader title={title} patientName={patient.name} patientCpf={patient.cpf} patientDob={patientDob} />
         <div className="flex-grow text-sm text-slate-800 leading-loose text-justify space-y-6 whitespace-pre-wrap px-4">
           {customDocument.content}
@@ -609,16 +609,16 @@ export const PatientPrintView: React.FC<PatientPrintViewProps> = ({
 
   return (
     <div className="unified-print-only w-full max-w-4xl mx-auto bg-white p-6 print:p-0">
-      {selectedSections.includes('personal')   && <div key="personal-section">{renderPersonal()}</div>}
-      {selectedSections.includes('anamnesis')  && <div key="anamnesis-section">{renderAnamnesis()}</div>}
-      {selectedSections.includes('odontogram') && <div key="odontogram-section">{renderOdontogram()}</div>}
-      {selectedSections.includes('evolution')  && <div key="evolution-section">{renderEvolution()}</div>}
-      {selectedSections.includes('treatment')  && <div key="treatment-section">{renderTreatmentPlan()}</div>}
-      {selectedSections.includes('payments')   && <div key="payments-section">{renderPayments()}</div>}
-      {selectedSections.includes('atestado')   && <div key="atestado-section">{renderAtestado()}</div>}
-      {selectedSections.includes('recomendacoes') && <div key="recomendacoes-section">{renderRecomendacoes()}</div>}
+      {selectedSections.includes('personal')   && renderPersonal()}
+      {selectedSections.includes('anamnesis')  && renderAnamnesis()}
+      {selectedSections.includes('odontogram') && renderOdontogram()}
+      {selectedSections.includes('evolution')  && renderEvolution()}
+      {selectedSections.includes('treatment')  && renderTreatmentPlan()}
+      {selectedSections.includes('payments')   && renderPayments()}
+      {selectedSections.includes('atestado')   && renderAtestado()}
+      {selectedSections.includes('recomendacoes') && renderRecomendacoes()}
       {selectedTemplates.map((template, idx) => renderTemplate(template, idx))}
-      {customDocument && <div key="custom-doc-section">{renderCustomDocument()}</div>}
+      {customDocument && renderCustomDocument()}
     </div>
   );
 };

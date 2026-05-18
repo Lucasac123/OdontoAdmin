@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { db, auth } from '../../firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 interface PatientInfo {
   name: string;
@@ -41,6 +43,19 @@ export const PrintFooter: React.FC<PrintFooterProps> = ({
   signatureType = 'dentist',
   patientName = "Paciente",
 }) => {
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    const userRef = doc(db, 'users', auth.currentUser.uid);
+    const unsub = onSnapshot(userRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setProfile(snapshot.data());
+      }
+    });
+    return () => unsub();
+  }, []);
+
   const defaultDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: 'long',
@@ -52,8 +67,8 @@ export const PrintFooter: React.FC<PrintFooterProps> = ({
 
   const pName = patient?.name || patientName;
   const pCpf = patient?.cpf;
-  const dName = dentist?.name || dentistName;
-  const dCro = dentist?.cro || cro;
+  const dName = dentist?.name || profile?.name || dentistName;
+  const dCro = dentist?.cro || profile?.cro || cro;
   const isDefaultCro = !dCro || dCro.toUpperCase() === 'CRO XXXXX' || dCro.toUpperCase() === 'CRO-XXXXX';
 
   return (
@@ -66,7 +81,7 @@ export const PrintFooter: React.FC<PrintFooterProps> = ({
         
         {/* Assinatura do Paciente */}
         {shouldShowPatient && (
-          <div className={`text-center ${shouldShowDentist ? 'flex-1 max-w-[240px]' : 'w-64'}`}>
+          <div className={`text-center flex flex-col items-center ${shouldShowDentist ? 'flex-1 max-w-[240px]' : 'w-64'}`}>
             <div className="border-t border-slate-400 w-full mb-3"></div>
             <p className="font-bold text-xs text-slate-800 uppercase tracking-wide">{pName}</p>
             <p className="text-[9px] uppercase tracking-widest text-slate-500 mt-0.5">Paciente ou Responsável Legal</p>
@@ -76,7 +91,7 @@ export const PrintFooter: React.FC<PrintFooterProps> = ({
 
         {/* Assinatura do Dentista */}
         {shouldShowDentist && (
-          <div className={`text-center ${shouldShowPatient ? 'flex-1 max-w-[240px]' : 'w-64'}`}>
+          <div className={`text-center flex flex-col items-center ${shouldShowPatient ? 'flex-1 max-w-[240px]' : 'w-64'}`}>
             <div className="border-t border-slate-400 w-full mb-3"></div>
             <p className="font-bold text-xs text-slate-800 uppercase tracking-wide">{dName}</p>
             <p className="text-[9px] uppercase tracking-widest text-slate-500 mt-0.5">{dentistLabelOverride || dentist?.specialty || 'Cirurgião-Dentista'}</p>

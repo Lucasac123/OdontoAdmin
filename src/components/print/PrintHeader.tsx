@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { db, auth } from '../../firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 interface ClinicInfo {
   name: string;
@@ -6,6 +8,8 @@ interface ClinicInfo {
   phone?: string;
   email?: string;
   epao?: string;
+  type?: 'consultorio' | 'clinica';
+  responsibleTechnician?: string;
 }
 
 interface PrintHeaderProps {
@@ -19,12 +23,7 @@ interface PrintHeaderProps {
 }
 
 export const PrintHeader: React.FC<PrintHeaderProps> = ({ 
-  clinic = {
-    name: 'Clínica Odontológica',
-    address: 'Endereço da Clínica, S/N',
-    phone: '(00) 0000-0000',
-    email: 'contato@clinica.com'
-  }, 
+  clinic: propClinic, 
   title, 
   subtitle,
   patientName,
@@ -32,13 +31,38 @@ export const PrintHeader: React.FC<PrintHeaderProps> = ({
   patientDob,
   via
 }) => {
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    const userRef = doc(db, 'users', auth.currentUser.uid);
+    const unsub = onSnapshot(userRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setProfile(snapshot.data());
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  const clinic = {
+    name: propClinic?.name || profile?.clinicName || (profile?.type === 'clinica' ? 'Clínica Odontológica' : 'Consultório Odontológico'),
+    address: propClinic?.address || profile?.address || 'Endereço da Clínica, S/N',
+    phone: propClinic?.phone || profile?.phone || '(00) 0000-0000',
+    email: propClinic?.email || profile?.email || 'contato@clinica.com',
+    epao: propClinic?.epao || profile?.epao,
+    type: profile?.type || propClinic?.type || 'consultorio',
+    responsibleTechnician: profile?.responsibleTechnician
+  };
+
   return (
     <div className="print-only avoid-break w-full mb-8">
       {/* Clinic Identity (Letterhead) */}
       <div className="flex justify-between items-end border-b-[1.5px] border-slate-800 pb-3 mb-6">
         <div>
           <h1 className="text-2xl font-serif font-bold text-slate-900 tracking-tight">{clinic.name}</h1>
-          <p className="text-[9px] uppercase tracking-[0.2em] text-slate-500 mt-1">Odontologia Integrada</p>
+          <p className="text-[9px] uppercase tracking-[0.2em] text-slate-500 mt-1">
+            {clinic.type === 'clinica' ? 'Clínica Odontológica' : 'Consultório Odontológico'}
+          </p>
         </div>
         <div className="text-right">
           <p className="text-[10px] text-slate-600">{clinic.address}</p>
@@ -46,8 +70,11 @@ export const PrintHeader: React.FC<PrintHeaderProps> = ({
             <p className="text-[10px] text-slate-600">{clinic.phone}</p>
             <p className="text-[10px] text-slate-600">{clinic.email}</p>
           </div>
-          {clinic.epao && (
-            <p className="text-[9px] font-mono text-slate-500 mt-1 uppercase">EPAO {clinic.epao}</p>
+          {clinic.type === 'clinica' && (
+            <div className="text-[9px] font-mono text-slate-500 mt-1 uppercase leading-tight text-right">
+              {clinic.epao && <p>EPAO nº {clinic.epao}</p>}
+              {clinic.responsibleTechnician && <p>RT: {clinic.responsibleTechnician}</p>}
+            </div>
           )}
         </div>
       </div>

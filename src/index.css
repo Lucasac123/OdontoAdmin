@@ -246,7 +246,8 @@ body {
 
   .print-page-sheet.print-landscape {
     page: landscape-layout !important;
-    width: 100% !important;
+    width: 277mm !important;
+    max-width: 277mm !important;
     height: 190mm !important; /* A4 landscape height 210mm minus 20mm margin */
     max-height: 190mm !important;
     display: flex !important;

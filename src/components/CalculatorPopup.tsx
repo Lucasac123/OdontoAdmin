@@ -97,9 +97,19 @@ export const CalculatorPopup: React.FC<CalculatorPopupProps> = ({
   };
 
   const clear = () => {
-
     setDisplay('0');
     setEquation('');
+  };
+
+  const handlePercent = () => {
+    try {
+      const value = parseFloat(display);
+      if (!isNaN(value)) {
+        setDisplay(String(value / 100));
+      }
+    } catch (e) {
+      setDisplay('Erro');
+    }
   };
 
   const handleResize = (e: React.PointerEvent) => {
@@ -130,6 +140,7 @@ export const CalculatorPopup: React.FC<CalculatorPopupProps> = ({
       if (!isOpen || isMinimized) return;
       if (/[0-9]/.test(e.key)) handleNumber(e.key);
       if (['+', '-', '*', '/'].includes(e.key)) handleOperator(e.key === '/' ? '÷' : e.key);
+      if (e.key === '%') handlePercent();
       if (e.key === 'Enter') calculate();
       if (e.key === 'Escape') onClose();
       if (e.key === 'Backspace') setDisplay(prev => prev.length > 1 ? prev.slice(0, -1) : '0');
@@ -232,28 +243,29 @@ export const CalculatorPopup: React.FC<CalculatorPopupProps> = ({
               <button onClick={backspace} className="bg-amber-500/20 text-amber-500 hover:bg-amber-500/30 rounded-lg flex items-center justify-center transition-colors">
                 <Delete className="w-4 h-4" />
               </button>
+              <button onClick={handlePercent} className="bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 rounded-lg font-medium transition-colors flex-grow">%</button>
               <button onClick={() => handleOperator('/')} className="bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 rounded-lg font-medium transition-colors flex-grow">÷</button>
-              <button onClick={() => handleOperator('*')} className="bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 rounded-lg font-medium transition-colors flex-grow">×</button>
 
               <button onClick={() => handleNumber('7')} className="bg-zinc-800 text-white hover:bg-zinc-700 rounded-lg font-medium transition-colors flex-grow">7</button>
               <button onClick={() => handleNumber('8')} className="bg-zinc-800 text-white hover:bg-zinc-700 rounded-lg font-medium transition-colors flex-grow">8</button>
               <button onClick={() => handleNumber('9')} className="bg-zinc-800 text-white hover:bg-zinc-700 rounded-lg font-medium transition-colors flex-grow">9</button>
-              <button onClick={() => handleOperator('-')} className="bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 rounded-lg font-medium transition-colors flex-grow">-</button>
+              <button onClick={() => handleOperator('*')} className="bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 rounded-lg font-medium transition-colors flex-grow">×</button>
 
               <button onClick={() => handleNumber('4')} className="bg-zinc-800 text-white hover:bg-zinc-700 rounded-lg font-medium transition-colors flex-grow">4</button>
               <button onClick={() => handleNumber('5')} className="bg-zinc-800 text-white hover:bg-zinc-700 rounded-lg font-medium transition-colors flex-grow">5</button>
               <button onClick={() => handleNumber('6')} className="bg-zinc-800 text-white hover:bg-zinc-700 rounded-lg font-medium transition-colors flex-grow">6</button>
-              <button onClick={() => handleOperator('+')} className="bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 rounded-lg font-medium transition-colors flex-grow">+</button>
+              <button onClick={() => handleOperator('-')} className="bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 rounded-lg font-medium transition-colors flex-grow">-</button>
 
               <button onClick={() => handleNumber('1')} className="bg-zinc-800 text-white hover:bg-zinc-700 rounded-lg font-medium transition-colors flex-grow">1</button>
               <button onClick={() => handleNumber('2')} className="bg-zinc-800 text-white hover:bg-zinc-700 rounded-lg font-medium transition-colors flex-grow">2</button>
               <button onClick={() => handleNumber('3')} className="bg-zinc-800 text-white hover:bg-zinc-700 rounded-lg font-medium transition-colors flex-grow">3</button>
-              <button onClick={calculate} className="row-span-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg font-medium transition-colors flex items-center justify-center flex-grow">
-                <Equal className="w-5 h-5" />
-              </button>
+              <button onClick={() => handleOperator('+')} className="bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 rounded-lg font-medium transition-colors flex-grow">+</button>
 
               <button onClick={() => handleNumber('0')} className="col-span-2 bg-zinc-800 text-white hover:bg-zinc-700 rounded-lg font-medium transition-colors flex-grow">0</button>
               <button onClick={() => handleNumber('.')} className="bg-zinc-800 text-white hover:bg-zinc-700 rounded-lg font-medium transition-colors flex-grow">.</button>
+              <button onClick={calculate} className="bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg font-medium transition-colors flex items-center justify-center flex-grow">
+                <Equal className="w-5 h-5" />
+              </button>
             </div>
           </div>
           

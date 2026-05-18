@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Printer, FileText, CheckSquare, Square } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { collection, query, where, getDocs, onSnapshot, orderBy } from 'firebase/firestore';
@@ -119,6 +120,44 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
     }
     
     document.body.classList.add('is-unified-printing');
+
+    // Dynamically inject A4 orientation stylesheet to force browser settings
+    const selectedTemplateObjects = templates.filter(t => selectedTemplates.includes(t.id));
+
+    const hasLandscape = selectedSections.includes('recomendacoes') || 
+                         selectedTemplateObjects.some(t => t.type === 'prescription' || t.type === 'postop') ||
+                         (includeCustomDocument && customDocument && 
+                           (customDocument.type === 'prescription' || 
+                            customDocument.type === 'postop' || 
+                            customDocument.type === 'recomendacoes'));
+
+    const hasPortrait = selectedSections.some(s => s !== 'recomendacoes') || 
+                        selectedTemplateObjects.some(t => t.type !== 'prescription' && t.type !== 'postop') || 
+                        (includeCustomDocument && customDocument && 
+                          customDocument.type !== 'prescription' && 
+                          customDocument.type !== 'postop' && 
+                          customDocument.type !== 'recomendacoes');
+
+    const styleEl = document.createElement('style');
+    styleEl.id = 'dynamic-print-page-style';
+    
+    if (hasLandscape && !hasPortrait) {
+      styleEl.innerHTML = `
+        @page {
+          size: A4 landscape !important;
+          margin: 10mm 10mm 10mm 10mm !important;
+        }
+      `;
+      document.head.appendChild(styleEl);
+    } else if (hasPortrait && !hasLandscape) {
+      styleEl.innerHTML = `
+        @page {
+          size: A4 portrait !important;
+          margin: 15mm 15mm 15mm 15mm !important;
+        }
+      `;
+      document.head.appendChild(styleEl);
+    }
     
     // Give React a moment to render the print view in the DOM before opening the print dialog
     setTimeout(() => {
@@ -126,6 +165,10 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
       
       // Cleanup after print dialog closes
       document.body.classList.remove('is-unified-printing');
+      const dynamicStyle = document.getElementById('dynamic-print-page-style');
+      if (dynamicStyle) {
+        dynamicStyle.remove();
+      }
       if (wasDarkMode) {
         document.documentElement.classList.add('dark');
       }
@@ -146,8 +189,9 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
   ];
 
   return (
-    <AnimatePresence>
-      {isOpen && (
+    <>
+      <AnimatePresence>
+        {isOpen && (
         <motion.div 
           initial={{ opacity: 0 }} 
           animate={{ opacity: 1 }} 
@@ -330,23 +374,23 @@ export const PatientPrintModal: React.FC<PatientPrintModalProps> = ({
           </motion.div>
         </motion.div>
       )}
+      </AnimatePresence>
 
-      {/* 
-        This is the actual invisible print area that the browser will print.
-        It must be at the root level so it works properly with window.print(). 
-      */}
-      <div className="unified-print-only hidden">
-        <PatientPrintView 
-          patient={patient}
-          selectedSections={selectedSections}
-          selectedTemplates={templates.filter(t => selectedTemplates.includes(t.id))}
-          evolutions={evolutions}
-          payments={payments}
-          customDocument={includeCustomDocument ? customDocument : undefined}
-          showDentistSignature={showDentistSignature}
-          showPatientSignature={showPatientSignature}
-        />
-      </div>
-    </AnimatePresence>
+      {isOpen && createPortal(
+        <div className="unified-print-only">
+          <PatientPrintView 
+            patient={patient}
+            selectedSections={selectedSections}
+            selectedTemplates={templates.filter(t => selectedTemplates.includes(t.id))}
+            evolutions={evolutions}
+            payments={payments}
+            customDocument={includeCustomDocument ? customDocument : undefined}
+            showDentistSignature={showDentistSignature}
+            showPatientSignature={showPatientSignature}
+          />
+        </div>,
+        document.body
+      )}
+    </>
   );
 };
