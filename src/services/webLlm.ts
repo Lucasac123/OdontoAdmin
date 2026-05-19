@@ -57,22 +57,55 @@ class WebLlmService {
     }
   }
 
-  async generateResponse(prompt: string, systemInstruction?: string): Promise<string> {
+  async generateResponse(
+    prompt: string, 
+    systemInstruction?: string,
+    history: { role: string, text: string }[] = []
+  ): Promise<string> {
     if (!this.engine) {
       await this.initializeEngine();
     }
 
-    const messages = [];
-    if (systemInstruction) {
-      messages.push({ role: "system", content: systemInstruction });
+    try {
+      const messages: any[] = [];
+      let isFirstUser = true;
+
+      for (const msg of history) {
+        if (msg.role === 'model') {
+          // Remove internal system markers from previous responses
+          const text = msg.text.replace(/^\*\(.*?\)\*\n\n/, '');
+          messages.push({ role: "assistant", content: text });
+        } else if (msg.role === 'user') {
+          let content = msg.text;
+          if (isFirstUser && systemInstruction) {
+            content = `${systemInstruction}\n\n${content}`;
+            isFirstUser = false;
+          }
+          messages.push({ role: "user", content });
+        }
+      }
+
+      let currentPrompt = prompt;
+      if (isFirstUser && systemInstruction) {
+          currentPrompt = `${systemInstruction}\n\n${prompt}`;
+      }
+      messages.push({ role: "user", content: currentPrompt });
+
+      const reply = await this.engine!.chat.completions.create({
+        messages: messages,
+        temperature: 0.7,
+        max_tokens: 1024
+      });
+
+      if (!reply || !reply.choices || reply.choices.length === 0) {
+        throw new Error("Resposta vazia do modelo local.");
+      }
+
+      return reply.choices[0].message.content || "";
+    } catch (e: any) {
+      console.error("WebLLM generation error:", e);
+      throw new Error("Erro na geração de resposta local: " + (e.message || "Desconhecido"));
     }
-    messages.push({ role: "user", content: prompt });
-
-    const reply = await this.engine!.chat.completions.create({
-      messages: messages as any,
-    });
-
-    return reply.choices[0].message.content || "";
   }
 
   isReady(): boolean {

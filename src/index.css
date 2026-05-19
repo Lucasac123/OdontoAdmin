@@ -401,3 +401,35 @@ body {
   }
 }
 
+/* Markdown body styling */
+.markdown-body table {
+  width: 100%;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  border-collapse: collapse;
+}
+
+.markdown-body th,
+.markdown-body td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-subtle);
+}
+
+.markdown-body th {
+  font-weight: 600;
+  text-align: left;
+  background-color: var(--bg);
+}
+
+.markdown-body thead {
+  border-bottom: 2px solid var(--border-subtle);
+}
+
+.markdown-body tbody tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.dark .markdown-body tbody tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+

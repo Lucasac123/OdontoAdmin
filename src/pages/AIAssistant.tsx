@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { AIHistoryModal } from '../components/AIHistoryModal';
 
 const API_KEY = process.env.GEMINI_API_KEY;
@@ -511,7 +512,7 @@ export const AIAssistant: React.FC = () => {
         
         const systemInstruction = `Você é o Gemma-2-2B-it, um modelo de IA rodando localmente no dispositivo do usuário. Você é um assistente especializado em odontologia. Responda à pergunta do usuário de forma direta e útil.`;
         
-        const text = await webLlmService.generateResponse(userMessage, systemInstruction);
+        const text = await webLlmService.generateResponse(userMessage, systemInstruction, chatMessages);
 
         setChatMessages(prev => [...prev, { 
           role: 'model', 
@@ -560,7 +561,7 @@ export const AIAssistant: React.FC = () => {
           }
       };
 
-      const response = await genAI.models.generateContent({
+      const responseStream = await genAI.models.generateContentStream({
         model: selectedModel,
         contents: [
           ...chatMessages.map(m => ({
@@ -573,16 +574,61 @@ export const AIAssistant: React.FC = () => {
           }
         ],
         config: {
-          tools: [
-            { functionDeclarations: [createPatientDeclaration] },
-            { googleSearch: {} }
-          ]
+          tools: requiresWebSearch
+            ? [{ googleSearch: {} }]
+            : [{ functionDeclarations: [createPatientDeclaration] }],
+          toolConfig: {
+            // @ts-ignore
+            includeServerSideToolInvocations: true,
+            // @ts-ignore
+            include_server_side_tool_invocations: true
+          }
         }
       });
       
-      const functionCalls = response.functionCalls;
-      if (functionCalls && functionCalls.length > 0) {
-        for (const call of functionCalls) {
+      let fullText = '';
+      let isFirstChunk = true;
+      let finalFunctionCalls: any[] = [];
+      let finalResponseMsg = '';
+      
+      // Update specific message in UI
+      const newMessageIndex = chatMessages.length + 1; // +1 because we added user msg
+      setChatMessages(prev => [...prev, { role: 'model', text: '' }]);
+
+      for await (const chunk of responseStream) {
+        if (isFirstChunk) {
+          setIsChatLoading(false);
+          isFirstChunk = false;
+        }
+        
+        if (chunk.text) {
+          fullText += chunk.text;
+          setChatMessages(prev => {
+            const updated = [...prev];
+            const msgToUpdate = updated[updated.length - 1];
+            if (msgToUpdate && msgToUpdate.role === 'model') {
+               msgToUpdate.text = fullText;
+               if (requiresWebSearch) {
+                  msgToUpdate.text = `*(Pesquisa na web necessária - Respondido via Gemini Cloud)*\n\n${fullText}`;
+               }
+            }
+            return updated;
+          });
+        }
+        
+        if (chunk.functionCalls) {
+           finalFunctionCalls = [...finalFunctionCalls, ...chunk.functionCalls];
+        }
+      }
+      
+      if (isFirstChunk) {
+        setIsChatLoading(false);
+      }
+      
+      finalResponseMsg = fullText || 'Desculpe, não consegui gerar uma resposta.';
+      
+      if (finalFunctionCalls && finalFunctionCalls.length > 0) {
+        for (const call of finalFunctionCalls) {
           if (call.name === 'addPatient' && auth.currentUser) {
              const args = call.args as any;
              const patientData = {
@@ -597,26 +643,28 @@ export const AIAssistant: React.FC = () => {
              await addDoc(collection(db, 'patients'), patientData);
              
              let addMsg = `*(Ação Automática Executada)* \n\nO paciente **${args.name}** foi cadastrado com sucesso nas fichas da clínica.`;
-             if (response.text) addMsg += `\n\n${response.text}`;
+             if (fullText) addMsg += `\n\n${fullText}`;
              
-             setChatMessages(prev => [...prev, { 
-               role: 'model', 
-               text: addMsg 
-             }]);
+             setChatMessages(prev => {
+               const updated = [...prev];
+               const msgToUpdate = updated[updated.length - 1];
+               if (msgToUpdate && msgToUpdate.role === 'model') {
+                 msgToUpdate.text = addMsg;
+               }
+               return updated;
+             });
           }
         }
-        setIsChatLoading(false);
-        return;
+      } else if (fullText.trim() === '') {
+         setChatMessages(prev => {
+            const updated = [...prev];
+            const msgToUpdate = updated[updated.length - 1];
+            if (msgToUpdate && msgToUpdate.role === 'model') {
+               msgToUpdate.text = finalResponseMsg;
+            }
+            return updated;
+         });
       }
-      
-      const text = response.text;
-      
-      let finalResponse = text || 'Desculpe, não consegui gerar uma resposta.';
-      if (isHybridMode && requiresWebSearch) {
-        finalResponse = `*(Pesquisa na web necessária - Respondido via Gemini Cloud)*\n\n${finalResponse}`;
-      }
-
-      setChatMessages(prev => [...prev, { role: 'model', text: finalResponse }]);
     } catch (error) {
       const errorMessage = formatAIError(error);
       setChatMessages(prev => [...prev, { role: 'model', text: errorMessage, isError: true }]);
@@ -677,7 +725,7 @@ export const AIAssistant: React.FC = () => {
     try {
       if (!genAI) throw new Error('Chave de API do Gemini não configurada.');
       
-      const response = await genAI.models.generateContent({ 
+      const responseStream = await genAI.models.generateContentStream({ 
         model: selectedModel,
         contents: searchQuery,
         config: {
@@ -685,34 +733,52 @@ export const AIAssistant: React.FC = () => {
         }
       });
       
-      // Use the .text property directly
-      const text = response.text;
-      setSearchResult(text || 'Nenhum resultado encontrado.');
+      let fullText = '';
+      let finalLinks: any[] = [];
+      let isFirstChunk = true;
       
-      // Grounding metadata
-      const grounding = (response as any).candidates?.[0]?.groundingMetadata;
-      if (grounding?.groundingChunks) {
-        const links = grounding.groundingChunks
-          .filter((chunk: any) => chunk.web)
-          .map((chunk: any) => ({
-            title: chunk.web.title,
-            url: chunk.web.uri
-          }));
+      for await (const chunk of responseStream) {
+        if (isFirstChunk) {
+          setIsSearchLoading(false);
+          isFirstChunk = false;
+        }
         
-        // Remove duplicates
-        const uniqueLinks = Array.from(new Set(links.map(l => l.url)))
-          .map(url => links.find(l => l.url === url)!);
-          
-        setSearchLinks(uniqueLinks);
-      } else {
-        setSearchLinks([]);
+        if (chunk.text) {
+          fullText += chunk.text;
+          setSearchResult(fullText);
+        }
+        
+        // Try to collect grounding chunks as they arrive
+        const grounding = (chunk as any).candidates?.[0]?.groundingMetadata;
+        if (grounding?.groundingChunks) {
+          const links = grounding.groundingChunks
+            .filter((c: any) => c.web)
+            .map((c: any) => ({
+              title: c.web.title,
+              url: c.web.uri
+            }));
+            
+          finalLinks = [...finalLinks, ...links];
+        }
       }
+      
+      if (isFirstChunk) {
+         setIsSearchLoading(false);
+      }
+      
+      if (fullText.trim() === '') {
+        setSearchResult('Nenhum resultado encontrado.');
+      }
+      
+      const uniqueLinks = Array.from(new Set(finalLinks.map(l => l.url)))
+          .map(url => finalLinks.find(l => l.url === url)!);
+      setSearchLinks(uniqueLinks);
 
       if (user) {
         try {
           const service = getDataService(storageLocation);
           const history = await service.getData('ai_searches', user.uid) || { searches: [] };
-          const newSearch = { query: searchQuery, result: text, links: searchLinks, date: new Date().toISOString() };
+          const newSearch = { query: searchQuery, result: fullText, links: uniqueLinks, date: new Date().toISOString() };
           const newSearches = [newSearch, ...history.searches].slice(0, 50);
           await service.saveData('ai_searches', user.uid, { searches: newSearches });
         } catch (err) {
@@ -895,7 +961,7 @@ export const AIAssistant: React.FC = () => {
          });
       }
 
-      const response = await genAI.models.generateContent({
+      const responseStream = await genAI.models.generateContentStream({
         model: selectedModel,
         contents: [
           {
@@ -905,30 +971,47 @@ export const AIAssistant: React.FC = () => {
         ]
       });
       
-      // Use the .text property directly
-      const text = response.text;
-      setAnalyzeResult(text || 'Não foi possível analisar a imagem.');
+      let streamedText = '';
+      let isFirstChunk = true;
+      
+      for await (const chunk of responseStream) {
+        if (isFirstChunk) {
+          setIsAnalyzeLoading(false);
+          isFirstChunk = false;
+        }
+        if (chunk.text) {
+          streamedText += chunk.text;
+          setAnalyzeResult(streamedText);
+        }
+      }
+      
+      if (isFirstChunk) {
+        setIsAnalyzeLoading(false);
+      }
+      
+      if (streamedText.trim() === '') {
+        setAnalyzeResult('Não foi possível analisar a imagem.');
+      }
 
       if (user) {
         try {
           const service = getDataService(storageLocation);
           const history = await service.getData('ai_analyses', user.uid) || { analyses: [] };
           
-          // Limit base64 to avoid huge storage. If it's a PDF, we don't save the data.
           let thumbnail = null;
-          if (analyzeImage && analyzeImage.length < 500000) { // Only save if < 500kb approx
+          if (analyzeImage && analyzeImage.length < 500000) { 
             thumbnail = analyzeImage;
           }
           
           const newAnalysis = { 
             prompt: analyzePrompt, 
-            result: text, 
+            result: streamedText, 
             type: fileType, 
             thumbnail,
             preset: PRESETS.find(p => p.id === selectedPreset)?.name || 'Geral',
             date: new Date().toISOString() 
           };
-          const newAnalyses = [newAnalysis, ...history.analyses].slice(0, 20); // Keep last 20
+          const newAnalyses = [newAnalysis, ...history.analyses].slice(0, 20);
           await service.saveData('ai_analyses', user.uid, { analyses: newAnalyses });
         } catch (err) {
           console.error("Erro ao salvar histórico de análise", err);
@@ -1370,7 +1453,7 @@ export const AIAssistant: React.FC = () => {
                           ) : (
                             <div className="space-y-4">
                               <div className="markdown-body">
-                                <Markdown>{msg.text}</Markdown>
+                                <Markdown remarkPlugins={[remarkGfm]}>{msg.text}</Markdown>
                               </div>
                               {msg.isError && (
                                 <button 
@@ -1435,7 +1518,7 @@ export const AIAssistant: React.FC = () => {
                     )}
                   </div>
                 )}
-                <form onSubmit={handleChatSubmit} className="relative flex items-center gap-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[24px] p-1.5 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all shadow-sm">
+                <form onSubmit={handleChatSubmit} className="relative flex items-end gap-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-1.5 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all shadow-sm">
                   <div className="relative shrink-0">
                     <input 
                       type="file" 
@@ -1448,7 +1531,7 @@ export const AIAssistant: React.FC = () => {
                       htmlFor="chat-file-upload" 
                       className="w-10 h-10 flex items-center justify-center text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-all cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400"
                     >
-                      <Plus className="w-5 h-5" />
+                      <Plus className="w-5 h-5 block" />
                     </label>
                   </div>
                   <textarea
@@ -1471,7 +1554,7 @@ export const AIAssistant: React.FC = () => {
                       }
                     }}
                     placeholder="Envie uma mensagem..."
-                    className="flex-1 bg-transparent border-none resize-none min-h-[40px] h-[40px] py-[9px] px-1 m-0 text-sm text-text-primary focus:outline-none focus:ring-0 placeholder:text-zinc-500 leading-normal"
+                    className="flex-1 bg-transparent border-none resize-none min-h-[40px] py-[10px] px-1 m-0 text-sm text-text-primary focus:outline-none focus:ring-0 placeholder:text-zinc-500 leading-tight"
                     rows={1}
                     disabled={isChatLoading}
                   />
@@ -1480,7 +1563,7 @@ export const AIAssistant: React.FC = () => {
                     disabled={isChatLoading || (!chatInput.trim() && !chatFileBase64)}
                     className="w-10 h-10 shrink-0 flex items-center justify-center bg-indigo-600 text-white rounded-full disabled:opacity-50 hover:bg-indigo-700 transition-all shadow-sm active:scale-95"
                   >
-                    <Send className="w-4 h-4 ml-0.5" />
+                    <Send className="w-4 h-4 ml-0.5 block" />
                   </button>
                 </form>
                 <p className="text-center text-[10px] text-text-secondary mt-3 font-medium">
@@ -1527,7 +1610,7 @@ export const AIAssistant: React.FC = () => {
                     className="bg-zinc-50 dark:bg-zinc-900/30 rounded-[32px] p-8 border border-zinc-200 dark:border-zinc-800"
                   >
                     <div className="markdown-body prose dark:prose-invert max-w-none text-sm">
-                      <Markdown>{searchResult}</Markdown>
+                      <Markdown remarkPlugins={[remarkGfm]}>{searchResult}</Markdown>
                     </div>
 
                     {isSearchError && (
@@ -1695,7 +1778,7 @@ export const AIAssistant: React.FC = () => {
                   className="space-y-6"
                 >
                   <div className="markdown-body prose dark:prose-invert max-w-none text-sm">
-                    <Markdown>{analyzeResult}</Markdown>
+                    <Markdown remarkPlugins={[remarkGfm]}>{analyzeResult}</Markdown>
                   </div>
                   {isAnalyzeError && (
                     <button 
